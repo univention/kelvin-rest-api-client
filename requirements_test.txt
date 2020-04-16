@@ -1,0 +1,8 @@
+coverage
+factory_boy
+Faker
+ldap3
+pytest
+pytest-asyncio
+pytest-cov
+ruamel.yaml

@@ -1,0 +1,4 @@
+async-property
+httpx>=0.12.1
+lazy-object-proxy
+pyjwt
