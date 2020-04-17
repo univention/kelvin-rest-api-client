@@ -93,8 +93,10 @@ async def test_search_partial_name_arg(
 ):
     school = new_school(1)[0]
     school_name = school.name
-    sc1_dn, sc1_attr = await new_school_class(school=school_name)
-    name = sc1_attr["name"]
+    # don't use usual name starting with 'test.', as leftovers of previous
+    # tests will also match 'test.*'
+    name = f"{fake.first_name()}{fake.first_name()}"
+    sc1_dn, sc1_attr = await new_school_class(school=school_name, name=name)
     name_len = len(name)
     name_begin = name[: int(name_len / 2)]
     name_end = name[len(name_begin) :]

@@ -257,17 +257,15 @@ async def test_create(
     assert ldap_obj["uid"].value == user_obj.name
     assert ldap_obj["givenName"].value == user_obj.firstname
     assert ldap_obj["sn"].value == user_obj.lastname
-    if isinstance(ldap_obj["ucsschoolSchool"].value, str):
-        ldap_val_schools = {ldap_obj["ucsschoolSchool"].value}
-    else:
-        ldap_val_schools = set(ldap_obj["ucsschoolSchool"].value)
-    assert ldap_val_schools == set(user_obj.schools)
+    ldap_val_schools = ldap_obj["ucsschoolSchool"].value
+    if isinstance(ldap_val_schools, str):
+        ldap_val_schools = [ldap_val_schools]
+    assert set(ldap_val_schools) == set(user_obj.schools)
     assert ldap_obj["univentionBirthday"].value == user_obj.birthday
-    if isinstance(ldap_obj["ucsschoolRole"].value, str):
-        ldap_val_ucsschool_role = {ldap_obj["ucsschoolRole"].value}
-    else:
-        ldap_val_ucsschool_role = set(ldap_obj["ucsschoolRole"].value)
-    assert ldap_val_ucsschool_role == set(user_data.ucsschool_roles)
+    ldap_val_ucsschool_role = ldap_obj["ucsschoolRole"].value
+    if isinstance(ldap_val_ucsschool_role, str):
+        ldap_val_ucsschool_role = [ldap_val_ucsschool_role]
+    assert set(ldap_val_ucsschool_role) == set(user_data.ucsschool_roles)
     assert ldap_obj["ucsschoolRecordUID"] == user_data.record_uid
     assert ldap_obj["ucsschoolSourceUID"] == user_data.source_uid
 
