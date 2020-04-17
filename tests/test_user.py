@@ -246,7 +246,7 @@ async def test_create(
         user_obj = User(session=session, **asdict(user_data))
         schedule_delete_obj(object_type="user", name=user_data.name)
         await user_obj.save()
-        print("Created new User: {!r}".format(user_obj.as_dict))
+        print("Created new User: {!r}".format(user_obj.as_dict()))
 
     assert f"ou={user_data.school}" in user_obj.dn
     ldap_filter = f"(&(uid={user_obj.name})(objectClass=ucsschoolType))"
@@ -290,11 +290,11 @@ async def test_modify(
                 setattr(obj, k, v)
         new_obj: User = await obj.save()
         assert new_obj is obj
-        assert new_obj.as_dict == obj.as_dict
+        compare_kelvin_obj_with_test_data(new_obj, **obj.as_dict())
         # load fresh object
         fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
-        assert fresh_obj.as_dict == new_obj.as_dict
-        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict)
+        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
 
 
 @pytest.mark.asyncio
@@ -326,7 +326,7 @@ async def test_move_change_name(
         fresh_obj: User = await user_resource.get(school=user.school, name=new_name)
         assert fresh_obj.name == new_name
         assert fresh_obj.url != old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict)
+        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
 
 
 @pytest.mark.asyncio
@@ -365,7 +365,7 @@ async def test_move_change_school(
         assert fresh_obj.school == new_school_
         assert fresh_obj.schools == [new_school_]
         assert fresh_obj.url == old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict)
+        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
 
 
 @pytest.mark.asyncio

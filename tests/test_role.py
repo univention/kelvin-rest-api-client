@@ -88,4 +88,4 @@ async def test_role_attrs(
         obj = await RoleResource(session=session).get(name=role)
     assert obj.name == role
     assert set(obj._kelvin_attrs) == {"name", "display_name"}
-    assert set(obj.as_dict.keys()) == {"name", "display_name", "url"}
+    assert set(obj.as_dict().keys()) == {"name", "display_name", "url"}

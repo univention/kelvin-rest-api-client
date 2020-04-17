@@ -87,7 +87,7 @@ class KelvinObject(ABC):
         obj = await self._resource_class(session=self.session).get(
             **self._required_get_attrs
         )
-        for k, v in obj.as_dict.items():
+        for k, v in obj.as_dict().items():
             setattr(self, k, v)
         self._update_old_attrs()
         self._fresh = True
@@ -111,7 +111,7 @@ class KelvinObject(ABC):
                 url=self._resource_class(session=self.session).collection_url, json=data
             )
             resp_obj = self._from_kelvin_response(resp_json)
-            for k, v in resp_obj.as_dict.items():
+            for k, v in resp_obj.as_dict().items():
                 setattr(self, k, v)
             self._fresh = False
             return self
@@ -119,7 +119,7 @@ class KelvinObject(ABC):
         # TODO: or creation failed and this is the fall-back
         resp_json = await self.session.put(url=self.url, json=data)
         resp_obj = self._from_kelvin_response(resp_json)
-        for k, v in resp_obj.as_dict.items():
+        for k, v in resp_obj.as_dict().items():
             setattr(self, k, v)
         self._fresh = False
         return self
@@ -135,7 +135,6 @@ class KelvinObject(ABC):
         await self.session.delete(self.url)
         self._deleted = True
 
-    @property
     def as_dict(self) -> Dict[str, Any]:
         attrs = self._kelvin_attrs + ["dn", "url"]
         return dict((attr, getattr(self, attr)) for attr in attrs)
@@ -152,7 +151,7 @@ class KelvinObject(ABC):
         return cls(**response)
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
-        data = self.as_dict
+        data = self.as_dict()
         if not data["ucsschool_roles"]:
             del data["ucsschool_roles"]
         del data["dn"]

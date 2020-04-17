@@ -214,7 +214,7 @@ async def test_create(
             object_type="class", school=sc_data.school, name=sc_data.name
         )
         await sc_obj.save()
-        print("Created new SchoolClass: {!r}".format(sc_obj.as_dict))
+        print("Created new SchoolClass: {!r}".format(sc_obj.as_dict()))
 
     ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolGroup))"
     ldap_objs = await ldap_access.search(filter_s=ldap_filter)
@@ -247,11 +247,11 @@ async def test_modify(
                 setattr(obj, k, v)
         new_obj: SchoolClass = await obj.save()
         assert new_obj is obj
-        assert new_obj.as_dict == obj.as_dict
+        assert new_obj.as_dict() == obj.as_dict()
         # load fresh object
         fresh_obj: SchoolClass = await sc_resource.get(school=school, name=name)
-        assert fresh_obj.as_dict == new_obj.as_dict
-        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict)
+        assert fresh_obj.as_dict() == new_obj.as_dict()
+        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
 
 
 @pytest.mark.asyncio
@@ -283,7 +283,7 @@ async def test_move_change_name(
         fresh_obj: SchoolClass = await sc_resource.get(school=school, name=new_name)
         assert fresh_obj.name == new_name
         assert fresh_obj.url != old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict)
+        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
 
 
 @pytest.mark.asyncio

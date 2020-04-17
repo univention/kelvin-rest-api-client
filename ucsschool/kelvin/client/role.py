@@ -68,7 +68,6 @@ class Role(KelvinObject):
             "Kelvin REST API."
         )
 
-    @property
     def as_dict(self) -> Dict[str, Any]:
         attrs = self._kelvin_attrs + ["url"]
         return dict((attr, getattr(self, attr)) for attr in attrs)
