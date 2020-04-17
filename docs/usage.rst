@@ -2,46 +2,29 @@
 Usage
 =====
 
-To use the *Kelvin REST API Client* in a project, first get the UCS servers CA certificate (from ``http://FQDN.OF.UCS/ucs-root-ca.crt``).
-Then use the ``Session`` context manager to open a HTTPS session and authenticate.
+The Kelvin APIs resources (users, school classes etc) support a varying range of operations: retrieve, search, create, modify, move and delete.
+Some resources support all operations, others only a subset.
+See each resources usage section about which operations are supported.
 
-Change some properties
-----------------------
-
-Open the session, get the current LDAP object, change some attributes and save the changes back to LDAP:
-
-.. code-block:: python
-
-    >>> import asyncio
-    >>> from ucsschool.kelvin.client import Session, User, UserResource
-    >>>
-    >>> async def change_properties(username: str, **changes) -> User:
-    ...     async with Session(
-    ...         "USERNAME",
-    ...         "PASSWORD",
-    ...         "master.ucs.local",
-    ...         verify="ucs-root-ca.crt"
-    ...     ) as session:
-    ...         user = await UserResource(session=session).get(name=username)
-    ...         for property, value in changes.items():
-    ...             setattr(user, property, value)
-    ...         return await user.save()
-    ...
-    >>> async def main() -> User:
-    ...     return await change_properties(
-    ...         "test_user",
-    ...         firstname="newfn",
-    ...         lastname="newln",
-    ...         password="password123",
-    ...     )
-    ...
-    >>> obj = asyncio.run(main())
-    >>> assert obj.firstname == "newfn"
-    >>> assert obj.lastname == "newln"
+All requests to the Kelvin API must be authenticated.
+The ``Session`` class takes care of that.
+Section :ref:`Authentication and authorization <auth>` describes its usage.
 
 
-Move an object
---------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   usage-auth
+   usage-role
+   usage-school
+   usage-school-class
+   usage-users
+
+
+
+Note on moving of objects
+-------------------------
 
 Moving an object means changing its position in LDAP.
 That happens whenever the DN changes.

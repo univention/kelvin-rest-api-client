@@ -67,6 +67,14 @@ Tests
 There are some isolated unittests, but most tests run against a real *UCS\@school Kelvin REST API*.
 .. A UCS Docker container is used for this. The ``Makefile`` automates downloading and starting the Docker container (1 GB) and running the tests.
 
+The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
+The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
+The first one usually already exists, but trying to create it again will is safe.
+To create the schools run *on the system with the Kelvin API*::
+
+    $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL
+    $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2
+
 Run tests with current Python interpreter::
 
     $ make test
