@@ -1,12 +1,10 @@
 argh
 bandit
 black
-coverage
 flake8
 isort
 pre-commit
 Sphinx
-tox
 twine
 watchdog
 wheel
