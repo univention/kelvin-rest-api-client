@@ -67,7 +67,7 @@ class KelvinObject(ABC):
         req_attrs_vals = [
             f"{attr!r}={value!r}" for attr, value in self._required_get_attrs.items()
         ]
-        if self.dn:
+        if hasattr(self, "dn") and self.dn:
             req_attrs_vals.append(f"dn={self.dn!r}")
         return f"{self.__class__.__name__}({', '.join(req_attrs_vals)})"
 
