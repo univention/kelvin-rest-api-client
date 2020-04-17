@@ -91,9 +91,9 @@ class User(KelvinObject):
         self.record_uid = record_uid
         self.roles = roles
         self.schools = schools
-        self.school_classes = school_classes
+        self.school_classes = school_classes or {}
         self.source_uid = source_uid
-        self.udm_properties = udm_properties
+        self.udm_properties = udm_properties or {}
         self._resource_class = UserResource
 
     @classmethod
