@@ -223,8 +223,8 @@ class Session:
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         return await self.request(self.client.get, url, **kwargs)
 
-    async def patch(self, url: str, **kwargs,) -> Dict[str, Any]:
-        return await self.request(self.client.patch, url, **kwargs)
+    # async def patch(self, url: str, **kwargs,) -> Dict[str, Any]:
+    #     return await self.request(self.client.patch, url, **kwargs)
 
     async def post(self, url: str, **kwargs,) -> Dict[str, Any]:
         return await self.request(self.client.post, url, **kwargs)

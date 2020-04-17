@@ -42,7 +42,7 @@ __all__ = [
 def _app_version() -> str:
     try:
         return pkg_resources.get_distribution("kelvin-rest-api-client").version
-    except pkg_resources.DistributionNotFound:
+    except pkg_resources.DistributionNotFound:  # pragma: no cover
         # not yet installed (running tests prior to installation)
         with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open(
             "r"

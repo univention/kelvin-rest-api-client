@@ -32,8 +32,7 @@ from ldap3 import (
     Entry,
     Server,
 )
-from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError, LDAPInvalidDnError
-from ldap3.utils.dn import parse_dn
+from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from urllib3.exceptions import InsecureRequestWarning
 
 from ucsschool.kelvin.client import InvalidRequest, KelvinObject, NoObject, ServerError
@@ -164,7 +163,7 @@ class LDAPAccess:
                     attributes=attributes,
                     search_scope=scope,
                 )
-        except LDAPBindError as exc:
+        except LDAPBindError as exc:  # pragma: no cover
             print(
                 "When connecting (binding) to %r with bind_dn %r: %s",
                 self.server.host,
@@ -172,7 +171,7 @@ class LDAPAccess:
                 exc,
             )
             raise
-        except LDAPExceptionError as exc:
+        except LDAPExceptionError as exc:  # pragma: no cover
             print(
                 "When searching on %r with bind_dn %r (filter_s=%r attributes=%r "
                 "base=%r scope=%r): %s",
@@ -220,7 +219,7 @@ class LDAPAccess:
                 conn.modify(
                     dn=dn, changes=changes, controls=controls,
                 )
-        except LDAPBindError as exc:
+        except LDAPBindError as exc:  # pragma: no cover
             print(
                 "When connecting (binding) to %r with bind_dn %r: %s",
                 self.server.host,
@@ -228,7 +227,7 @@ class LDAPAccess:
                 exc,
             )
             raise
-        except LDAPExceptionError as exc:
+        except LDAPExceptionError as exc:  # pragma: no cover
             print(
                 "When modifying on %r with bind_dn %r (changes=%r): %s",
                 self.server.host,
@@ -371,46 +370,20 @@ def test_server_configuration(load_test_server_yaml) -> TestServerConfiguration:
     try:
         server_configuration = load_test_server_yaml()
         _test_a_server_configuration(server_configuration)
-    except FileNotFoundError:
+    except FileNotFoundError:  # pragma: no cover
         print(f"File not found: '{TEST_SERVER_YAML_FILENAME!s}'.")
-    except TypeError as exc:
+    except TypeError as exc:  # pragma: no cover
         raise BadTestServerConfig(
             f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}"
         ) from exc
-    except TestServerConnectionError as exc:
+    except TestServerConnectionError as exc:  # pragma: no cover
         raise BadTestServerConfig(
             f"Error connecting to test server using credentials "
             f"from '{TEST_SERVER_YAML_FILENAME!s}': [{exc.status}] {exc.reason}"
         ) from exc
     else:
         return server_configuration
-
-    print("Trying to load test server config from environment...")
-    try:
-        verify = ucs_ca_file_path(os.environ["UCS_HOST"])
-        server_configuration = TestServerConfiguration(
-            host=os.environ["UCS_HOST"],
-            username=parse_dn(os.environ["UCS_USERDN"])[0][1],
-            user_dn=os.environ["UCS_USERDN"],
-            password=os.environ["UCS_PASSWORD"],
-            verify=verify,
-        )
-        _test_a_server_configuration(server_configuration)
-    except (IndexError, KeyError):
-        print("Test server config not found in environment.")
-    except LDAPInvalidDnError as exc:
-        raise BadTestServerConfig(
-            f"Invalid DN in environment variable 'UCS_USERDN': {exc!s}"
-        )
-    except TestServerConnectionError as exc:
-        raise BadTestServerConfig(
-            f"Error connecting to test server using credentials from the "
-            f"environment: [{exc.status}] {exc.reason}"
-        ) from exc
-    else:
-        return server_configuration
-
-    raise NoTestServerConfig("No test server configuration found.")
+    raise NoTestServerConfig("No test server configuration found.")  # pragma: no cover
 
 
 @pytest.fixture(scope="session")
@@ -438,28 +411,28 @@ class TestSchool:
     url: str = None
 
 
-class SchoolFactory(factory.Factory):
-    class Meta:
-        model = TestSchool
-
-    name = factory.LazyFunction(lambda: f"test{fake.user_name()}")
-    display_name = factory.Faker("text", max_nb_chars=50)
-    administrative_servers = factory.List([])
-    class_share_file_server = factory.LazyAttribute(lambda o: f"dc{o.name.lower()}-01")
-    dc_name = None
-    dc_name_administrative = None
-    educational_servers: List[str] = factory.LazyAttribute(
-        lambda o: o.class_share_file_server
-    )
-    home_share_file_server = factory.LazyAttribute(lambda o: o.class_share_file_server)
-    ucsschool_roles = factory.List([])
-    dn = ""
-    url = ""
-
-
-@pytest.fixture
-def new_school_test_obj() -> Callable[[], TestSchool]:
-    return lambda: SchoolFactory()
+# class SchoolFactory(factory.Factory):
+#     class Meta:
+#         model = TestSchool
+#
+#     name = factory.LazyFunction(lambda: f"test{fake.user_name()}")
+#     display_name = factory.Faker("text", max_nb_chars=50)
+#     administrative_servers = factory.List([])
+#     class_share_file_server = factory.LazyAttribute(lambda o: f"dc{o.name.lower()}-01")
+#     dc_name = None
+#     dc_name_administrative = None
+#     educational_servers: List[str] = factory.LazyAttribute(
+#         lambda o: o.class_share_file_server
+#     )
+#     home_share_file_server = factory.LazyAttribute(lambda o: o.class_share_file_server)
+#     ucsschool_roles = factory.List([])
+#     dn = ""
+#     url = ""
+#
+#
+# @pytest.fixture
+# def new_school_test_obj() -> Callable[[], TestSchool]:
+#     return lambda: SchoolFactory()
 
 
 @pytest.fixture
@@ -473,7 +446,7 @@ def demoschool_data(
     )
     json_resp = response.json()
     if not {"DEMOSCHOOL", "DEMOSCHOOL2"}.issubset({obj["name"] for obj in json_resp}):
-        raise AssertionError(
+        raise AssertionError(  # pragma: no cover
             f"To run the tests properly you need to have two schools named "
             f"'DEMOSCHOOL' and 'DEMOSCHOOL2' at the moment! Execute *on the "
             f"host*: "
@@ -648,7 +621,7 @@ def new_user_test_obj(new_school):  # noqa: C901
             elif role == "teacher_and_staff":
                 kwargs["roles"] = ["staff", "teacher"]
             else:
-                raise ValueError(
+                raise ValueError(  # pragma: no cover
                     f"Argument 'role' to new_user_test_obj() must be one of "
                     f"{', '.join(role_choices)}."
                 )
@@ -657,7 +630,7 @@ def new_user_test_obj(new_school):  # noqa: C901
             kwargs["school"] = test_school.name
             kwargs["schools"] = [kwargs["school"]]
         if "school" not in kwargs:
-            kwargs["school"] = sorted(kwargs["schools"])[0]
+            kwargs["school"] = sorted(kwargs["schools"])[0]  # pragma: no cover
         if "schools" not in kwargs:
             kwargs["schools"] = [kwargs["school"]]
         if "ucsschool_roles" not in kwargs:
@@ -808,7 +781,7 @@ def http_request(json_headers, kelvin_session_kwargs):  # noqa: C901
                 status=response.status_code,
                 url=url,
             )
-        elif 400 <= response.status_code <= 499:
+        elif 400 <= response.status_code <= 499:  # pragma: no cover
             try:
                 resp_json = response.json()
                 if "detail" in resp_json:
@@ -832,7 +805,7 @@ def http_request(json_headers, kelvin_session_kwargs):  # noqa: C901
 
 
 @pytest.fixture(scope="session")
-def ucs_ca_file_path():
+def ucs_ca_file_path():  # pragma: no cover
     global CA_CERT_PATH
     ucs_ca_ori_filename = "ucs-root-ca.crt"
     ip_chars = string.digits + "."
