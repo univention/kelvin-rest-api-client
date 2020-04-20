@@ -10,8 +10,8 @@ Kelvin API documentation
 Please see the `Kelvin API documentation section Resource Roles`_ about allowed values for the attributes.
 
 
-Role
-------------
+Role class
+----------
 
 The :py:class:`ucsschool.kelvin.client.Role` class has the following attributes and methods:
 
@@ -56,7 +56,7 @@ The :py:class:`ucsschool.kelvin.client.RoleResource` class has the following pub
 
 .. code-block:: python
 
-    class SchoolResource(KelvinResource):
+    class RoleResource(KelvinResource):
         def __init__(self, session: Session):
             ...
         async def get(self, **kwargs) -> School:

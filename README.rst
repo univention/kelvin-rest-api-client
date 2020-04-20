@@ -69,7 +69,7 @@ There are some isolated unittests, but most tests run against a real *UCS\@schoo
 
 The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
 The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
-The first one usually already exists, but trying to create it again will is safe.
+The first one usually already exists, but trying to create it again is safe.
 To create the schools run *on the system with the Kelvin API*::
 
     $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL

@@ -144,7 +144,7 @@ Example creating two school classes as a byproduct of creating a user:
 
 .. code-block:: python
 
-    from ucsschool.kelvin.client import Session, SchoolClassResource
+    from ucsschool.kelvin.client import Session, SchoolClassResource, User
 
     async with Session(**credentials) as session:
         user = User(
