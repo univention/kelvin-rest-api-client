@@ -79,8 +79,8 @@ The :py:class:`ucsschool.kelvin.client.SchoolClassResource` class has the follow
 
 
 
-Creating school classes
------------------------
+Create school class
+-------------------
 
 School classes can be created explicitly or implicitly when creating or modifying users.
 
@@ -164,8 +164,8 @@ Example creating two school classes as a byproduct of creating a user:
     SchoolClass('name'='Democlass', 'school'='DEMOSCHOOL', dn='cn=DEMOSCHOOL-Democlass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com')
 
 
-Retrieving a school class
--------------------------
+Retrieve school class
+---------------------
 
 It is necessary to pass both ``name`` and ``school`` arguments to the :py:meth:`get()` method, as the name alone wouldn't be unique in a domain (there can be classes of the same name in multiple schools).
 
@@ -188,8 +188,8 @@ It is necessary to pass both ``name`` and ``school`` arguments to the :py:meth:`
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 
 
-Searching for school classes
-----------------------------
+Search school classes
+---------------------
 
 The :py:meth:`search()` method allows searching for school classes, filtering by ``school`` (mandatory) and ``name`` (optional).
 
@@ -214,8 +214,8 @@ The mandatory ``school`` argument must be exact while the optional ``name`` argu
     SchoolClass('name'='testclass', 'school'='DEMOSCHOOL', dn='cn=DEMOSCHOOL-testclass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com')
 
 
-Changing a school classes properties
-------------------------------------
+Change school class properties
+------------------------------
 
 Get the current school class object, change some attributes and save the changes back to LDAP:
 
@@ -242,8 +242,8 @@ Get the current school class object, change some attributes and save the changes
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 
 
-Moving
-------
+Move school class
+-----------------
 
 School class objects do not support changing the ``school``.
 Changing the ``name`` is allowed however.
@@ -264,8 +264,8 @@ Changing the ``name`` is allowed however.
     'cn=DEMOSCHOOL-testclass-new,cn,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com'
 
 
-Deleting a school class
------------------------
+Delete school class
+-------------------
 
 Get the current school class object and delete it:
 

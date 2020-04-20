@@ -99,16 +99,16 @@ The :py:class:`ucsschool.kelvin.client.SchoolResource` class has the following p
 
 
 
-Creating school classes
------------------------
+Create school
+-------------
 
 The Kelvin API does not yet support creating school objects, and thus the Kelvin API client doesn't either.
 
 To create a school (OU) object, either use the servers ``Schools`` UMC module or run the ``/usr/share/ucs-school-import/scripts/create_ou`` script from the servers command line.
 
 
-Retrieving a school
--------------------
+Retrieve school
+---------------
 
 .. code-block:: python
 
@@ -131,8 +131,8 @@ Retrieving a school
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/schools/DEMOSCHOOL'}
 
 
-Searching for schools
----------------------
+Search schools
+--------------
 
 The :py:meth:`search()` method allows searching for schools.
 The optional ``name`` argument supports an inexact search using ``*`` as a placeholder.
@@ -149,18 +149,18 @@ The optional ``name`` argument supports an inexact search using ``*`` as a place
     School('name'='DEMOSCHOOL2', dn='ou=DEMOSCHOOL2,dc=example,dc=com')
 
 
-Changing a schools properties
------------------------------
+Change school properties
+------------------------
 
 The Kelvin API does not yet support changing school objects, and thus the Kelvin API client doesn't either.
 
-Moving
-------
+Move school
+-----------
 
 School objects do not support moving.
 
-Deleting a school class
------------------------
+Delete school
+-------------
 
 The Kelvin API does not yet support deleting school objects, and thus the Kelvin API client doesn't either.
 

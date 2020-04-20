@@ -68,14 +68,14 @@ The :py:class:`ucsschool.kelvin.client.RoleResource` class has the following pub
 
 
 
-Creating roles
---------------
+Create role
+-----------
 
 The Kelvin API does not yet support creating role objects, and thus the Kelvin API client doesn't either.
 
 
-Retrieving a role
------------------
+Retrieve role
+-------------
 
 .. code-block:: python
 
@@ -90,8 +90,8 @@ Retrieving a role
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/roles/student'}
 
 
-Searching for roles
--------------------
+Search roles
+------------
 
 The :py:meth:`search()` method allows searching for roles.
 No filter argument are supported.
@@ -109,18 +109,18 @@ No filter argument are supported.
     Role('name'='teacher')
 
 
-Changing a roles properties
----------------------------
+Change role properties
+----------------------
 
 The Kelvin API does not yet support changing role objects, and thus the Kelvin API client doesn't either.
 
-Moving
-------
+Move role
+---------
 
 Role objects do not support moving.
 
-Deleting a role
----------------
+Delete role
+-----------
 
 The Kelvin API does not yet support deleting role objects, and thus the Kelvin API client doesn't either.
 

@@ -101,8 +101,8 @@ UserResource class
             ...
 
 
-Creating a user
----------------
+Create user
+-----------
 
 .. code-block:: python
 
@@ -126,8 +126,8 @@ Creating a user
     'uid=test1,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=example,dc=com'
 
 
-Retrieving a user
------------------
+Retrieve user
+-------------
 
 .. code-block:: python
 
@@ -157,8 +157,8 @@ Retrieving a user
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/users/test1'}
 
 
-Searching for users
--------------------
+Search users
+------------
 
 The :py:meth:`search()` method allows searching for users, using a number of filters.
 Not narrowing down the search with a ``school`` argument will result in a massive performance loss.
@@ -206,8 +206,8 @@ In the 1. search *all* users (of the school ``DEMOSCHOOL``) are searched,
     User('name'='demo_teacher', dn='uid=demo_teacher,cn=lehrer,cn=users,ou=DEMOSCHOOL,dc=example,dc=com')
 
 
-Changing a users properties
----------------------------
+Change user properties
+----------------------
 
 Get the current user object, change some attributes and save the changes back to LDAP:
 
@@ -234,8 +234,8 @@ Get the current user object, change some attributes and save the changes back to
 
 Hint: users cannot be modified, unless their ``record_uid`` and ``source_uid`` attributes are set (as is the case with the ``demo_*`` users).
 
-Moving users
-------------
+Move user
+---------
 
 User objects support changing both ``school`` and ``name``.
 
@@ -265,8 +265,8 @@ In the following example both ``school`` and ``name`` are changed.
         'uid=test2,cn=schueler,cn=users,ou=DEMOSCHOOL2,dc=example,dc=com'
 
 
-Deleting a user
----------------
+Delete user
+-----------
 
 Get the current user object and delete it:
 
