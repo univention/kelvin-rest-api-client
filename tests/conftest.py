@@ -35,6 +35,9 @@ from ldap3 import (
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from urllib3.exceptions import InsecureRequestWarning
 
+import docker
+from docker.errors import NotFound as ContainerNotFound
+
 from ucsschool.kelvin.client import InvalidRequest, KelvinObject, NoObject, ServerError
 
 API_VERSION = "v1"
@@ -56,6 +59,8 @@ URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
 URL_USER_RESOURCE = f"{URL_BASE}/{API_VERSION}/users/"
 URL_USER_COLLECTION = URL_USER_RESOURCE
 URL_USER_OBJECT = f"{URL_USER_COLLECTION}{{name}}"
+UDM_DOCKER_CONTAINER_NAME = "udm_rest_only"
+KELVIN_DOCKER_CONTAINER_NAME = "kelvin-api"
 
 fake = faker.Faker()
 logger = logging.getLogger(__name__)
@@ -75,6 +80,10 @@ TestServerConfiguration = NamedTuple(
 
 
 class BadTestServerConfig(Exception):
+    ...
+
+
+class ContainerIpUnknown(Exception):
     ...
 
 
@@ -239,6 +248,57 @@ class LDAPAccess:
         return conn.result
 
 
+def _get_ip_of_container(container_name: str) -> str:
+    docker_client = docker.from_env()
+    container = docker_client.containers.get(container_name)
+    for k, v in container.attrs["NetworkSettings"]["Networks"].items():
+        try:
+            return v["IPAddress"]
+        except KeyError:  # pragma: no cover
+            pass
+    raise ContainerIpUnknown(
+        f"Could not get IP address from container {container_name!r}."
+    )  # pragma: no cover
+
+
+def _start_stopped_container(container_name: str):
+    docker_client = docker.from_env()
+    container = docker_client.containers.get(container_name)
+    if container.status != "running":  # pragma: no cover
+        print(
+            f"Found stopped Docker container {container_name!r}. "
+            f"Trying to start and continue."
+        )  # pragma: no cover
+        container.start()
+
+
+@pytest.fixture(scope="session")
+def running_test_container():
+    """
+    :raises: ContainerIpUnknown
+    :raises: ContainerNotFound
+    """
+
+    def _func() -> TestServerConfiguration:
+        for container_name in (UDM_DOCKER_CONTAINER_NAME, KELVIN_DOCKER_CONTAINER_NAME):
+            _start_stopped_container(container_name)
+        ip = _get_ip_of_container(UDM_DOCKER_CONTAINER_NAME)
+        server = TestServerConfiguration(
+            host=ip,
+            username="Administrator",
+            user_dn="uid=Administrator,cn=users,dc=ucs-test,dc=intranet",
+            password="univention",
+            verify=False,
+        )
+        print(
+            f"Using Docker containers '{KELVIN_DOCKER_CONTAINER_NAME!r}' and "
+            f"{UDM_DOCKER_CONTAINER_NAME}."
+        )
+        return server
+
+    return _func
+
+
 @pytest.fixture(scope="session")
 def ldap_credentials(test_server_configuration) -> Dict[str, Any]:
     return {
@@ -312,12 +372,17 @@ def save_test_server_yaml():
 def retrieve_kelvin_access_token(
     host: str, username: str, password: str, verify: bool
 ) -> str:
-    resp = httpx.post(
-        URL_TOKEN.format(host=host),
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={"username": username, "password": password},
-        verify=verify,
-    )
+    try:
+        resp = httpx.post(
+            URL_TOKEN.format(host=host),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={"username": username, "password": password},
+            verify=verify,
+        )
+    except httpx.NetworkError as exc:
+        raise TestServerConnectionError(
+            f"Error retrieving token from Kelvin REST API: {exc}"
+        )
     if resp.status_code != 200:
         raise TestServerConnectionError(  # pragma: no cover
             f"Error retrieving token from Kelvin REST API: [{resp.status_code}] {resp.reason_phrase}",
@@ -359,7 +424,9 @@ def _test_a_server_configuration(server_config: TestServerConfiguration) -> None
 
 
 @pytest.fixture(scope="session")  # noqa: C901
-def test_server_configuration(load_test_server_yaml) -> TestServerConfiguration:
+def test_server_configuration(
+    load_test_server_yaml, running_test_container
+) -> TestServerConfiguration:
     """
     Get data of server used to run tests.
 
@@ -377,12 +444,31 @@ def test_server_configuration(load_test_server_yaml) -> TestServerConfiguration:
             f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}"
         ) from exc
     except TestServerConnectionError as exc:  # pragma: no cover
-        raise BadTestServerConfig(
+        pytest.exit(
             f"Error connecting to test server using credentials "
-            f"from '{TEST_SERVER_YAML_FILENAME!s}': [{exc.status}] {exc.reason}"
-        ) from exc
+            f"from '{TEST_SERVER_YAML_FILENAME!s}': [{exc.status}] {exc.reason}.\n"
+            f"Maybe remove/rename {TEST_SERVER_YAML_FILENAME.name!r} and try "
+            f"the Docker solution?"
+        )
     else:
         return server_configuration
+
+    print(f"Trying to use running Docker container {KELVIN_DOCKER_CONTAINER_NAME!r}...")
+    try:
+        res = running_test_container()
+        _test_a_server_configuration(res)
+    except ContainerNotFound:
+        print(f"Container not found.")
+    except ContainerIpUnknown as exc:
+        raise BadTestServerConfig(str(exc)) from exc
+    except TestServerConnectionError as exc:
+        pytest.exit(
+            f"Error connecting to test server using credentials for Docker "
+            f"Docker container {KELVIN_DOCKER_CONTAINER_NAME!r}: [{exc.status}] {exc!s}"
+        )
+    else:
+        return res
+
     raise NoTestServerConfig("No test server configuration found.")  # pragma: no cover
 
 

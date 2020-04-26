@@ -16,7 +16,7 @@ Features
 * Asynchronous
 * Automatic handling of HTTP(S) sessions
 * Type annotations
-* 90% test coverage (unittests + integration tests)
+* 97% test coverage (unittests + integration tests)
 * Python 3.7, 3.8, 3.9
 
 
@@ -56,7 +56,9 @@ Obviously that is *not safe*! The CA of any UCS server can always be downloaded 
 Installation
 ------------
 
-Install *UCS\@school Kelvin REST API Client* via pip from `PyPI`_::
+Install *UCS\@school Kelvin REST API Client* via pip from `PyPI`_:
+
+.. code-block:: console
 
     $ pip install kelvin-rest-api-client
 
@@ -65,25 +67,73 @@ Tests
 -----
 
 There are some isolated unittests, but most tests run against a real *UCS\@school Kelvin REST API*.
-.. A UCS Docker container is used for this. The ``Makefile`` automates downloading and starting the Docker container (1 GB) and running the tests.
+A UCS Docker container has been prepared for this (additionally to the Kelvin API Docker container).
+The ``Makefile`` automates downloading and starting the Docker containers (3.2 GB GB) and running the tests.
+It is also possible to use an existing UCS DC Master with UCS\@school and the Kelvin API installed.
 
 The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
 The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
 The first one usually already exists, but trying to create it again is safe.
-To create the schools run *on the system with the Kelvin API*::
+To create the schools run *on the UCS DC Master*:
+
+.. code-block:: console
 
     $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL
     $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2
 
-Run tests with current Python interpreter::
+The provided UCS Docker containers already contain both OUs.
+They can be started using the Makefile:
+
+.. code-block:: console
+
+    $ make start-docker-containers
+
+    Downloading Docker image '..-ucsschool-udm-rest-api-only:stable-4.4-4'...
+    Downloading Docker image '../ucsschool-kelvin-rest-api:1.1.0'...
+    Starting UCS docker container...
+    Waiting for UCS docker container to start...
+    Waiting for IP address of UCS container...
+    Waiting for UDM REST API...........
+    Creating Kelvin REST API container...
+    Configuring Kelvin REST API container...
+    Rebuilding the OpenAPI client library in the Kelvin API Container...
+    Starting Kelvin REST API server...
+    Waiting for Kelvin docker container to start...
+    Waiting for IP address of Kelvin container...
+    Waiting for Kelvin API...
+    Fixing log file permissions...
+    Setting up reverse proxy...
+    ==> UDM REST API log file: /tmp/udm-rest-api-log/directory-manager-rest.log
+    ==> UDM REST API: http://172.17.0.2/univention/udm/
+    ==> Kelvin API configs: /tmp/kelvin-api/configs/
+    ==> Kelvin API hooks: /tmp/kelvin-api/kelvin-hooks/
+    ==> Kelvin API log file: /tmp/kelvin-api/log/http.log
+    ==> Kelvin API: http://172.17.0.3:8911/ucsschool/kelvin/v1/docs
+    ==> Kelvin API: https://172.17.0.2/ucsschool/kelvin/v1/docs
+
+The Docker containers can be stopped and removed by running:
+
+.. code-block:: console
+
+    $ make stop-and-remove-docker-containers
+
+The Docker images will not be removed, only the running containers.
+
+Run tests with current Python interpreter:
+
+.. code-block:: console
 
     $ make test
 
-Using `tox`_ the tests can be executed with all supported Python versions::
+Using `tox`_ the tests can be executed with all supported Python versions:
+
+.. code-block:: console
 
     $ make test-all
 
-To use an existing UCS server for the tests, copy the file ``tests/test_server_example.yaml`` to ``tests/test_server.yaml`` and adapt the settings before starting the tests::
+To use an existing UCS server for the tests, copy the file ``tests/test_server_example.yaml`` to ``tests/test_server.yaml`` and adapt the settings before starting the tests:
+
+.. code-block:: console
 
     $ cp tests/test_server_example.yaml tests/test_server.yaml
     $ $EDITOR tests/test_server.yaml

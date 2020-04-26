@@ -1,0 +1,97 @@
+#!/bin/bash
+
+set -e
+
+. docker/common.sh
+
+if ! docker_container_running "$UCS_CONTAINER"; then
+    echo "UDM REST API container '$UCS_CONTAINER' ist not running."
+    exit 1
+fi
+
+UDM_IP="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' udm_rest_only)"
+echo "IP of UCS server is ${UDM_IP}."
+
+echo "Creating Kelvin REST API container..."
+docker create \
+    --name kelvin-api \
+    --hostname=kelvin \
+    -p 8911:80/tcp \
+    -v /tmp/kelvin-api/log:/var/log/univention/ucsschool-kelvin-rest-api \
+    -v /tmp/kelvin-api/configs:/var/lib/ucs-school-import/configs \
+    -v /tmp/kelvin-api/kelvin-hooks:/var/lib/ucs-school-import/kelvin-hooks \
+    --env LDAP_BASE=dc=ucs-test,dc=intranet \
+    --env LDAP_HOSTDN=cn=kelvin-container,cn=memberserver,cn=computers,dc=ucs-test,dc=intranet \
+    --env LDAP_MASTER=master.ucs-test.intranet \
+    --env LDAP_SERVER_IP=$UDM_IP \
+    --env LDAP_MASTER_PORT=7389 \
+    --env UCSSCHOOL_KELVIN_LOG_LEVEL=DEBUG \
+    "$KELVIN_REST_API_IMG" \
+    sh -c "/usr/sbin/update-ca-certificates && echo \"$UDM_IP master.ucs-test.intranet master\" >> /etc/hosts && exec /sbin/init"
+
+echo "Configuring Kelvin REST API container..."
+# copy (empty) user import config files from temporary container
+mkdir -p /tmp/kelvin-api/log /tmp/kelvin-api/configs /tmp/kelvin-api/kelvin-hooks
+# start temp container to copy from only if needed
+START_TEMP_CONTAINER=0
+for CONF in global.json user_import.json user_import_http-api.json user_import_legacy.json; do
+    if ! [ -e "/tmp/kelvin-api/configs/$CONF" ]; then
+        START_TEMP_CONTAINER=1
+    fi
+done
+if [ "$START_TEMP_CONTAINER" = 1 ]; then
+    echo "Creating temporary Kelvin REST API container to copy from..."
+    docker create \
+        --name kelvin-api-tmp \
+        -u "$(id -u):$(id -g)" \
+        "$KELVIN_REST_API_IMG"
+    for CONF in global.json user_import.json user_import_http-api.json user_import_legacy.json; do
+        if ! [ -e "/tmp/kelvin-api/configs/$CONF" ]; then
+            docker cp "kelvin-api-tmp:/var/lib/ucs-school-import/configs/$CONF" /tmp/kelvin-api/configs
+        fi
+    done
+    echo "Removing temporary Kelvin REST API container..."
+    docker rm kelvin-api-tmp
+fi
+
+TMP_DIR="$(mktemp -d)"
+mkdir -p "$TMP_DIR/etc/univention"
+cat > $TMP_DIR/etc/univention/base.conf <<__EOF__
+ldap/base: dc=ucs-test,dc=intranet
+ldap/hostdn: cn=kelvin-container,cn=memberserver,cn=computers,dc=ucs-test,dc=intranet
+ldap/master: master.ucs-test.intranet
+ldap/server/ip: $UDM_IP
+ldap/server/name: master.ucs-test.intranet
+ldap/server/port: 7389
+ucsschool/kelvin/log_level: DEBUG
+__EOF__
+
+docker cp udm_rest_only:/etc/kelvin-container.secret "$TMP_DIR/etc/machine.secret"
+
+KELVIN_APP_CONF_DIR="$TMP_DIR/var/lib/univention-appcenter/apps/ucsschool-kelvin-rest-api/conf"
+mkdir -p "$KELVIN_APP_CONF_DIR"
+docker cp udm_rest_only:/etc/ldap.secret "$KELVIN_APP_CONF_DIR/cn_admin.secret"
+dd if=/dev/urandom bs=64 count=1 2>/dev/null | base64 | head -1 | cut -b -20 > "$KELVIN_APP_CONF_DIR/tokens.secret"
+
+mkdir -p "$TMP_DIR/usr/local/share/ca-certificates"
+docker cp udm_rest_only:/var/www/ucs-root-ca.crt "$TMP_DIR/usr/local/share/ca-certificates/ucs.crt"
+
+mkdir -p "$TMP_DIR/var/lib/ucs-school-import/kelvin-hooks"
+
+docker cp "$TMP_DIR" kelvin-api:/
+for DIR in "$TMP_DIR"/*; do
+    docker cp "$DIR" kelvin-api:/
+done
+rm -rf "$TMP_DIR"
+
+echo "Starting Kelvin REST API container..."
+docker start kelvin-api
+
+echo "Rebuilding the OpenAPI client library in the Kelvin API Container..."
+sleep 1
+docker exec -it kelvin-api /bin/sh -c "/etc/init.d/ucsschool-kelvin-rest-api stop; . /kelvin/venv/bin/activate; update_openapi_client --generator java --jar /kelvin/openapi-generator/jar/openapi-generator-cli-*.jar --insecure --username Administrator --password univention $UDM_IP"
+
+echo "Starting Kelvin REST API server..."
+docker exec -it kelvin-api /bin/sh -c "/etc/init.d/ucsschool-kelvin-rest-api restart; sleep 1; /etc/init.d/ucsschool-kelvin-rest-api status || /etc/init.d/ucsschool-kelvin-rest-api restart"
+
+docker logs kelvin-api

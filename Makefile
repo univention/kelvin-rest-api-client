@@ -28,7 +28,24 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
+SHELL := /bin/bash
 
+UCS_IMG = $(shell . docker/common.sh &&  echo "$$UDM_ONLY_TARGET_DOCKER_IMG_VERSION")
+UCS_CONTAINER = $(shell . docker/common.sh && echo "$$UCS_CONTAINER")
+UCS_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(UCS_IMG)"
+UCS_IS_RUNNING = . docker/common.sh && docker_container_running "$(UCS_CONTAINER)"
+START_UCS_CONTAINER = docker run --detach --name "$(UCS_CONTAINER)" --hostname=master -p 9080:80/tcp -p 9443:443/tcp -v /tmp/udm-rest-api-log:/var/log/univention --tmpfs /run --tmpfs /run/lock "$(UCS_IMG)"
+UCS_CONTAINER_IP_CMD = . docker/common.sh && docker_container_ip $(UCS_CONTAINER)
+GET_OPENAPI_SCHEMA_UDM = . docker/common.sh && get_openapi_schema "$(UCS_CONTAINER)"
+
+KELVIN_IMG := $(shell . docker/common.sh && echo "$$KELVIN_REST_API_IMG")
+KELVIN_CONTAINER = $(shell . docker/common.sh && echo "$$KELVIN_CONTAINER")
+KELVIN_API_LOG_FILE = $(shell . docker/common.sh && echo "$$KELVIN_API_LOG_FILE")
+KELVIN_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(KELVIN_IMG)"
+KELVIN_IS_RUNNING = . docker/common.sh && docker_container_running "$(KELVIN_CONTAINER)"
+START_KELVIN_CONTAINER = docker/start_kelvin_container
+KELVIN_CONTAINER_IP_CMD = . docker/common.sh && docker_container_ip $(KELVIN_CONTAINER)
+GET_OPENAPI_SCHEMA_KELVIN = . docker/common.sh && get_openapi_schema "$(KELVIN_CONTAINER)"
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -126,3 +143,76 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python3 -m pip install --editable .
+
+download-docker-containers: ## download docker containers from Univention Docker registry (~3 GB)
+	@if $(UCS_IMG_EXISTS); then \
+		echo "Docker image '$(UCS_IMG)' exists."; \
+	else \
+	  	echo "Downloading Docker image '$(UCS_IMG)'..."; \
+		docker pull $(UCS_IMG); \
+	fi
+	@if $(KELVIN_IMG_EXISTS); then \
+		echo "Docker image '$(KELVIN_IMG)' exists."; \
+	else \
+	  	echo "Downloading Docker image '$(KELVIN_IMG)'..."; \
+		docker pull $(KELVIN_IMG); \
+	fi
+
+start-docker-containers: download-docker-containers ## start docker containers (UDM and Kelvin REST API)
+	@if $(UCS_IS_RUNNING); then \
+		echo "Docker container '$(UCS_CONTAINER)' is running."; \
+	else \
+		echo "Starting UCS docker container..."; \
+		echo "(from image $(UCS_IMG))"; \
+		mkdir -p /tmp/udm-rest-api-log; \
+		$(START_UCS_CONTAINER); \
+	fi
+	@echo "Waiting for UCS docker container to start..."
+	@while ! ($(UCS_IS_RUNNING)); do echo -n "."; sleep 1; done
+	@echo "Waiting for IP address of UCS container..."
+	@while true; do export UCS_CONTAINER_IP=`$(UCS_CONTAINER_IP_CMD)`; [ -n "$$UCS_CONTAINER_IP" ] && break || (echo "."; sleep 1); done; \
+	if [ -z "$$UCS_CONTAINER_IP" ]; then \
+		echo "Cannot get IP of UCS container."; \
+		exit 1; \
+	fi; \
+	echo -n "Waiting for UDM REST API"; \
+	while ! ($(GET_OPENAPI_SCHEMA_UDM) --connect-timeout 1 >/dev/null); do echo -n "."; sleep 1; done; \
+	echo; \
+	echo "==> UDM REST API log file: /tmp/udm-rest-api-log/directory-manager-rest.log"; \
+	echo "==> UDM REST API: http://$$UCS_CONTAINER_IP/univention/udm/"
+	@if $(KELVIN_IS_RUNNING); then \
+		echo "Docker container '$(KELVIN_CONTAINER)' is running."; \
+	else \
+		echo "Starting Kelvin docker container..."; \
+		echo "(from image $(KELVIN_IMG))"; \
+		$(START_KELVIN_CONTAINER); \
+	fi
+	@echo "Waiting for Kelvin docker container to start..."
+	@while ! ($(KELVIN_IS_RUNNING)); do echo -n "."; sleep 1; done
+	@echo "Waiting for IP address of Kelvin container..."
+	@while true; do export KELVIN_CONTAINER_IP=`$(KELVIN_CONTAINER_IP_CMD)`; [ -n "$$KELVIN_CONTAINER_IP" ] && break || (echo "."; sleep 1); done; \
+	if [ -z "$$KELVIN_CONTAINER_IP" ]; then \
+		echo "Cannot get IP of Kelvin container."; \
+		exit 1; \
+	fi; \
+	echo -n "Waiting for Kelvin API"; \
+	while ! ($(GET_OPENAPI_SCHEMA_KELVIN) --connect-timeout 1 >/dev/null); do echo -n "."; sleep 1; done; \
+	echo; \
+	echo "Fixing log file permissions..."; \
+	docker exec $(KELVIN_CONTAINER) sh -c "chmod 666 \"$(KELVIN_API_LOG_FILE)\"; chown \"$(shell id -u):$(shell id -g)\" \"$(KELVIN_API_LOG_FILE)\""; \
+	echo "Setting up reverse proxy..."; \
+	export UCS_CONTAINER_IP=`$(UCS_CONTAINER_IP_CMD)`; \
+	docker exec udm_rest_only sh -c "echo \"ProxyPass /ucsschool/kelvin http://$$KELVIN_CONTAINER_IP:8911/ucsschool/kelvin retry=0\nProxyPassReverse /ucsschool/kelvin http://$$KELVIN_CONTAINER_IP:8911/ucsschool/kelvin\" > /etc/apache2/ucs-sites.conf.d/kelvin-api.conf; service apache2 reload"; \
+	echo "==> UDM REST API log file: /tmp/udm-rest-api-log/directory-manager-rest.log"; \
+	echo "==> UDM REST API: http://$$UCS_CONTAINER_IP/univention/udm/"; \
+	echo "==> Kelvin API configs: /tmp/kelvin-api/configs/"; \
+	echo "==> Kelvin API hooks: /tmp/kelvin-api/kelvin-hooks/"; \
+	echo "==> Kelvin API log file: /tmp/kelvin-api/log/http.log"; \
+	echo "==> Kelvin API: http://$$KELVIN_CONTAINER_IP:8911/ucsschool/kelvin/v1/docs"; \
+	echo "==> Kelvin API: https://$$UCS_CONTAINER_IP/ucsschool/kelvin/v1/docs"
+
+stop-and-remove-docker-containers: ## stop and remove docker containers (not images)
+	docker stop --time 0 $(UCS_CONTAINER) || true
+	docker stop --time 0 $(KELVIN_CONTAINER) || true
+	docker rm $(UCS_CONTAINER) || true
+	docker rm $(KELVIN_CONTAINER) || true
