@@ -37,7 +37,6 @@ from urllib3.exceptions import InsecureRequestWarning
 
 import docker
 from docker.errors import NotFound as ContainerNotFound
-
 from ucsschool.kelvin.client import InvalidRequest, KelvinObject, NoObject, ServerError
 
 API_VERSION = "v1"
