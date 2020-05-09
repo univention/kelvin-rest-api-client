@@ -1,5 +1,5 @@
 coverage==5.1
-docker
+docker==4.2.0
 factory_boy
 Faker
 ldap3
