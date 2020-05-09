@@ -1,7 +1,7 @@
 coverage==5.1
 docker==4.2.0
 factory_boy==2.12.0
-Faker
+Faker==4.0.3
 ldap3
 pytest
 pytest-asyncio
