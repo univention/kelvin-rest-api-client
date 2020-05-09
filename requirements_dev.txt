@@ -1,5 +1,5 @@
 argh==0.26.2
-bandit
+bandit==1.6.2
 black
 flake8
 isort
