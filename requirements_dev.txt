@@ -1,6 +1,6 @@
 argh==0.26.2
 bandit==1.6.2
-black
+black==19.10b0
 flake8
 isort
 pre-commit
