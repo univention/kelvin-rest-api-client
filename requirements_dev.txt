@@ -2,7 +2,7 @@ argh==0.26.2
 bandit==1.6.2
 black==19.10b0
 flake8==3.7.9
-isort
+isort==4.3.21
 pre-commit
 Sphinx
 twine
