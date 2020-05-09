@@ -7,4 +7,4 @@ pre-commit==2.3.0
 Sphinx==3.0.3
 twine==3.1.1
 watchdog==0.10.2
-wheel
+wheel==0.34.2
