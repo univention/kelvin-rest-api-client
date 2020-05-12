@@ -1,6 +1,6 @@
 coverage
 docker
-factory_boy
+factory_boy==2.12.0
 Faker
 ldap3
 pytest
