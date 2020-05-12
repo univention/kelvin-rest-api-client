@@ -3,7 +3,7 @@ docker
 factory_boy
 Faker
 ldap3
-pytest
+pytest==5.4.2
 pytest-asyncio
 pytest-cov
 ruamel.yaml
