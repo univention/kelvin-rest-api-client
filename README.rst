@@ -4,7 +4,7 @@ Python UCS\@school Kelvin REST API Client
 
 |python| |license| |code style| |bandit| |codecov| |docspassing| |travisci|
 
-Python library to interact with the *UCS\@school Kelvin REST API*.
+Python library to interact with the `UCS\@school Kelvin REST API`_.
 
 * Free software: GNU Affero General Public License version 3
 * Documentation: https://kelvin-rest-api-client.readthedocs.io
@@ -163,6 +163,7 @@ Repo permissions
 Credits
 -------
 
+.. _`UCS\@school Kelvin REST API`: https://docs.software-univention.de/ucsschool-kelvin-rest-api/
 .. _`tox`: http://tox.readthedocs.org/
 .. _`docs`: https://kelvin-rest-api-client.readthedocs.io
 .. _`PyPI`: https://pypi.org/project/kelvin-rest-api-client/
