@@ -50,7 +50,7 @@ async def test_search_no_name_arg(
     async with Session(**kelvin_session_kwargs) as session:
         objs = [obj async for obj in RoleResource(session=session).search()]
 
-    assert objs, f"No roles found."
+    assert objs, "No roles found."
     assert len(objs) == 3
     for obj in objs:
         assert not hasattr(obj, "dn")

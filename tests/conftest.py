@@ -457,7 +457,7 @@ def test_server_configuration(
         res = running_test_container()
         _test_a_server_configuration(res)
     except ContainerNotFound:
-        print(f"Container not found.")
+        print("Container not found.")
     except ContainerIpUnknown as exc:
         raise BadTestServerConfig(str(exc)) from exc
     except TestServerConnectionError as exc:
@@ -532,11 +532,11 @@ def demoschool_data(
     json_resp = response.json()
     if not {"DEMOSCHOOL", "DEMOSCHOOL2"}.issubset({obj["name"] for obj in json_resp}):
         raise AssertionError(  # pragma: no cover
-            f"To run the tests properly you need to have two schools named "
-            f"'DEMOSCHOOL' and 'DEMOSCHOOL2' at the moment! Execute *on the "
-            f"host*: "
-            f"/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL; "
-            f"/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2"
+            "To run the tests properly you need to have two schools named "
+            "'DEMOSCHOOL' and 'DEMOSCHOOL2' at the moment! Execute *on the "
+            "host*: "
+            "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL; "
+            "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2"
         )
     return json_resp
 

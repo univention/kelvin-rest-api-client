@@ -130,6 +130,4 @@ class UserResource(KelvinResource):
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs.get("school", ""):
-            raise InvalidRequest(
-                f"Argument 'school' for searching users must be exact."
-            )
+            raise InvalidRequest("Argument 'school' for searching users must be exact.")

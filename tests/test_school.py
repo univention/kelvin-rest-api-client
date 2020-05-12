@@ -53,7 +53,7 @@ async def test_search_no_name_arg(
     async with Session(**kelvin_session_kwargs) as session:
         objs = [obj async for obj in SchoolResource(session=session).search()]
 
-    assert objs, f"No Schools found."
+    assert objs, "No Schools found."
     assert len(objs) >= 2
     assert school1.dn in [school.dn for school in objs]
     assert school2.dn in [school.dn for school in objs]

@@ -90,5 +90,5 @@ class SchoolClassResource(KelvinResource):
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
             raise InvalidRequest(
-                f"Argument 'school' for searching school classes must be exact."
+                "Argument 'school' for searching school classes must be exact."
             )
