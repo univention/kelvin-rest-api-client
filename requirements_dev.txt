@@ -2,7 +2,7 @@ argh
 bandit
 black
 flake8
-isort
+isort==4.3.21
 pre-commit
 Sphinx
 twine
