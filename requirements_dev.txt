@@ -1,7 +1,7 @@
 argh
 bandit
 black
-flake8
+flake8==3.8.1
 isort
 pre-commit
 Sphinx
