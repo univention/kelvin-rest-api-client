@@ -6,5 +6,5 @@ isort
 pre-commit
 Sphinx
 twine
-watchdog
+watchdog==0.10.2
 wheel
