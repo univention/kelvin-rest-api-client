@@ -1,7 +1,7 @@
 coverage
 docker
 factory_boy
-Faker
+Faker==4.1.0
 ldap3
 pytest
 pytest-asyncio
