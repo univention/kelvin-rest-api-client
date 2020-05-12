@@ -3,7 +3,7 @@ bandit
 black
 flake8
 isort
-pre-commit
+pre-commit==2.4.0
 Sphinx
 twine
 watchdog
