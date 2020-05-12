@@ -2,7 +2,7 @@
 Python UCS\@school Kelvin REST API Client
 =========================================
 
-|python| |license| |code style| |bandit| |codecov| |docspassing| |travisci|
+|python| |license| |code style| |bandit| |codecov| |docspassing| |travisci| |gh Code Linting| |gh Integration tests|
 
 Python library to interact with the `UCS\@school Kelvin REST API`_.
 
@@ -187,3 +187,7 @@ Credits
 .. |bandit| image:: https://img.shields.io/badge/security-bandit-yellow.svg
     :alt: Security: bandit
     :target: https://github.com/PyCQA/bandit
+.. |gh Code Linting| image:: https://github.com/univention/kelvin-rest-api-client/workflows/Code%20Linting/badge.svg
+    :target: https://github.com/univention/kelvin-rest-api-client/actions?query=workflow%3A%22Code+Linting%22
+.. |gh Integration tests| image:: https://github.com/univention/kelvin-rest-api-client/workflows/Integration%20tests/badge.svg
+    :target: https://github.com/univention/kelvin-rest-api-client/actions?query=workflow%3A%22Integration+tests%22
