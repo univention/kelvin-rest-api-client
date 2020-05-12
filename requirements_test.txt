@@ -5,6 +5,6 @@ Faker
 ldap3
 pytest
 pytest-asyncio
-pytest-cov
+pytest-cov==2.8.1
 ruamel.yaml
 tox
