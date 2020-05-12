@@ -2,7 +2,7 @@ coverage
 docker
 factory_boy
 Faker
-ldap3
+ldap3==2.7
 pytest
 pytest-asyncio
 pytest-cov
