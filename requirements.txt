@@ -1,4 +1,4 @@
 async-property==0.2.1
 httpx>=0.12.1
-lazy-object-proxy==1.5.0
+lazy-object-proxy==1.5.1
 pyjwt==1.7.1
