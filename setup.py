@@ -29,6 +29,7 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Software Development :: Libraries",
         "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
     ],

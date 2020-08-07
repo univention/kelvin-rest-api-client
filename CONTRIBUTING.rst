@@ -112,7 +112,7 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.rst.
 3. Make sure style and coverage requirements are met (run ``make lint``
    and ``tox``).
-4. The pull request should work for Python 3.7 and 3.8. Check
+4. The pull request should work for Python 3.7, 3.8 and 3.9. Check
    https://travis-ci.org/dansan/TODO/pull_requests
    and make sure that the tests pass for all supported Python versions.
 

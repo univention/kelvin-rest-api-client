@@ -46,7 +46,7 @@ repos:
     rev: 19.10b0
     hooks:
     -   id: black
-        language_version: python3.7
+        language_version: python3.8
 #-   repo: https://github.com/pryorda/dockerfilelint-precommit-hooks
 #    rev: v0.1.0
 #    hooks:
@@ -66,4 +66,4 @@ repos:
 #    hooks:
 #    -   id: pydocstyle
 default_language_version:
-    python: python3.7
+    python: python3.8

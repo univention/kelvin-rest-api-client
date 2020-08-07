@@ -6,6 +6,10 @@ History
 ------------------
 
 * fix JWT token validity calculation: timestamp uses UTC
+* documentation fixes
+* dependency updates
+* tests also run on Python 3.9-dev
+
 0.2.0 (2020-04-17)
 ------------------
 
