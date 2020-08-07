@@ -76,7 +76,7 @@ class Token:
                 f"Payload in token not a dict or missing 'exp' entry ({token_str!r})."
             )
         try:
-            expiry = datetime.datetime.fromtimestamp(payload["exp"])
+            expiry = datetime.datetime.utcfromtimestamp(payload["exp"])
         except ValueError as exc:
             raise InvalidToken(f"Error parsing date in token ({token_str!r}): {exc!s}")
         return cls(expiry=expiry, value=token_str,)
@@ -84,7 +84,7 @@ class Token:
     def is_valid(self):
         if not self.expiry or not self.value:
             return False
-        if datetime.datetime.now() > self.expiry:
+        if datetime.datetime.utcnow() > self.expiry:
             return False
         return True
 
@@ -150,9 +150,7 @@ class Session:
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
                 data={"username": self.username, "password": self.password},
             )
-            self._token = Token(
-                expiry=datetime.datetime.now(), value=resp_json["access_token"],
-            )
+            self._token = Token.from_str(resp_json["access_token"])
         return self._token.value
 
     @async_property
