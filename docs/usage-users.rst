@@ -43,6 +43,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             birthday: datetime.date = None,
             disabled: bool = False,
             email: str = None,
+            kelvin_password_hashes: PasswordsHashes = None,
             password: str = None,
             record_uid: str = None,
             roles: List[str],
@@ -62,6 +63,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
         self.birthday = birthday
         self.disabled = disabled
         self.email = email
+        self.kelvin_password_hashes = kelvin_password_hashes
         self.password = password
         self.record_uid = record_uid
         self.roles = roles
@@ -146,6 +148,7 @@ Retrieve user
      'birthday': None,
      'disabled': False,
      'email': None,
+     'kelvin_password_hashes': None,
      'password': None,
      'record_uid': 'test1',
      'roles': ['student'],
