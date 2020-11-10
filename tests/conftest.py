@@ -1,3 +1,4 @@
+import base64
 import copy
 import logging
 import os
@@ -33,6 +34,7 @@ from ldap3 import (
     Server,
 )
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
+from ldap3.utils.conv import escape_filter_chars
 from urllib3.exceptions import InsecureRequestWarning
 
 import docker
@@ -63,6 +65,10 @@ KELVIN_DOCKER_CONTAINER_NAME = "kelvin-api"
 
 fake = faker.Faker()
 logger = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_handler.setLevel(logging.DEBUG)
+logger.addHandler(_handler)
+logger.setLevel(logging.DEBUG)
 urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
@@ -137,6 +143,8 @@ class LDAPAccess:
         attributes: List[str] = ALL_ATTRIBUTES,
         base: str = None,
         scope=SUBTREE,
+        user: str = None,
+        password: str = None,
     ) -> List[Entry]:
         """
         Search an LDAP directory.
@@ -159,12 +167,19 @@ class LDAPAccess:
             `ldap3.ALL_OPERATIONAL_ATTRIBUTES` ('+')
         :param str base: DN where the search should start
         :param str scope: one of `ldap3.BASE`, `ldap3.LEVEL`, `ldap3.SUBTREE` (default)
+        :param str user: DN to instead of the one given in `__init__()`
+        :param str password: password to instead of the one given in `__init__()`
         :return: a list of ldap3.abstract.entry.Entry objects
         :rtype: list(ldap3.abstract.entry.Entry)
         """
         base = base or self.base_dn
+        connection_kwargs = self._connection_kwargs.copy()
+        if user:
+            connection_kwargs["user"] = user
+        if password:
+            connection_kwargs["password"] = password
         try:
-            with Connection(**self._connection_kwargs) as conn:
+            with Connection(**connection_kwargs) as conn:
                 conn.search(
                     search_base=base,
                     search_filter=filter_s,
@@ -172,19 +187,19 @@ class LDAPAccess:
                     search_scope=scope,
                 )
         except LDAPBindError as exc:  # pragma: no cover
-            print(
+            logger.error(
                 "When connecting (binding) to %r with bind_dn %r: %s",
                 self.server.host,
-                self.bind_dn,
+                connection_kwargs["user"],
                 exc,
             )
             raise
         except LDAPExceptionError as exc:  # pragma: no cover
-            print(
+            logger.error(
                 "When searching on %r with bind_dn %r (filter_s=%r attributes=%r "
                 "base=%r scope=%r): %s",
                 self.server.host,
-                self.bind_dn,
+                connection_kwargs["user"],
                 filter_s,
                 attributes,
                 base,
@@ -228,7 +243,7 @@ class LDAPAccess:
                     dn=dn, changes=changes, controls=controls,
                 )
         except LDAPBindError as exc:  # pragma: no cover
-            print(
+            logger.error(
                 "When connecting (binding) to %r with bind_dn %r: %s",
                 self.server.host,
                 self.bind_dn,
@@ -236,7 +251,7 @@ class LDAPAccess:
             )
             raise
         except LDAPExceptionError as exc:  # pragma: no cover
-            print(
+            logger.error(
                 "When modifying on %r with bind_dn %r (changes=%r): %s",
                 self.server.host,
                 self.bind_dn,
@@ -245,6 +260,18 @@ class LDAPAccess:
             )
             raise
         return conn.result
+
+    async def get_dn_of_user(self, username: str) -> str:
+        filter_s = f"(uid={escape_filter_chars(username)})"
+        results = await self.search(filter_s, attributes=[])
+        if len(results) == 1:
+            return results[0].entry_dn
+        elif len(results) > 1:
+            raise RuntimeError(
+                f"More than 1 result when searching LDAP with filter {filter_s!r}: {results!r}."
+            )
+        else:
+            return ""
 
 
 def _get_ip_of_container(container_name: str) -> str:
@@ -264,7 +291,7 @@ def _start_stopped_container(container_name: str):
     docker_client = docker.from_env()
     container = docker_client.containers.get(container_name)
     if container.status != "running":  # pragma: no cover
-        print(
+        logger.info(
             f"Found stopped Docker container {container_name!r}. "
             f"Trying to start and continue."
         )  # pragma: no cover
@@ -289,7 +316,7 @@ def running_test_container():
             password="univention",
             verify=False,
         )
-        print(
+        logger.info(
             f"Using Docker containers '{KELVIN_DOCKER_CONTAINER_NAME!r}' and "
             f"{UDM_DOCKER_CONTAINER_NAME}."
         )
@@ -412,14 +439,14 @@ def json_headers(kelvin_token) -> Dict[str, str]:
 
 
 def _test_a_server_configuration(server_config: TestServerConfiguration) -> None:
-    print("Testing auth with Kelvin REST API...")
+    logger.info("Testing auth with Kelvin REST API...")
     retrieve_kelvin_access_token(
         host=server_config.host,
         username=server_config.username,
         password=server_config.password,
         verify=server_config.verify,
     )
-    print("OK: auth with Kelvin REST API.")
+    logger.info("OK: auth with Kelvin REST API.")
 
 
 @pytest.fixture(scope="session")  # noqa: C901
@@ -432,12 +459,14 @@ def test_server_configuration(
     :raises: BadTestServerConfig
     :raises: NoTestServerConfig
     """
-    print(f"Trying to load test server config from '{TEST_SERVER_YAML_FILENAME!s}'...")
+    logger.info(
+        "Trying to load test server config from %r...", str(TEST_SERVER_YAML_FILENAME)
+    )
     try:
         server_configuration = load_test_server_yaml()
         _test_a_server_configuration(server_configuration)
     except FileNotFoundError:  # pragma: no cover
-        print(f"File not found: '{TEST_SERVER_YAML_FILENAME!s}'.")
+        logger.error("File not found: %r.", str(TEST_SERVER_YAML_FILENAME))
     except TypeError as exc:  # pragma: no cover
         raise BadTestServerConfig(
             f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}"
@@ -452,12 +481,14 @@ def test_server_configuration(
     else:
         return server_configuration
 
-    print(f"Trying to use running Docker container {KELVIN_DOCKER_CONTAINER_NAME!r}...")
+    logger.info(
+        "Trying to use running Docker container %r...", KELVIN_DOCKER_CONTAINER_NAME
+    )
     try:
         res = running_test_container()
         _test_a_server_configuration(res)
     except ContainerNotFound:
-        print("Container not found.")
+        logger.error("Container not found.")
     except ContainerIpUnknown as exc:
         raise BadTestServerConfig(str(exc)) from exc
     except TestServerConnectionError as exc:
@@ -626,7 +657,7 @@ async def new_school_class(
         schedule_delete_obj(object_type="class", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data,)
         dn = obj["dn"]
-        print(f"Created new SchoolClass: {obj!r}")
+        logger.info("Created new SchoolClass: %r", obj)
 
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"cn={school}-{name}"
@@ -643,6 +674,15 @@ async def new_school_class(
         return dn, data
 
     yield _func
+
+
+@dataclass
+class TestUserPasswordsHashes:
+    user_password: List[str]
+    samba_nt_password: str
+    krb_5_key: List[str]
+    krb5_key_version_number: int
+    samba_pwd_last_set: int
 
 
 @dataclass
@@ -664,6 +704,7 @@ class TestUser:
     ucsschool_roles: List[str] = None
     dn: str = None
     url: str = None
+    kelvin_password_hashes: TestUserPasswordsHashes = None
 
 
 class UserFactory(factory.Factory):
@@ -680,7 +721,7 @@ class UserFactory(factory.Factory):
     )
     disabled = False
     email = None
-    password = factory.Faker("password")
+    password = factory.Faker("password", length=20)
     record_uid = factory.LazyAttribute(lambda o: o.name)
     roles = factory.List([])
     school_classes = factory.Dict({})
@@ -689,6 +730,7 @@ class UserFactory(factory.Factory):
     ucsschool_roles = factory.List([])
     dn = ""
     url = ""
+    kelvin_password_hashes = None
 
 
 @pytest.fixture  # noqa: C901
@@ -769,7 +811,7 @@ def new_school_user(
         schedule_delete_obj(object_type="user", name=user_obj.name)
         obj = http_request("post", url=collection_url, json=json_data)
         dn = obj["dn"]
-        print(f"Created new User, API response: {obj!r}")
+        logger.info("Created new User, API response: %r", obj)
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"uid={user_obj.name}"
         ldap_objs = await ldap_access.search(
@@ -795,6 +837,7 @@ def new_school_user(
         obj["school"] = obj["school"].rsplit("/", 1)[-1]
         for attr in ("roles", "schools"):
             obj[attr] = [url.rsplit("/", 1)[-1] for url in obj[attr]]
+        obj["password"] = user_obj.password
         return TestUser(**obj)
 
     yield _func
@@ -815,7 +858,7 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
     yield _func
 
     for kelvin_type, obj_search_args in kelvin_objs:
-        print(f"Deleting {kelvin_type!r} object with {obj_search_args!r}...")
+        logger.info("Deleting %r object with %r...", kelvin_type, obj_search_args)
 
         url_template = url_templates[kelvin_type]
         obj_url = url_template.format(
@@ -826,9 +869,10 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
                 "delete", url=obj_url, return_json=False,
             )
         except NoObject:
-            print(
-                f"Object does not exist (anymore): kelvin_type={kelvin_type!r} "
-                f"obj_search_args={obj_search_args!r}."
+            logger.info(
+                "Object does not exist (anymore): kelvin_type=%r obj_search_args=%r.",
+                kelvin_type,
+                obj_search_args,
             )
             continue
 
@@ -917,10 +961,83 @@ def ucs_ca_file_path():  # pragma: no cover
 def compare_kelvin_obj_with_test_data(kelvin_session_kwargs):
     def _func(kelvin_obj: KelvinObject, **test_data):
         for test_data_attr, test_data_value in test_data.items():
+            if test_data_attr == "password":
+                # use check_password() to check this
+                continue
             kelvin_obj_value = getattr(kelvin_obj, test_data_attr)
             if isinstance(test_data_value, list):
                 assert set(kelvin_obj_value) == set(test_data_value)
             else:
                 assert kelvin_obj_value == test_data_value
+
+    return _func
+
+
+@pytest.fixture
+def check_password(ldap_access):
+    async def _func(bind_dn: str, bind_pw: str) -> None:
+        search_kwargs = {
+            "filter_s": f"({bind_dn.split(',')[0]})",
+            "attributes": ["uid"],
+            "user": bind_dn,
+            "password": bind_pw,
+        }
+        logger.info("Testing login (making LDAP search) with: %r", search_kwargs)
+        try:
+            results = await ldap_access.search(**search_kwargs)
+        except LDAPBindError as exc:
+            raise AssertionError(
+                f"Login fail with user={bind_dn!r} and password={bind_pw!r}: {exc!s}"
+            ) from exc
+        logger.info("Login success.")
+        assert len(results) == 1
+        result = results[0]
+        expected_uid = bind_dn.split(",")[0].split("=")[1]
+        assert expected_uid == result["uid"].value
+
+    return _func
+
+
+@pytest.fixture
+def password_hash(check_password, ldap_access, new_school_user):
+    async def _func(password: str = None) -> Tuple[str, TestUserPasswordsHashes]:
+        password = password or fake.password(length=20)
+        user = await new_school_user(password=password)
+        await check_password(user.dn, user.password)
+        # get hashes of user
+        filter_s = f"(uid={user.name})"
+        attributes = [
+            "userPassword",
+            "sambaNTPassword",
+            "krb5Key",
+            "krb5KeyVersionNumber",
+            "sambaPwdLastSet",
+        ]
+        ldap_results = await ldap_access.search(
+            filter_s=filter_s, attributes=attributes
+        )
+        if len(ldap_results) == 1:
+            ldap_result = ldap_results[0]
+        else:
+            raise RuntimeError(
+                f"More than 1 result when searching LDAP with filter {filter_s!r}: {ldap_results!r}."
+            )
+        user_password = ldap_result["userPassword"].value
+        if not isinstance(user_password, list):
+            user_password = [user_password]
+        user_password = [pw.decode("ascii") for pw in user_password]
+        krb_5_key = [
+            base64.b64encode(v).decode("ascii") for v in ldap_result["krb5Key"].value
+        ]
+        return (
+            password,
+            TestUserPasswordsHashes(
+                user_password=user_password,
+                samba_nt_password=ldap_result["sambaNTPassword"].value,
+                krb_5_key=krb_5_key,
+                krb5_key_version_number=ldap_result["krb5KeyVersionNumber"].value,
+                samba_pwd_last_set=ldap_result["sambaPwdLastSet"].value,
+            ),
+        )
 
     return _func

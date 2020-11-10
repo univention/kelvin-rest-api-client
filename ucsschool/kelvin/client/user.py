@@ -27,15 +27,66 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import base64
 import datetime
 import logging
-from typing import Any, Dict, Iterable, List, Type
+from typing import Any, Dict, Iterable, List, Type, get_type_hints
 
 from .base import KelvinObject, KelvinResource
 from .exceptions import InvalidRequest
 from .session import Session
 
 logger = logging.getLogger(__name__)
+
+
+class PasswordsHashes:
+    user_password: List[str]
+    samba_nt_password: str
+    krb_5_key: List[str]
+    krb5_key_version_number: int
+    samba_pwd_last_set: int
+
+    def __init__(
+        self,
+        user_password: List[str],
+        samba_nt_password: str,
+        krb_5_key: List[str],
+        krb5_key_version_number: int,
+        samba_pwd_last_set: int,
+    ):
+        self.user_password = user_password
+        self.samba_nt_password = samba_nt_password
+        self.krb_5_key = krb_5_key
+        self.krb5_key_version_number = krb5_key_version_number
+        self.samba_pwd_last_set = samba_pwd_last_set
+
+    def as_dict(self) -> Dict[str, Any]:
+        return dict((attr, getattr(self, attr)) for attr in get_type_hints(self).keys())
+
+    def as_dict_with_ldap_attr_names(self) -> Dict[str, Any]:
+        """
+        Wrapper around `as_dict()` that renames the keys to those used in a UCS'
+        OpenLDAP.
+        """
+        res = self.as_dict()
+        res["userPassword"] = res.pop("user_password")
+        res["sambaNTPassword"] = res.pop("samba_nt_password")
+        res["krb5Key"] = res.pop("krb_5_key")
+        res["krb5KeyVersionNumber"] = res.pop("krb5_key_version_number")
+        res["sambaPwdLastSet"] = res.pop("samba_pwd_last_set")
+        return res
+
+    @property
+    def krb_5_key_as_bytes(self) -> List[bytes]:
+        """Value of `krb_5_key` as a list of bytes."""
+        return [base64.b64decode(k) for k in self.krb_5_key]
+
+    @krb_5_key_as_bytes.setter
+    def krb_5_key_as_bytes(self, value: List[bytes]) -> None:
+        """Set value of `krb_5_key` from a list of bytes."""
+        if not isinstance(value, list):
+            raise TypeError("Argument 'value' must be a list.")
+        self.krb_5_key = [base64.b64encode(v).decode("ascii") for v in value]
 
 
 class User(KelvinObject):
@@ -47,6 +98,7 @@ class User(KelvinObject):
         "birthday",
         "disabled",
         "email",
+        "kelvin_password_hashes",
         "password",
         "record_uid",
         "roles",
@@ -74,6 +126,7 @@ class User(KelvinObject):
         source_uid: str = None,
         udm_properties: Dict[str, Any] = None,
         ucsschool_roles: List[str] = None,
+        kelvin_password_hashes: PasswordsHashes = None,
         dn: str = None,
         url: str = None,
         session: Session = None,
@@ -94,14 +147,14 @@ class User(KelvinObject):
         self.school_classes = school_classes or {}
         self.source_uid = source_uid
         self.udm_properties = udm_properties or {}
+        self.kelvin_password_hashes = kelvin_password_hashes
         self._resource_class = UserResource
 
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "User":
         for attr in ("roles", "schools"):
-            # turn urls to names
+            # turn urls to names ('school' will be done in super class)
             response[attr] = [url.rsplit("/", 1)[-1] for url in response[attr]]
-        # 'school' will be done in super class
         return super()._from_kelvin_response(response)
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
@@ -113,6 +166,10 @@ class User(KelvinObject):
             data[attr] = [
                 f"{self.session.urls[url_key]}{value}" for value in data[attr]
             ]
+        if data["kelvin_password_hashes"]:
+            data["kelvin_password_hashes"] = self.kelvin_password_hashes.as_dict()
+        else:
+            del data["kelvin_password_hashes"]
         return data
 
 

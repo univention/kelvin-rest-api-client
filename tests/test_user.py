@@ -34,6 +34,7 @@ from faker import Faker
 from ucsschool.kelvin.client import (
     InvalidRequest,
     NoObject,
+    PasswordsHashes,
     Session,
     User,
     UserResource,
@@ -234,6 +235,7 @@ async def test_get(
 
 @pytest.mark.asyncio
 async def test_create(
+    check_password,
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
@@ -268,10 +270,34 @@ async def test_create(
     assert set(ldap_val_ucsschool_role) == set(user_data.ucsschool_roles)
     assert ldap_obj["ucsschoolRecordUID"] == user_data.record_uid
     assert ldap_obj["ucsschoolSourceUID"] == user_data.source_uid
+    await check_password(ldap_obj.entry_dn, user_data.password)
+
+
+@pytest.mark.asyncio
+async def test_create_with_password_hashes(
+    check_password,
+    kelvin_session_kwargs,
+    password_hash,
+    new_user_test_obj,
+    schedule_delete_obj,
+):
+    user_data = new_user_test_obj()
+    password, password_hashes = await password_hash()
+    assert user_data.password != password
+    user_data.password = None
+    user_data.kelvin_password_hashes = PasswordsHashes(**asdict(password_hashes))
+
+    async with Session(**kelvin_session_kwargs) as session:
+        user_obj = User(session=session, **asdict(user_data))
+        schedule_delete_obj(object_type="user", name=user_data.name)
+        await user_obj.save()
+        print("Created new User: {!r}".format(user_obj.as_dict()))
+    await check_password(user_obj.dn, password)
 
 
 @pytest.mark.asyncio
 async def test_modify(
+    check_password,
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school_user,
@@ -283,6 +309,7 @@ async def test_modify(
         user_resource = UserResource(session=session)
         obj: User = await user_resource.get(school=user.school, name=user.name)
         compare_kelvin_obj_with_test_data(obj, **asdict(user))
+        await check_password(obj.dn, user.password)
         for k, v in new_data.items():
             if k not in ("school", "schools", "name", "dn", "url", "ucsschool_roles"):
                 setattr(obj, k, v)
@@ -293,6 +320,25 @@ async def test_modify(
         fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
         compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
         compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+        await check_password(fresh_obj.dn, new_data["password"])
+
+
+@pytest.mark.asyncio
+async def test_modify_password_hashes(
+    check_password, kelvin_session_kwargs, password_hash, new_school_user,
+):
+    user = await new_school_user()
+    password, password_hashes = await password_hash()
+    assert user.password != password
+    async with Session(**kelvin_session_kwargs) as session:
+        user_resource = UserResource(session=session)
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        await check_password(obj.dn, user.password)
+        obj.password = None
+        obj.kelvin_password_hashes = PasswordsHashes(**asdict(password_hashes))
+        await obj.save()
+        fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
+        await check_password(fresh_obj.dn, password)
 
 
 @pytest.mark.asyncio

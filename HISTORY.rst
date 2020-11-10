@@ -2,6 +2,11 @@
 History
 =======
 
+0.2.2 (2020-11-09)
+------------------
+
+* add support for `kelvin_password_hashes` user attribute
+
 0.2.1 (2020-08-07)
 ------------------
 

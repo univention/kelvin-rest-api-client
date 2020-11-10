@@ -17,7 +17,7 @@ from .role import Role, RoleResource
 from .school import School, SchoolResource
 from .school_class import SchoolClass, SchoolClassResource
 from .session import Session
-from .user import User, UserResource
+from .user import PasswordsHashes, User, UserResource
 
 __all__ = [
     "KelvinObject",
@@ -26,6 +26,7 @@ __all__ = [
     "InvalidToken",
     "KelvinClientError",
     "NoObject",
+    "PasswordsHashes",
     "ServerError",
     "School",
     "SchoolResource",
