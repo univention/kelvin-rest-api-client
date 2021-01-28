@@ -44,9 +44,7 @@ URL_ROLE_OBJECT = f"{URL_ROLE_RESOURCE}{{name}}"
 
 
 @pytest.mark.asyncio
-async def test_search_no_name_arg(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs,
-):
+async def test_search_no_name_arg(compare_kelvin_obj_with_test_data, kelvin_session_kwargs):
     async with Session(**kelvin_session_kwargs) as session:
         objs = [obj async for obj in RoleResource(session=session).search()]
 
@@ -60,9 +58,7 @@ async def test_search_no_name_arg(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", ["staff", "student", "teacher"])
-async def test_get_from_url(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role,
-):
+async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role):
     url = URL_ROLE_OBJECT.format(host=kelvin_session_kwargs["host"], name=role)
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get_from_url(url)
@@ -71,18 +67,14 @@ async def test_get_from_url(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", ["staff", "student", "teacher"])
-async def test_get(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role,
-):
+async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role):
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get(name=role)
     assert obj.name == role
 
 
 @pytest.mark.asyncio
-async def test_role_attrs(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs,
-):
+async def test_role_attrs(compare_kelvin_obj_with_test_data, kelvin_session_kwargs):
     role = random.choice(("staff", "student", "teacher"))
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get(name=role)

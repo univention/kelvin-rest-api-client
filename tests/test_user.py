@@ -66,10 +66,7 @@ async def test_search_no_name_arg(
     user2 = await new_school_user(school=school.name)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [
-            obj
-            async for obj in UserResource(session=session).search(school=school.name)
-        ]
+        objs = [obj async for obj in UserResource(session=session).search(school=school.name)]
 
     assert objs, f"No Users in school {school.name!r} found."
     assert len(objs) >= 2
@@ -118,9 +115,7 @@ async def test_search_partial_name_arg(
 
 
 @pytest.mark.asyncio
-async def test_search_inexact_school(
-    new_school, kelvin_session_kwargs,
-):
+async def test_search_inexact_school(new_school, kelvin_session_kwargs):
     school = new_school(1)[0]
     school_name = school.name
     school_name_len = len(school_name)
@@ -129,10 +124,7 @@ async def test_search_inexact_school(
     async with Session(**kelvin_session_kwargs) as session:
         with pytest.raises(InvalidRequest):
             assert [
-                obj
-                async for obj in UserResource(session=session).search(
-                    school=f"{school_name_begin}*"
-                )
+                obj async for obj in UserResource(session=session).search(school=f"{school_name_begin}*")
             ]
 
 
@@ -151,9 +143,7 @@ async def test_search_exact(
     async with Session(**kelvin_session_kwargs) as session:
         objs = [
             obj
-            async for obj in UserResource(session=session).search(
-                school=user.school, **{attr: value}
-            )
+            async for obj in UserResource(session=session).search(school=user.school, **{attr: value})
         ]
     assert objs, f"No User for school={user.school!r} and {attr!r}={value!r} found."
     if attr in ("roles", "disabled"):
@@ -192,12 +182,8 @@ async def test_search_inexact(
                 school=user.school, **{attr: f"*{value_end}"}
             )
         ]
-    assert (
-        objs1
-    ), f"No User for school={user.school!r} and {attr!r}='{value_begin}*' found."
-    assert (
-        objs2
-    ), f"No User for school={user.school!r} and {attr!r}='*{value_end}' found."
+    assert objs1, f"No User for school={user.school!r} and {attr!r}='{value_begin}*' found."
+    assert objs2, f"No User for school={user.school!r} and {attr!r}='*{value_end}' found."
     if attr == "source_uid":
         assert len(objs1) >= 1
         assert user.dn in [o.dn for o in objs1]
@@ -211,22 +197,16 @@ async def test_search_inexact(
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user,
-):
+async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
-    url = URL_USER_OBJECT.format(
-        host=kelvin_session_kwargs["host"], school=user.school, name=user.name
-    )
+    url = URL_USER_OBJECT.format(host=kelvin_session_kwargs["host"], school=user.school, name=user.name)
     async with Session(**kelvin_session_kwargs) as session:
         obj: User = await UserResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, **asdict(user))
 
 
 @pytest.mark.asyncio
-async def test_get(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user,
-):
+async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
         obj = await UserResource(session=session).get(name=user.name)
@@ -325,7 +305,10 @@ async def test_modify(
 
 @pytest.mark.asyncio
 async def test_modify_password_hashes(
-    check_password, kelvin_session_kwargs, password_hash, new_school_user,
+    check_password,
+    kelvin_session_kwargs,
+    password_hash,
+    new_school_user,
 ):
     user = await new_school_user()
     password, password_hashes = await password_hash()
@@ -413,14 +396,10 @@ async def test_move_change_school(
 
 
 @pytest.mark.asyncio
-async def test_delete(
-    kelvin_session_kwargs, new_school_user,
-):
+async def test_delete(kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await UserResource(session=session).get(
-            school=user.school, name=user.name
-        )
+        obj = await UserResource(session=session).get(school=user.school, name=user.name)
         assert obj
         res = await obj.delete()
         assert res is None
@@ -442,14 +421,10 @@ async def test_reload(
     first_name_new = fake.first_name()
 
     async with Session(**kelvin_session_kwargs) as session:
-        obj: User = await UserResource(session=session).get(
-            school=user.school, name=user.name
-        )
+        obj: User = await UserResource(session=session).get(school=user.school, name=user.name)
         assert obj.firstname == first_name_old
         await obj.reload()
         assert obj.firstname == first_name_old
-        await ldap_access.modify(
-            obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]}
-        )
+        await ldap_access.modify(obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]})
         await obj.reload()
         assert obj.firstname == first_name_new

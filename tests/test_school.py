@@ -45,9 +45,7 @@ URL_SCHOOL_OBJECT = f"{URL_SCHOOL_RESOURCE}{{name}}"
 
 
 @pytest.mark.asyncio
-async def test_search_no_name_arg(
-    compare_kelvin_obj_with_test_data, new_school, kelvin_session_kwargs,
-):
+async def test_search_no_name_arg(compare_kelvin_obj_with_test_data, new_school, kelvin_session_kwargs):
     school1, school2 = new_school(2)
 
     async with Session(**kelvin_session_kwargs) as session:
@@ -66,7 +64,9 @@ async def test_search_no_name_arg(
 
 @pytest.mark.asyncio
 async def test_search_partial_name_arg(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school,
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    new_school,
 ):
     school = new_school(1)[0]
     name_len = len(school.name)
@@ -74,16 +74,8 @@ async def test_search_partial_name_arg(
     name_end = school.name[len(name_begin) :]
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs1 = [
-            obj
-            async for obj in SchoolResource(session=session).search(
-                name=f"{name_begin}*"
-            )
-        ]
-        objs2 = [
-            obj
-            async for obj in SchoolResource(session=session).search(name=f"*{name_end}")
-        ]
+        objs1 = [obj async for obj in SchoolResource(session=session).search(name=f"{name_begin}*")]
+        objs2 = [obj async for obj in SchoolResource(session=session).search(name=f"*{name_end}")]
     assert objs1, f"No School for name='{name_begin}*' found."
     assert len(objs1) >= 1
     assert school.dn in [o.dn for o in objs1]
@@ -93,9 +85,7 @@ async def test_search_partial_name_arg(
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school,
-):
+async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
     url = URL_SCHOOL_OBJECT.format(host=kelvin_session_kwargs["host"], name=school.name)
     async with Session(**kelvin_session_kwargs) as session:
@@ -104,9 +94,7 @@ async def test_get_from_url(
 
 
 @pytest.mark.asyncio
-async def test_get(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school,
-):
+async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolResource(session=session).get(name=school.name)
@@ -115,7 +103,10 @@ async def test_get(
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, ldap_access, new_school,
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    ldap_access,
+    new_school,
 ):
     school = new_school(1)[0]
     display_name_old = school.display_name
@@ -126,11 +117,7 @@ async def test_reload(
         assert obj.display_name == display_name_old
         await obj.reload()
         assert obj.display_name == display_name_old
-        await ldap_access.modify(
-            obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_new])]}
-        )
+        await ldap_access.modify(obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_new])]})
         await obj.reload()
         assert obj.display_name == display_name_new
-        await ldap_access.modify(
-            obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_old])]}
-        )
+        await ldap_access.modify(obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_old])]})

@@ -72,14 +72,12 @@ class Token:
         except jwt.PyJWTError as exc:
             raise InvalidToken(f"Error decoding token ({token_str!r}): {exc!s}")
         if not isinstance(payload, dict) or "exp" not in payload:
-            raise InvalidToken(
-                f"Payload in token not a dict or missing 'exp' entry ({token_str!r})."
-            )
+            raise InvalidToken(f"Payload in token not a dict or missing 'exp' entry ({token_str!r}).")
         try:
             expiry = datetime.datetime.utcfromtimestamp(payload["exp"])
         except ValueError as exc:
             raise InvalidToken(f"Error parsing date in token ({token_str!r}): {exc!s}")
-        return cls(expiry=expiry, value=token_str,)
+        return cls(expiry=expiry, value=token_str)
 
     def is_valid(self):
         if not self.expiry or not self.value:
@@ -216,16 +214,14 @@ class Session:
     async def delete(self, url: str, **kwargs) -> None:
         await self.request(self.client.delete, url, return_json=False, **kwargs)
 
-    async def get(
-        self, url: str, **kwargs
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    async def get(self, url: str, **kwargs) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         return await self.request(self.client.get, url, **kwargs)
 
     # async def patch(self, url: str, **kwargs,) -> Dict[str, Any]:
     #     return await self.request(self.client.patch, url, **kwargs)
 
-    async def post(self, url: str, **kwargs,) -> Dict[str, Any]:
+    async def post(self, url: str, **kwargs) -> Dict[str, Any]:
         return await self.request(self.client.post, url, **kwargs)
 
-    async def put(self, url: str, **kwargs,) -> Dict[str, Any]:
+    async def put(self, url: str, **kwargs) -> Dict[str, Any]:
         return await self.request(self.client.put, url, **kwargs)

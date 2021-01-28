@@ -53,9 +53,7 @@ class SchoolClass(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(
-            name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session
-        )
+        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
         self.school = school
         self.description = description
         self.users = users
@@ -89,6 +87,4 @@ class SchoolClassResource(KelvinResource):
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
-            raise InvalidRequest(
-                "Argument 'school' for searching school classes must be exact."
-            )
+            raise InvalidRequest("Argument 'school' for searching school classes must be exact.")

@@ -82,17 +82,17 @@ setup_devel_env: ## setup development environment (virtualenv)
 	echo "==> Run '. venv/bin/activate' to activate virtual env."
 
 format: ## format source code (using the current Python interpreter)
-	isort --apply --recursive docs setup.py tests ucsschool
-	black --target-version py37 setup.py docs tests ucsschool
+	pre-commit run -a --hook-stage manual isort-edit
+	pre-commit run -a --hook-stage manual black-edit
 
 lint-isort:
-	isort --check-only --recursive docs setup.py tests ucsschool
+	pre-commit run -a isort
 
 lint-black:
-	black --check --target-version py37 docs setup.py tests ucsschool
+	pre-commit run -a black
 
 lint-flake8:
-	flake8 docs setup.py tests ucsschool
+	pre-commit run -a flake8
 
 lint-bandit:
 	pre-commit run -a bandit

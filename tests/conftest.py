@@ -6,17 +6,7 @@ import random
 import string
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 import factory
 import faker
@@ -24,21 +14,13 @@ import httpx
 import pytest
 import ruamel.yaml
 import urllib3
-from ldap3 import (
-    ALL_ATTRIBUTES,
-    AUTO_BIND_TLS_BEFORE_BIND,
-    SIMPLE,
-    SUBTREE,
-    Connection,
-    Entry,
-    Server,
-)
+from docker.errors import NotFound as ContainerNotFound
+from ldap3 import ALL_ATTRIBUTES, AUTO_BIND_TLS_BEFORE_BIND, SIMPLE, SUBTREE, Connection, Entry, Server
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from ldap3.utils.conv import escape_filter_chars
 from urllib3.exceptions import InsecureRequestWarning
 
 import docker
-from docker.errors import NotFound as ContainerNotFound
 from ucsschool.kelvin.client import InvalidRequest, KelvinObject, NoObject, ServerError
 
 API_VERSION = "v1"
@@ -131,9 +113,7 @@ class LDAPAccess:
     def base_dn(self) -> str:
         if not self._base_dn:
             with Connection(**self._connection_kwargs) as conn:
-                res = [
-                    c for c in conn.server.info.naming_contexts if c != "cn=translog"
-                ]
+                res = [c for c in conn.server.info.naming_contexts if c != "cn=translog"]
                 self.__class__._base_dn = res[0]
         return self._base_dn
 
@@ -239,9 +219,7 @@ class LDAPAccess:
         """
         try:
             with Connection(**self._connection_kwargs) as conn:
-                conn.modify(
-                    dn=dn, changes=changes, controls=controls,
-                )
+                conn.modify(dn=dn, changes=changes, controls=controls)
         except LDAPBindError as exc:  # pragma: no cover
             logger.error(
                 "When connecting (binding) to %r with bind_dn %r: %s",
@@ -292,8 +270,7 @@ def _start_stopped_container(container_name: str):
     container = docker_client.containers.get(container_name)
     if container.status != "running":  # pragma: no cover
         logger.info(
-            f"Found stopped Docker container {container_name!r}. "
-            f"Trying to start and continue."
+            f"Found stopped Docker container {container_name!r}. " f"Trying to start and continue."
         )  # pragma: no cover
         container.start()
 
@@ -347,9 +324,7 @@ def base_dn(ldap_access):
 
 @pytest.fixture(scope="session")
 def load_test_server_yaml(ucs_ca_file_path):
-    def _func(
-        path: Union[str, Path] = TEST_SERVER_YAML_FILENAME
-    ) -> TestServerConfiguration:
+    def _func(path: Union[str, Path] = TEST_SERVER_YAML_FILENAME) -> TestServerConfiguration:
         """
         :raises: FileNotFoundError
         :raises: TypeError
@@ -395,9 +370,8 @@ def save_test_server_yaml():
     return _func
 
 
-def retrieve_kelvin_access_token(
-    host: str, username: str, password: str, verify: bool
-) -> str:
+def retrieve_kelvin_access_token(host: str, username: str, password: str, verify: bool) -> str:
+    logger.info("Retrieving Kelvin access token...")
     try:
         resp = httpx.post(
             URL_TOKEN.format(host=host),
@@ -406,9 +380,7 @@ def retrieve_kelvin_access_token(
             verify=verify,
         )
     except httpx.NetworkError as exc:
-        raise TestServerConnectionError(
-            f"Error retrieving token from Kelvin REST API: {exc}"
-        )
+        raise TestServerConnectionError(f"Error retrieving token from Kelvin REST API: {exc}")
     if resp.status_code != 200:
         raise TestServerConnectionError(  # pragma: no cover
             f"Error retrieving token from Kelvin REST API: [{resp.status_code}] {resp.reason_phrase}",
@@ -450,27 +422,21 @@ def _test_a_server_configuration(server_config: TestServerConfiguration) -> None
 
 
 @pytest.fixture(scope="session")  # noqa: C901
-def test_server_configuration(
-    load_test_server_yaml, running_test_container
-) -> TestServerConfiguration:
+def test_server_configuration(load_test_server_yaml, running_test_container) -> TestServerConfiguration:
     """
     Get data of server used to run tests.
 
     :raises: BadTestServerConfig
     :raises: NoTestServerConfig
     """
-    logger.info(
-        "Trying to load test server config from %r...", str(TEST_SERVER_YAML_FILENAME)
-    )
+    logger.info("Trying to load test server config from %r...", str(TEST_SERVER_YAML_FILENAME))
     try:
         server_configuration = load_test_server_yaml()
         _test_a_server_configuration(server_configuration)
     except FileNotFoundError:  # pragma: no cover
         logger.error("File not found: %r.", str(TEST_SERVER_YAML_FILENAME))
     except TypeError as exc:  # pragma: no cover
-        raise BadTestServerConfig(
-            f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}"
-        ) from exc
+        raise BadTestServerConfig(f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}") from exc
     except TestServerConnectionError as exc:  # pragma: no cover
         pytest.exit(
             f"Error connecting to test server using credentials "
@@ -481,9 +447,7 @@ def test_server_configuration(
     else:
         return server_configuration
 
-    logger.info(
-        "Trying to use running Docker container %r...", KELVIN_DOCKER_CONTAINER_NAME
-    )
+    logger.info("Trying to use running Docker container %r...", KELVIN_DOCKER_CONTAINER_NAME)
     try:
         res = running_test_container()
         _test_a_server_configuration(res)
@@ -651,19 +615,16 @@ async def new_school_class(
         json_data = copy.deepcopy(data)
         json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
         json_data["users"] = [
-            URL_USER_OBJECT.format(host=host, name=user_name)
-            for user_name in json_data["users"]
+            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
         ]
         schedule_delete_obj(object_type="class", school=school, name=name)
-        obj = http_request("post", url=collection_url, json=json_data,)
+        obj = http_request("post", url=collection_url, json=json_data)
         dn = obj["dn"]
         logger.info("Created new SchoolClass: %r", obj)
 
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"cn={school}-{name}"
-        ldap_objs = await ldap_access.search(
-            filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))"
-        )
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))")
         assert len(ldap_objs) == 1
         ldap_obj = ldap_objs[0]
         assert ldap_obj.entry_dn == dn
@@ -762,9 +723,7 @@ def new_user_test_obj(new_school):  # noqa: C901
             kwargs["schools"] = [kwargs["school"]]
         if "ucsschool_roles" not in kwargs:
             kwargs["ucsschool_roles"] = [
-                f"{role}:school:{school}"
-                for role in kwargs["roles"]
-                for school in kwargs["schools"]
+                f"{role}:school:{school}" for role in kwargs["roles"] for school in kwargs["schools"]
             ]
         user: TestUser = UserFactory(**kwargs)
         # ensure half names in test_user.test_search_inexact() are long enough
@@ -801,12 +760,9 @@ def new_school_user(
         json_data["roles"] = [
             URL_ROLE_OBJECT.format(host=host, name=role) for role in json_data["roles"]
         ]
-        json_data["school"] = URL_SCHOOL_OBJECT.format(
-            host=host, name=json_data["school"]
-        )
+        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=json_data["school"])
         json_data["schools"] = [
-            URL_SCHOOL_OBJECT.format(host=host, name=school)
-            for school in json_data["schools"]
+            URL_SCHOOL_OBJECT.format(host=host, name=school) for school in json_data["schools"]
         ]
         schedule_delete_obj(object_type="user", name=user_obj.name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -814,9 +770,7 @@ def new_school_user(
         logger.info("Created new User, API response: %r", obj)
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"uid={user_obj.name}"
-        ldap_objs = await ldap_access.search(
-            filter_s=f"(&({dn0})(objectClass=ucsschoolType))"
-        )
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolType))")
         assert len(ldap_objs) == 1
         ldap_obj = ldap_objs[0]
         assert ldap_obj.entry_dn == dn
@@ -829,9 +783,7 @@ def new_school_user(
         elif isinstance(ldap_val, Iterable):
             ldap_val = set(ldap_val)
         assert ldap_val == {
-            f"{role}:school:{school.rsplit('/', 1)[-1]}"
-            for role in roles
-            for school in user_obj.schools
+            f"{role}:school:{school.rsplit('/', 1)[-1]}" for role in roles for school in user_obj.schools
         }
         # role/school urls to names
         obj["school"] = obj["school"].rsplit("/", 1)[-1]
@@ -852,7 +804,7 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
         "user": URL_USER_OBJECT,
     }
 
-    def _func(object_type: str, **search_args,) -> None:
+    def _func(object_type: str, **search_args) -> None:
         kelvin_objs.append((object_type, search_args))
 
     yield _func
@@ -861,13 +813,9 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
         logger.info("Deleting %r object with %r...", kelvin_type, obj_search_args)
 
         url_template = url_templates[kelvin_type]
-        obj_url = url_template.format(
-            host=test_server_configuration.host, **obj_search_args
-        )
+        obj_url = url_template.format(host=test_server_configuration.host, **obj_search_args)
         try:
-            http_request(
-                "delete", url=obj_url, return_json=False,
-            )
+            http_request("delete", url=obj_url, return_json=False)
         except NoObject:
             logger.info(
                 "Object does not exist (anymore): kelvin_type=%r obj_search_args=%r.",
@@ -1013,9 +961,7 @@ def password_hash(check_password, ldap_access, new_school_user):
             "krb5KeyVersionNumber",
             "sambaPwdLastSet",
         ]
-        ldap_results = await ldap_access.search(
-            filter_s=filter_s, attributes=attributes
-        )
+        ldap_results = await ldap_access.search(filter_s=filter_s, attributes=attributes)
         if len(ldap_results) == 1:
             ldap_result = ldap_results[0]
         else:
@@ -1026,9 +972,7 @@ def password_hash(check_password, ldap_access, new_school_user):
         if not isinstance(user_password, list):
             user_password = [user_password]
         user_password = [pw.decode("ascii") for pw in user_password]
-        krb_5_key = [
-            base64.b64encode(v).decode("ascii") for v in ldap_result["krb5Key"].value
-        ]
+        krb_5_key = [base64.b64encode(v).decode("ascii") for v in ldap_result["krb5Key"].value]
         return (
             password,
             TestUserPasswordsHashes(

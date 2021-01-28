@@ -44,9 +44,7 @@ async def test_session_closes_on_context_exit(kelvin_session_kwargs):
 @pytest.mark.parametrize("arg_client_tasks", range(-10, 11))
 async def test_session_warn_max_client_tasks(arg_client_tasks, kelvin_session_kwargs):
     with warnings.catch_warnings(record=True) as w:
-        async with Session(
-            max_client_tasks=arg_client_tasks, **kelvin_session_kwargs
-        ) as session:
+        async with Session(max_client_tasks=arg_client_tasks, **kelvin_session_kwargs) as session:
             assert session.max_client_tasks >= 4
         if arg_client_tasks < 4:
             assert len(w) == 1

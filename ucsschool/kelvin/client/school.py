@@ -64,9 +64,7 @@ class School(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(
-            name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session
-        )
+        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
         self.display_name = display_name
         self.administrative_servers = administrative_servers
         self.class_share_file_server = class_share_file_server
@@ -84,8 +82,7 @@ class School(KelvinObject):
 
     async def delete(self) -> None:
         raise NotImplementedError(
-            "Deleting school objects has not yet been implemented in the "
-            "Kelvin REST API."
+            "Deleting school objects has not yet been implemented in the " "Kelvin REST API."
         )
 
 

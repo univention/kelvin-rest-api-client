@@ -48,9 +48,7 @@ class Role(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(
-            name=name, ucsschool_roles=None, dn=None, url=url, session=session
-        )
+        super().__init__(name=name, ucsschool_roles=None, dn=None, url=url, session=session)
         self.display_name = display_name
         del self.dn
         del self.ucsschool_roles
@@ -64,8 +62,7 @@ class Role(KelvinObject):
 
     async def delete(self) -> None:
         raise NotImplementedError(
-            "Deleting school roles has not yet been implemented in the "
-            "Kelvin REST API."
+            "Deleting school roles has not yet been implemented in the " "Kelvin REST API."
         )
 
     def as_dict(self) -> Dict[str, Any]:

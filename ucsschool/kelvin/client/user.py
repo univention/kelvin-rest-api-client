@@ -131,9 +131,7 @@ class User(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(
-            name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session
-        )
+        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
         self.school = school
         self.firstname = firstname
         self.lastname = lastname
@@ -163,9 +161,7 @@ class User(KelvinObject):
         for attr in ("roles", "schools"):
             url_key = url_keys[attr]
             # role/school names to urls
-            data[attr] = [
-                f"{self.session.urls[url_key]}{value}" for value in data[attr]
-            ]
+            data[attr] = [f"{self.session.urls[url_key]}{value}" for value in data[attr]]
         if data["kelvin_password_hashes"]:
             data["kelvin_password_hashes"] = self.kelvin_password_hashes.as_dict()
         else:
