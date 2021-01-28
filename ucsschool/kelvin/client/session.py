@@ -43,6 +43,7 @@ from .exceptions import InvalidRequest, InvalidToken, NoObject, ServerError
 DN = str
 
 API_VERSION = "v1"
+TOKEN_HASH_ALGORITHM = "HS256"  # nosec
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
 URL_RESOURCE_CLASS = f"{URL_BASE}/{API_VERSION}/classes/"
@@ -68,7 +69,9 @@ class Token:
     @classmethod
     def from_str(cls, token_str: str) -> "Token":
         try:
-            payload = jwt.decode(token_str, verify=False)
+            payload = jwt.decode(
+                token_str, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False}
+            )
         except jwt.PyJWTError as exc:
             raise InvalidToken(f"Error decoding token ({token_str!r}): {exc!s}")
         if not isinstance(payload, dict) or "exp" not in payload:

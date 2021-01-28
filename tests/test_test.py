@@ -11,6 +11,7 @@ import ruamel.yaml
 from conftest import TestServerConnectionError, retrieve_kelvin_access_token
 from faker import Faker
 
+TOKEN_HASH_ALGORITHM = "HS256"  # nosec
 fake = Faker()
 
 
@@ -67,7 +68,13 @@ def test_retrieve_kelvin_access_token_fail(kelvin_session_kwargs):
 
 def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
     token = retrieve_kelvin_access_token(**kelvin_session_kwargs)
-    payload = jwt.decode(token, verify=False)
-    assert payload["sub"] == kelvin_session_kwargs["username"]
+    payload = jwt.decode(token, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False})
+    exp_payload_sub = {
+        "username": kelvin_session_kwargs["username"],
+        "kelvin_admin": True,
+        "schools": [],
+        "roles": [],
+    }
+    assert payload["sub"] == exp_payload_sub
     expiry = datetime.datetime.fromtimestamp(payload["exp"])
     assert expiry > datetime.datetime.now()
