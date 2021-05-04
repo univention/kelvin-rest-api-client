@@ -89,7 +89,7 @@ docker start kelvin-api
 
 echo "Rebuilding the OpenAPI client library in the Kelvin API Container..."
 sleep 1
-docker exec kelvin-api /bin/sh -c "/etc/init.d/ucsschool-kelvin-rest-api stop; . /kelvin/venv/bin/activate; update_openapi_client --generator java --jar /kelvin/openapi-generator/jar/openapi-generator-cli-*.jar --insecure --username Administrator --password univention $UDM_IP"
+docker exec kelvin-api /bin/sh -c "/etc/init.d/ucsschool-kelvin-rest-api stop; update_openapi_client --generator java --jar /kelvin/openapi-generator/jar/openapi-generator-cli-*.jar --insecure --username Administrator --password univention $UDM_IP"
 
 echo "Starting Kelvin REST API server..."
 docker exec kelvin-api /bin/sh -c "/etc/init.d/ucsschool-kelvin-rest-api restart; sleep 1; /etc/init.d/ucsschool-kelvin-rest-api status || /etc/init.d/ucsschool-kelvin-rest-api restart"
