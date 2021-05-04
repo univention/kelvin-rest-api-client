@@ -102,12 +102,75 @@ async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new
 
 
 @pytest.mark.asyncio
-async def test_reload(
+async def test_create_minimal(
+    base_dn,
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
-    new_school,
+    new_school_test_obj,
+    schedule_delete_ou_using_ssh,
 ):
+    school_data = new_school_test_obj()
+    schedule_delete_ou_using_ssh(school_data.name)
+    async with Session(**kelvin_session_kwargs) as session:
+        school_kwargs = {"name": school_data.name}
+        print(f"Creating school with kwargs: {school_kwargs!r}")
+        school_obj = School(session=session, **school_kwargs)
+        await school_obj.save()
+        print("Created new School: {!r}".format(school_obj.as_dict()))
+
+    ldap_filter = f"(&(ou={school_obj.name})(objectClass=ucsschoolOrganizationalUnit))"
+    ldap_objs = await ldap_access.search(filter_s=ldap_filter)
+    assert len(ldap_objs) == 1
+    ldap_obj = ldap_objs[0]
+    assert ldap_obj.entry_dn == school_obj.dn
+    assert ldap_obj["ou"].value == school_obj.name
+    assert ldap_obj["ucsschoolRole"].value == f"school:school:{school_obj.name}"
+    assert ldap_obj["displayName"].value == school_obj.name
+    dc_base_dn = f"cn=dc,cn=server,cn=computers,ou={school_obj.name},{base_dn}"
+    class_share_file_server_dn_dn = f"cn=dc{school_obj.name},{dc_base_dn}"
+    home_share_file_server_dn = f"cn=dc{school_obj.name},{dc_base_dn}"
+    assert ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
+    assert ldap_obj["ucsschoolHomeShareFileServer"].value == home_share_file_server_dn
+    # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
+
+
+@pytest.mark.asyncio
+async def test_create_all_attrs(
+    base_dn,
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    ldap_access,
+    new_school_test_obj,
+    schedule_delete_ou_using_ssh,
+):
+    school_data = new_school_test_obj()
+    schedule_delete_ou_using_ssh(school_data.name)
+    async with Session(**kelvin_session_kwargs) as session:
+        school_kwargs = asdict(school_data)
+        print(f"Creating school with kwargs: {school_kwargs!r}")
+        school_obj = School(session=session, **school_kwargs)
+        await school_obj.save()
+        print("Created new School: {!r}".format(school_obj.as_dict()))
+
+    ldap_filter = f"(&(ou={school_obj.name})(objectClass=ucsschoolOrganizationalUnit))"
+    ldap_objs = await ldap_access.search(filter_s=ldap_filter)
+    assert len(ldap_objs) == 1
+    ldap_obj = ldap_objs[0]
+    assert ldap_obj.entry_dn == school_obj.dn
+    assert ldap_obj["ou"].value == school_obj.name
+    assert ldap_obj["ucsschoolRole"].value == f"school:school:{school_obj.name}"
+    assert ldap_obj["displayName"].value == school_obj.display_name
+    dc_base_dn = f"cn=dc,cn=server,cn=computers,ou={school_obj.name},{base_dn}"
+    class_share_file_server_dn_dn = f"cn={school_obj.class_share_file_server},{dc_base_dn}"
+    home_share_file_server_dn = f"cn={school_obj.home_share_file_server},{dc_base_dn}"
+    assert ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
+    assert ldap_obj["ucsschoolHomeShareFileServer"].value == home_share_file_server_dn
+    # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
+
+
+@pytest.mark.asyncio
+async def test_reload(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, ldap_access, new_school):
     school = new_school(1)[0]
     display_name_old = school.display_name
     display_name_new = fake.text(max_nb_chars=50)

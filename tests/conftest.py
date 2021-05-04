@@ -4,6 +4,7 @@ import logging
 import os
 import random
 import string
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
@@ -480,39 +481,37 @@ def kelvin_session_kwargs(test_server_configuration) -> Dict[str, str]:
 class TestSchool:
     name: str
     display_name: str
+    educational_servers: List[str] = None
     administrative_servers: List[str] = None
     class_share_file_server: str = None
-    dc_name: str = None
-    dc_name_administrative: str = None
-    educational_servers: List[str] = None
     home_share_file_server: str = None
     ucsschool_roles: List[str] = None
     dn: str = None
     url: str = None
 
 
-# class SchoolFactory(factory.Factory):
-#     class Meta:
-#         model = TestSchool
-#
-#     name = factory.LazyFunction(lambda: f"test{fake.user_name()}")
-#     display_name = factory.Faker("text", max_nb_chars=50)
-#     administrative_servers = factory.List([])
-#     class_share_file_server = factory.LazyAttribute(lambda o: f"dc{o.name.lower()}-01")
-#     dc_name = None
-#     dc_name_administrative = None
-#     educational_servers: List[str] = factory.LazyAttribute(
-#         lambda o: o.class_share_file_server
-#     )
-#     home_share_file_server = factory.LazyAttribute(lambda o: o.class_share_file_server)
-#     ucsschool_roles = factory.List([])
-#     dn = ""
-#     url = ""
-#
-#
-# @pytest.fixture
-# def new_school_test_obj() -> Callable[[], TestSchool]:
-#     return lambda: SchoolFactory()
+class SchoolFactory(factory.Factory):
+    class Meta:
+        model = TestSchool
+
+    name = factory.LazyFunction(lambda: f"testou{fake.pyint(1000, 9999)}")
+    display_name = factory.Faker("text", max_nb_chars=50)
+    educational_servers = factory.LazyAttribute(lambda o: [f"edu{o.name[:10]}"])
+    administrative_servers = factory.LazyAttribute(lambda o: [f"adm{o.name[:10]}"])
+    class_share_file_server = factory.LazyAttribute(
+        lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
+    )
+    home_share_file_server = factory.LazyAttribute(
+        lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
+    )
+    ucsschool_roles = factory.List([])
+    dn = ""
+    url = ""
+
+
+@pytest.fixture
+def new_school_test_obj() -> Callable[[], TestSchool]:
+    return lambda: SchoolFactory()
 
 
 @pytest.fixture
@@ -985,3 +984,64 @@ def password_hash(check_password, ldap_access, new_school_user):
         )
 
     return _func
+
+
+@pytest.fixture(scope="session")
+def exec_with_ssh():
+    def _func(cmd: List[str], host: str = None) -> int:
+        if not Path("/usr/bin/ssh").exists() or not Path("/usr/bin/sshpass").exists():
+            print("'ssh' and/or 'sshpass' are not installed. Please install them to enable OU deletion.")
+            return -1
+        ssh_cmd = [
+            "/usr/bin/sshpass",
+            "-p",
+            "univention",
+            "/usr/bin/ssh",
+            "-o",
+            "StrictHostKeyChecking no",
+            "-o",
+            "UserKnownHostsFile /dev/null",
+            f"root@{host}",
+        ] + cmd
+        print(f"ssh to {host!r} and execute: {cmd!r}...")
+        return subprocess.call(ssh_cmd)
+
+    return _func
+
+
+@pytest.fixture(scope="session")
+def delete_ou_using_ssh(base_dn, exec_with_ssh, kelvin_session_kwargs):
+    host = kelvin_session_kwargs["host"]
+
+    async def _func(ou_name: str):
+        print(f"Deleting OU {ou_name!r} on host {host!r}...")
+        dn = f"ou={ou_name},{base_dn}"
+        exec_with_ssh(["/usr/sbin/udm", "container/ou", "remove", "--dn", dn], host)
+
+        group_dns = [
+            f"cn=admins-{ou_name.lower()},cn=ouadmins,cn=groups,{base_dn}",
+            f"cn=OU{ou_name}-Klassenarbeit,cn=ucsschool,cn=groups,{base_dn}",
+            f"cn=OU{ou_name.lower()}-DC-Edukativnetz,cn=ucsschool,cn=groups,{base_dn}",
+            f"cn=OU{ou_name.lower()}-DC-Verwaltungsnetz,cn=ucsschool,cn=groups,{base_dn}",
+            f"cn=OU{ou_name.lower()}-Member-Edukativnetz,cn=ucsschool,cn=groups,{base_dn}",
+            f"cn=OU{ou_name.lower()}-Member-Verwaltungsnetz,cn=ucsschool,cn=groups,{base_dn}",
+        ]
+        group_dns_s = " ".join("'{}'".format(dn) for dn in group_dns)
+        cmd = f"'for DN in {group_dns_s}; do /usr/sbin/udm groups/group remove --dn \"$DN\"; done'"
+        print(f"Deleting groups on host {host!r}: {group_dns!r}...")
+        exec_with_ssh(["/bin/bash", "-c", cmd], host)
+
+    return _func
+
+
+@pytest.fixture
+async def schedule_delete_ou_using_ssh(delete_ou_using_ssh):
+    ous_created: List[str] = []
+
+    def _func(ou_name: str):
+        ous_created.append(ou_name)
+
+    yield _func
+
+    for ou_name in ous_created:
+        await delete_ou_using_ssh(ou_name)

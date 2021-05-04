@@ -2,6 +2,11 @@
 History
 =======
 
+0.3.0 (2021-05-04)
+------------------
+
+* add support for the creation of school (OU) objects
+
 0.2.2 (2020-11-09)
 ------------------
 

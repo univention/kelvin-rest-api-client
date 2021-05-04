@@ -40,11 +40,9 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
             name: str,
             *,
             display_name: str = None,
+            educational_servers: List[str] = None,
             administrative_servers: List[str] = None,
             class_share_file_server: str = None,
-            dc_name: str = None,
-            dc_name_administrative: str = None,
-            educational_servers: List[str] = None,
             home_share_file_server: str = None,
             ucsschool_roles: List[str] = None,
             dn: str = None,
@@ -53,11 +51,9 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
         ):
             self.name = name
             self.display_name = display_name
+            self.educational_servers = educational_servers
             self.administrative_servers = administrative_servers
             self.class_share_file_server = class_share_file_server
-            self.dc_name = dc_name
-            self.dc_name_administrative = dc_name_administrative
-            self.educational_servers = educational_servers
             self.home_share_file_server = home_share_file_server
             self.ucsschool_roles = ucsschool_roles
             self.dn = dn
@@ -68,7 +64,7 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
             ...
 
         async def save(self) -> School:
-            raise NotImplementedError()
+            ...
 
         async def delete(self) -> None:
             raise NotImplementedError()
@@ -76,8 +72,8 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
         def as_dict(self) -> Dict[str, Any]:
             ...
 
-Note: The Kelvin API does not yet support creating, changing or deleting school objects, and thus the Kelvin API client doesn't either.
-Using ``School.save()`` or ``School.delete()`` will raise a :py:exc:`NotImplementedError` exception.
+Note: The Kelvin API does not yet support changing or deleting school objects, and thus the Kelvin API client doesn't either.
+Using ``School.save()`` or ``School.delete()`` on existing school objects will raise a :py:exc:`NotImplementedError` exception.
 
 
 SchoolResource class
@@ -102,9 +98,63 @@ The :py:class:`ucsschool.kelvin.client.SchoolResource` class has the following p
 Create school
 -------------
 
-The Kelvin API does not yet support creating school objects, and thus the Kelvin API client doesn't either.
+Since version ``1.4.0`` the Kelvin REST API supports the creation of school (OU) objects.
+The result should be the same as using the ``Schools`` UMC module or running the ``/usr/share/ucs-school-import/scripts/create_ou`` script from the command line.
+The *Kelvin REST API Client* supports this feature since version ``0.3.0``.
 
-To create a school (OU) object, either use the servers ``Schools`` UMC module or run the ``/usr/share/ucs-school-import/scripts/create_ou`` script from the servers command line.
+The only required attribute is ``name``. An educational domain controller for each school is required however.
+If none is passed in the request, one will be created automatically as ``dc<name>``.
+If ``name`` is longer than 11 characters this will fail.
+In that case the hostname must be passed in ``educational_servers``.
+
+For historical reasons ``administrative_servers`` and ``educational_servers`` are lists that must contain exactly one item.
+
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, School
+
+    async with Session(**credentials) as session:
+        school = School(
+            name="testou",
+            display_name="A test school",
+            session=session,
+        )
+        await school.save()
+
+    school.as_dict()
+    {'name': 'testou',
+     'ucsschool_roles': ['school:school:testou'],
+     'display_name': 'A test school',
+     'educational_servers': ['dctestou'],
+     'administrative_servers': [],
+     'class_share_file_server': 'dctestou',
+     'home_share_file_server': 'dctestou',
+     'dn': 'ou=testou,dc=example,dc=com',
+     'url': 'https://master.ucs.local/ucsschool/kelvin/v1/schools/testou'}
+
+
+Schools are saved as containers in the UCS LDAP.
+The result can be verified on the target system using UDM:
+
+.. code-block:: console
+
+    $ udm container/ou list --filter ou=testou
+
+    DN: ou=testou,dc=example,dc=com
+      name: testou
+      displayName: A test school
+      ucsschoolRole: school:school:testou
+      ucsschoolClassShareFileServer: cn=dctestou,cn=dc,cn=server,cn=computers,ou=testou,dc=example,dc=com
+      ucsschoolHomeShareFileServer: cn=dctestou,cn=dc,cn=server,cn=computers,ou=testou,dc=example,dc=com
+      ...
+
+The administrative and educational server information is stored as group membership.
+If interested, search using the hostname prefixed with a dollar (``dctestou$``):
+
+.. code-block:: console
+
+    $ udm groups/group list --filter 'memberUid=dctestou$'
 
 
 Retrieve school
@@ -121,11 +171,9 @@ Retrieve school
     {'name': 'DEMOSCHOOL',
      'ucsschool_roles': ['school:school:DEMOSCHOOL'],
      'display_name': 'Demo School',
+     'educational_servers': ['DEMOSCHOOL'],
      'administrative_servers': [],
      'class_share_file_server': 'DEMOSCHOOL',
-     'dc_name': None,
-     'dc_name_administrative': None,
-     'educational_servers': ['DEMOSCHOOL'],
      'home_share_file_server': 'DEMOSCHOOL',
      'dn': 'ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/schools/DEMOSCHOOL'}
