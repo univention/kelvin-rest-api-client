@@ -7,9 +7,9 @@ import tempfile
 
 import jwt
 import pytest
-import ruamel.yaml
 from conftest import TestServerConnectionError, retrieve_kelvin_access_token
 from faker import Faker
+from ruamel.yaml import YAML
 
 TOKEN_HASH_ALGORITHM = "HS256"  # nosec
 fake = Faker()
@@ -34,8 +34,9 @@ def connection_data():
 
 def test_load_test_server_yaml(load_test_server_yaml, connection_data):
     server = connection_data()
+    yaml = YAML(typ="safe")
     with tempfile.NamedTemporaryFile(mode="w") as fp:
-        ruamel.yaml.dump(server, fp, ruamel.yaml.SafeDumper)
+        yaml.dump(server, fp)
         fp.flush()
         config = load_test_server_yaml(fp.name)
         assert server == {
@@ -48,11 +49,12 @@ def test_load_test_server_yaml(load_test_server_yaml, connection_data):
 
 def test_save_test_server_yaml(save_test_server_yaml, connection_data):
     server = connection_data()
+    yaml = YAML(typ="safe")
     with tempfile.NamedTemporaryFile() as fp:
         save_test_server_yaml(**server, path=fp.name)
         fp.flush()
         fp.seek(0)
-        config = ruamel.yaml.load(fp, ruamel.yaml.Loader)
+        config = yaml.load(fp)
         assert config == server
 
 

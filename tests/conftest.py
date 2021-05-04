@@ -12,12 +12,12 @@ import factory
 import faker
 import httpx
 import pytest
-import ruamel.yaml
 import urllib3
 from docker.errors import NotFound as ContainerNotFound
 from ldap3 import ALL_ATTRIBUTES, AUTO_BIND_TLS_BEFORE_BIND, SIMPLE, SUBTREE, Connection, Entry, Server
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from ldap3.utils.conv import escape_filter_chars
+from ruamel.yaml import YAML
 from urllib3.exceptions import InsecureRequestWarning
 
 import docker
@@ -329,8 +329,8 @@ def load_test_server_yaml(ucs_ca_file_path):
         :raises: FileNotFoundError
         :raises: TypeError
         """
-        with open(path, "r") as fp:
-            config = ruamel.yaml.load(fp, ruamel.yaml.RoundTripLoader)
+        yaml = YAML(typ="rt")
+        config = yaml.load(Path(path))
         verify = ucs_ca_file_path(config["host"])
         return TestServerConfiguration(verify=verify, **config)
 
@@ -354,8 +354,10 @@ def save_test_server_yaml():
         """
         :raises: OSError (PermissionError etc)
         """
+        yaml = YAML(typ="rt")
+        yaml.indent = 4
         with open(path, "w") as fp:
-            ruamel.yaml.dump(
+            yaml.dump(
                 {
                     "host": host,
                     "username": username,
@@ -363,8 +365,6 @@ def save_test_server_yaml():
                     "password": password,
                 },
                 fp,
-                ruamel.yaml.RoundTripDumper,
-                indent=4,
             )
 
     return _func
