@@ -30,7 +30,7 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 SHELL := /bin/bash
 
-UCS_IMG = docker-test.software-univention.de/ucs-master-amd64-joined-ucsschool-udm-rest-api-only:stable-4.4-4
+UCS_IMG = docker-test.software-univention.de/ucs-master-amd64-joined-ucsschool-udm-rest-api-only:stable-4.4-8
 UCS_CONTAINER = $(shell . docker/common.sh && echo "$$UCS_CONTAINER")
 UCS_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(UCS_IMG)"
 UCS_IS_RUNNING = . docker/common.sh && docker_container_running "$(UCS_CONTAINER)"
@@ -38,7 +38,7 @@ START_UCS_CONTAINER = docker run --detach --name "$(UCS_CONTAINER)" --hostname=m
 UCS_CONTAINER_IP_CMD = . docker/common.sh && docker_container_ip $(UCS_CONTAINER)
 GET_OPENAPI_SCHEMA_UDM = . docker/common.sh && get_openapi_schema "$(UCS_CONTAINER)"
 
-KELVIN_IMG = docker.software-univention.de/ucsschool-kelvin-rest-api:1.4.0
+KELVIN_IMG = docker.software-univention.de/ucsschool-kelvin-rest-api:1.4.3
 KELVIN_CONTAINER = $(shell . docker/common.sh && echo "$$KELVIN_CONTAINER")
 KELVIN_API_LOG_FILE = $(shell . docker/common.sh && echo "$$KELVIN_API_LOG_FILE")
 KELVIN_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(KELVIN_IMG)"

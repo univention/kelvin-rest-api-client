@@ -3,7 +3,7 @@
 UCS_REPOS="stable"
 
 export DOCKER_REGISTRY="docker-test-upload.software-univention.de"
-export UCS_VERSION="4.4-4"
+export UCS_VERSION="4.4-8"
 
 export UCS_CONTAINER=udm_rest_only
 export UCS_JOINED_TARGET_DOCKER_IMG="${DOCKER_REGISTRY}/ucs-master-amd64-joined"
@@ -16,7 +16,7 @@ export UDM_ONLY_TARGET_DOCKER_IMG_VERSION="${UDM_ONLY_TARGET_DOCKER_IMG}:${UCS_R
 export UDM_ONLY_TARGET_DOCKER_IMG_LATEST="${UDM_ONLY_TARGET_DOCKER_IMG}:${UCS_REPOS}-latest"
 
 export KELVIN_CONTAINER=kelvin-api
-export KELVIN_REST_API_VERSION="1.4.0"
+export KELVIN_REST_API_VERSION="1.4.3"
 export KELVIN_REST_API_IMG="docker.software-univention.de/ucsschool-kelvin-rest-api:${KELVIN_REST_API_VERSION}"
 export KELVIN_API_LOG_FILE="/var/log/univention/ucsschool-kelvin-rest-api/http.log"
 
