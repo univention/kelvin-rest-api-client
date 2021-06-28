@@ -284,13 +284,15 @@ async def test_modify(
     new_user_test_obj,
 ):
     user = await new_school_user()
-    new_data = asdict(new_user_test_obj(
-        name=user.name,
-        roles=user.roles,
-        school=user.school,
-        schools=user.schools,
-        ucsschool_roles=user.ucsschool_roles,
-    ))
+    new_data = asdict(
+        new_user_test_obj(
+            name=user.name,
+            roles=user.roles,
+            school=user.school,
+            schools=user.schools,
+            ucsschool_roles=user.ucsschool_roles,
+        )
+    )
     async with Session(**kelvin_session_kwargs) as session:
         user_resource = UserResource(session=session)
         obj: User = await user_resource.get(school=user.school, name=user.name)
