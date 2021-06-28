@@ -284,14 +284,20 @@ async def test_modify(
     new_user_test_obj,
 ):
     user = await new_school_user()
-    new_data = asdict(new_user_test_obj())
+    new_data = asdict(new_user_test_obj(
+        name=user.name,
+        roles=user.roles,
+        school=user.school,
+        schools=user.schools,
+        ucsschool_roles=user.ucsschool_roles,
+    ))
     async with Session(**kelvin_session_kwargs) as session:
         user_resource = UserResource(session=session)
         obj: User = await user_resource.get(school=user.school, name=user.name)
         compare_kelvin_obj_with_test_data(obj, **asdict(user))
         await check_password(obj.dn, user.password)
         for k, v in new_data.items():
-            if k not in ("school", "schools", "name", "dn", "url", "ucsschool_roles"):
+            if k not in ("dn", "url"):
                 setattr(obj, k, v)
         new_obj: User = await obj.save()
         assert new_obj is obj
