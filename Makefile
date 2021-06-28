@@ -30,7 +30,7 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 SHELL := /bin/bash
 
-UCS_IMG = docker-test.software-univention.de/ucs-master-amd64-joined-ucsschool-udm-rest-api-only:stable-4.4-8
+UCS_IMG = docker.software-univention.de/ucs-master-amd64-joined-ucsschool-udm-rest-api-only:stable-4.4-8
 UCS_CONTAINER = $(shell . docker/common.sh && echo "$$UCS_CONTAINER")
 UCS_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(UCS_IMG)"
 UCS_IS_RUNNING = . docker/common.sh && docker_container_running "$(UCS_CONTAINER)"
