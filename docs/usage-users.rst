@@ -164,7 +164,6 @@ Search users
 ------------
 
 The :py:meth:`search()` method allows searching for users, using a number of filters.
-Not narrowing down the search with a ``school`` argument will result in a massive performance loss.
 Most (but now all) attributes support searching inexact, using an asterisk (``*``) as placeholder.
 
 In the following examples the search is always limited to users of the school ``DEMOSCHOOL``.
