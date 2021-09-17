@@ -486,6 +486,7 @@ class TestSchool:
     class_share_file_server: str = None
     home_share_file_server: str = None
     ucsschool_roles: List[str] = None
+    udm_properties: Dict[str, Any] = None
     dn: str = None
     url: str = None
 
@@ -505,6 +506,7 @@ class SchoolFactory(factory.Factory):
         lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
     )
     ucsschool_roles = factory.List([])
+    udm_properties = factory.Dict({"description": None})
     dn = ""
     url = ""
 
@@ -560,6 +562,7 @@ class TestSchoolClass:
     description: str = None
     users: List[str] = None
     ucsschool_roles: List[str] = None
+    udm_properties: Dict[str, Any] = None
     dn: str = None
     url: str = None
 
@@ -573,6 +576,7 @@ class SchoolClassFactory(factory.Factory):
     description = factory.Faker("text", max_nb_chars=50)
     users = factory.List([])
     ucsschool_roles = factory.List([])
+    udm_properties = factory.Dict({"mailAddress": None})
     dn = ""
     url = ""
 
@@ -686,7 +690,7 @@ class UserFactory(factory.Factory):
     roles = factory.List([])
     school_classes = factory.Dict({})
     source_uid = "TESTID"
-    udm_properties = factory.Dict({})
+    udm_properties = factory.Dict({"title": None})
     ucsschool_roles = factory.List([])
     dn = ""
     url = ""

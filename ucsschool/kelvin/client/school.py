@@ -56,11 +56,19 @@ class School(KelvinObject):
         class_share_file_server: str = None,
         home_share_file_server: str = None,
         ucsschool_roles: List[str] = None,
+        udm_properties: Dict[str, Any] = None,
         dn: str = None,
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
+        super().__init__(
+            name=name,
+            ucsschool_roles=ucsschool_roles,
+            udm_properties=udm_properties,
+            dn=dn,
+            url=url,
+            session=session,
+        )
         self.display_name = display_name
         self.educational_servers = educational_servers
         self.administrative_servers = administrative_servers

@@ -48,10 +48,13 @@ class Role(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(name=name, ucsschool_roles=None, dn=None, url=url, session=session)
+        super().__init__(
+            name=name, ucsschool_roles=None, udm_properties=None, dn=None, url=url, session=session
+        )
         self.display_name = display_name
         del self.dn
         del self.ucsschool_roles
+        del self.udm_properties
         self._resource_class = RoleResource
 
     async def save(self) -> "RoleResource":

@@ -44,6 +44,7 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
             administrative_servers: List[str] = None,
             class_share_file_server: str = None,
             home_share_file_server: str = None,
+            udm_properties: Dict[str, Any] = None,
             ucsschool_roles: List[str] = None,
             dn: str = None,
             url: str = None,
@@ -55,6 +56,7 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
             self.administrative_servers = administrative_servers
             self.class_share_file_server = class_share_file_server
             self.home_share_file_server = home_share_file_server
+            self.udm_properties = udm_properties or {}
             self.ucsschool_roles = ucsschool_roles
             self.dn = dn
             self.url = url
@@ -130,6 +132,7 @@ For historical reasons ``administrative_servers`` and ``educational_servers`` ar
      'administrative_servers': [],
      'class_share_file_server': 'dctestou',
      'home_share_file_server': 'dctestou',
+     'udm_properties': {},
      'dn': 'ou=testou,dc=example,dc=com',
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/schools/testou'}
 
