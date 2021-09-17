@@ -41,19 +41,21 @@ logger = logging.getLogger(__name__)
 
 class KelvinObject(ABC):
     _class_display_name = "Kelvin Object"
-    _kelvin_attrs = ["name", "ucsschool_roles"]
+    _kelvin_attrs = ["name", "ucsschool_roles", "udm_properties"]
 
     def __init__(
         self,
         name: str,
         *,
         ucsschool_roles: List[str] = None,
+        udm_properties: Dict[str, Any] = None,
         dn: str = None,
         url: str = None,
         session: Session = None,
     ):
         self.name = name
         self.ucsschool_roles = ucsschool_roles
+        self.udm_properties = udm_properties or {}
         self.dn = dn
         self.url = url
         self.session = session

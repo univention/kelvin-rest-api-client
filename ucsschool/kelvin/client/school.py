@@ -56,6 +56,7 @@ class School(KelvinObject):
         class_share_file_server: str = None,
         home_share_file_server: str = None,
         ucsschool_roles: List[str] = None,
+        udm_properties: Dict[str, Any] = None,
         dn: str = None,
         url: str = None,
         session: Session = None,

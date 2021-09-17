@@ -105,7 +105,6 @@ class User(KelvinObject):
         "schools",
         "school_classes",
         "source_uid",
-        "udm_properties",
     ]
 
     def __init__(
@@ -131,7 +130,14 @@ class User(KelvinObject):
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
+        super().__init__(
+            name=name,
+            ucsschool_roles=ucsschool_roles,
+            dn=dn,
+            url=url,
+            session=session,
+            udm_properties=udm_properties,
+        )
         self.school = school
         self.firstname = firstname
         self.lastname = lastname
@@ -144,7 +150,6 @@ class User(KelvinObject):
         self.schools = schools
         self.school_classes = school_classes or {}
         self.source_uid = source_uid
-        self.udm_properties = udm_properties or {}
         self.kelvin_password_hashes = kelvin_password_hashes
         self._resource_class = UserResource
 

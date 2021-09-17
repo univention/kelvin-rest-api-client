@@ -49,11 +49,19 @@ class SchoolClass(KelvinObject):
         description: str = None,
         users: List[str] = None,
         ucsschool_roles: List[str] = None,
+        udm_properties: Dict[str, Any] = None,
         dn: str = None,
         url: str = None,
         session: Session = None,
     ):
-        super().__init__(name=name, ucsschool_roles=ucsschool_roles, dn=dn, url=url, session=session)
+        super().__init__(
+            name=name,
+            ucsschool_roles=ucsschool_roles,
+            dn=dn,
+            url=url,
+            session=session,
+            udm_properties=udm_properties,
+        )
         self.school = school
         self.description = description
         self.users = users
