@@ -15,6 +15,8 @@ To install *Python UCS\@school Kelvin REST API Client*, run this command in your
     $ pip install kelvin-rest-api-client
 
 This is the preferred method to install *Python UCS\@school Kelvin REST API Client*, as it will always install the most recent stable release.
+The major version of the *Python UCS\@school Kelvin REST API Client* must be at least as high as the version of the *UCS\@school Kelvin REST API*
+which is used.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.

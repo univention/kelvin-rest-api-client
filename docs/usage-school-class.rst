@@ -36,6 +36,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following attr
             *,
             description: str = None,
             users: List[str] = None,
+            udm_properties: Dict[str, Any] = None,
             ucsschool_roles: List[str] = None,
             dn: str = None,
             url: str = None,
@@ -45,6 +46,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following attr
             self.school = school
             self.description = description
             self.users = users
+            self.udm_properties = udm_properties or {}
             self.ucsschool_roles = ucsschool_roles
             self.dn = dn
             self.url = url
@@ -107,6 +109,7 @@ They will however not be deleted automatically if they are removed from all user
      'school': 'DEMOSCHOOL',
      'description': 'A test class',
      'users': ['demo_student', 'demo_teacher'],
+     'udm_properties': {},
      'dn': 'cn=DEMOSCHOOL-testclass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 
