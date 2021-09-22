@@ -133,10 +133,10 @@ class User(KelvinObject):
         super().__init__(
             name=name,
             ucsschool_roles=ucsschool_roles,
+            udm_properties=udm_properties,
             dn=dn,
             url=url,
             session=session,
-            udm_properties=udm_properties,
         )
         self.school = school
         self.firstname = firstname
