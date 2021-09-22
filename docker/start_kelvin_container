@@ -20,6 +20,7 @@ docker create \
     -v /tmp/kelvin-api/log:/var/log/univention/ucsschool-kelvin-rest-api \
     -v /tmp/kelvin-api/configs:/var/lib/ucs-school-import/configs \
     -v /tmp/kelvin-api/kelvin-hooks:/var/lib/ucs-school-import/kelvin-hooks \
+    -v /tmp/kelvin-api/new_config:/etc/ucsschool/kelvin \
     --env LDAP_BASE=dc=ucs-test,dc=intranet \
     --env LDAP_HOSTDN=cn=kelvin-container,cn=memberserver,cn=computers,dc=ucs-test,dc=intranet \
     --env LDAP_MASTER=master.ucs-test.intranet \
@@ -31,7 +32,7 @@ docker create \
 
 echo "Configuring Kelvin REST API container..."
 # copy (empty) user import config files from temporary container
-mkdir -p /tmp/kelvin-api/log /tmp/kelvin-api/configs /tmp/kelvin-api/kelvin-hooks
+mkdir -p /tmp/kelvin-api/log /tmp/kelvin-api/configs /tmp/kelvin-api/kelvin-hooks /tmp/kelvin-api/new_config
 # start temp container to copy from only if needed
 START_TEMP_CONTAINER=0
 for CONF in global.json user_import.json user_import_http-api.json user_import_legacy.json; do
@@ -77,6 +78,15 @@ mkdir -p "$TMP_DIR/usr/local/share/ca-certificates"
 docker cp udm_rest_only:/var/www/ucs-root-ca.crt "$TMP_DIR/usr/local/share/ca-certificates/ucs.crt"
 
 mkdir -p "$TMP_DIR/var/lib/ucs-school-import/kelvin-hooks"
+
+mkdir -p "$TMP_DIR/etc/ucsschool/kelvin"
+cat > $TMP_DIR//etc/ucsschool/kelvin/mapped_udm_properties.json <<__EOF__
+{
+    "user": ["title"],
+    "school_class": ["mailAddress"],
+    "school": ["description"]
+}
+__EOF__
 
 docker cp "$TMP_DIR" kelvin-api:/
 for DIR in "$TMP_DIR"/*; do

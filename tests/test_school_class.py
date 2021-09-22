@@ -181,6 +181,7 @@ async def test_create(
     new_school_class_test_obj,
     schedule_delete_obj,
     new_school_user,
+    test_server_configuration,
 ):
     sc_data = new_school_class_test_obj()
     user1 = await new_school_user(school=sc_data.school)
@@ -189,6 +190,7 @@ async def test_create(
     async with Session(**kelvin_session_kwargs) as session:
         sc_kwargs = asdict(sc_data)
         sc_obj = SchoolClass(session=session, **sc_kwargs)
+        sc_obj.udm_properties = {"mailAddress": f"test@{test_server_configuration.host}"}
         schedule_delete_obj(object_type="class", school=sc_data.school, name=sc_data.name)
         await sc_obj.save()
         print("Created new SchoolClass: {!r}".format(sc_obj.as_dict()))
@@ -202,6 +204,7 @@ async def test_create(
     assert ldap_obj["ucsschoolRole"].value == f"school_class:school:{sc_data.school}"
     assert ldap_obj["description"].value == sc_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
+    assert ldap_obj["mailPrimaryAddress"] == sc_obj.udm_properties["mailAddress"]
 
 
 @pytest.mark.asyncio
@@ -210,8 +213,11 @@ async def test_modify(
     kelvin_session_kwargs,
     new_school_class,
     new_school_class_test_obj,
+    test_server_configuration,
 ):
-    sc1_dn, sc1_attr = await new_school_class()
+    sc1_dn, sc1_attr = await new_school_class(
+        udm_properties={"mailAddress": f"test@{test_server_configuration.host}"}
+    )
     new_data = asdict(new_school_class_test_obj())
     school = sc1_attr["school"]
     name = sc1_attr["name"]

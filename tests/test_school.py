@@ -148,6 +148,7 @@ async def test_create_all_attrs(
     schedule_delete_ou_using_ssh(school_data.name)
     async with Session(**kelvin_session_kwargs) as session:
         school_kwargs = asdict(school_data)
+        school_kwargs["udm_properties"] = {"description": "test-description"}
         print(f"Creating school with kwargs: {school_kwargs!r}")
         school_obj = School(session=session, **school_kwargs)
         await school_obj.save()
@@ -166,6 +167,7 @@ async def test_create_all_attrs(
     home_share_file_server_dn = f"cn={school_obj.home_share_file_server},{dc_base_dn}"
     assert ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
     assert ldap_obj["ucsschoolHomeShareFileServer"].value == home_share_file_server_dn
+    assert ldap_obj["description"].value == school_kwargs["udm_properties"]["description"]
     # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
 
 

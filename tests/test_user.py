@@ -226,6 +226,7 @@ async def test_create(
 
     async with Session(**kelvin_session_kwargs) as session:
         user_obj = User(session=session, **asdict(user_data))
+        user_obj.udm_properties = {"title": "Ph.D."}
         schedule_delete_obj(object_type="user", name=user_data.name)
         await user_obj.save()
         print("Created new User: {!r}".format(user_obj.as_dict()))
@@ -251,6 +252,7 @@ async def test_create(
     assert ldap_obj["ucsschoolRecordUID"] == user_data.record_uid
     assert ldap_obj["ucsschoolSourceUID"] == user_data.source_uid
     await check_password(ldap_obj.entry_dn, user_data.password)
+    assert ldap_obj["title"] == user_obj.udm_properties["title"]
 
 
 @pytest.mark.asyncio
@@ -291,6 +293,7 @@ async def test_modify(
             school=user.school,
             schools=user.schools,
             ucsschool_roles=user.ucsschool_roles,
+            udm_properties={"title": "Ph.D."},
         )
     )
     async with Session(**kelvin_session_kwargs) as session:
