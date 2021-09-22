@@ -67,7 +67,7 @@ class School(KelvinObject):
             udm_properties=udm_properties,
             dn=dn,
             url=url,
-            session=session
+            session=session,
         )
         self.display_name = display_name
         self.educational_servers = educational_servers
