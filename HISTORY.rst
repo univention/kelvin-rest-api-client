@@ -3,8 +3,9 @@ History
 =======
 
 1.5.0 (2021-09-21)
+------------------
 
-* add attribute `udm_properties` for schools and schoolclasses which were added in ucsschool-kelvin-rest-api version 1.5.0
+* add attribute `udm_properties` for schools and `schoolclasses` which were added in ucsschool-kelvin-rest-api version 1.5.0
 
 0.3.0 (2021-05-04)
 ------------------
