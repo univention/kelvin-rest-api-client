@@ -148,7 +148,7 @@ async def test_create_all_attrs(
     schedule_delete_ou_using_ssh(school_data.name)
     async with Session(**kelvin_session_kwargs) as session:
         school_kwargs = asdict(school_data)
-        school_kwargs["udm_properties"] = {"description": "test-description"}
+        school_kwargs["udm_properties"] = {"description": fake.first_name()}
         print(f"Creating school with kwargs: {school_kwargs!r}")
         school_obj = School(session=session, **school_kwargs)
         await school_obj.save()

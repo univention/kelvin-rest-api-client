@@ -226,7 +226,7 @@ async def test_create(
 
     async with Session(**kelvin_session_kwargs) as session:
         user_obj = User(session=session, **asdict(user_data))
-        user_obj.udm_properties = {"title": "Ph.D."}
+        user_obj.udm_properties = {"title": fake.first_name()}
         schedule_delete_obj(object_type="user", name=user_data.name)
         await user_obj.save()
         print("Created new User: {!r}".format(user_obj.as_dict()))
@@ -293,7 +293,7 @@ async def test_modify(
             school=user.school,
             schools=user.schools,
             ucsschool_roles=user.ucsschool_roles,
-            udm_properties={"title": "Ph.D."},
+            udm_properties={"title": fake.first_name()},
         )
     )
     async with Session(**kelvin_session_kwargs) as session:
