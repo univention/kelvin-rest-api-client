@@ -25,6 +25,7 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import time
 from dataclasses import asdict
 
 import ldap3
@@ -129,7 +130,7 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("attr", ["birthday", "roles", "disabled"])
+@pytest.mark.parametrize("attr", ["birthday", "disabled", "expiration_date", "roles"])
 async def test_search_exact(
     compare_kelvin_obj_with_test_data,
     new_school,
@@ -155,7 +156,7 @@ async def test_search_exact(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("attr", ["record_uid", "source_uid", "firstname", "lastname"])
+@pytest.mark.parametrize("attr", ["firstname", "lastname", "record_uid", "source_uid"])
 async def test_search_inexact(
     compare_kelvin_obj_with_test_data,
     new_school,
@@ -244,7 +245,14 @@ async def test_create(
     if isinstance(ldap_val_schools, str):
         ldap_val_schools = [ldap_val_schools]
     assert set(ldap_val_schools) == set(user_obj.schools)
-    assert ldap_obj["univentionBirthday"].value == user_obj.birthday
+    assert ldap_obj["univentionBirthday"].value == user_obj.birthday.strftime("%Y-%m-%d")
+    if user_obj.disabled is True:
+        exp_shadow_expire = "1"
+    elif user_obj.expiration_date:
+        exp_shadow_expire = int(time.mktime(user_obj.expiration_date.timetuple()) / 3600 / 24 + 1)
+    else:
+        exp_shadow_expire = "0"
+    assert ldap_obj["shadowExpire"].value == exp_shadow_expire
     ldap_val_ucsschool_role = ldap_obj["ucsschoolRole"].value
     if isinstance(ldap_val_ucsschool_role, str):
         ldap_val_ucsschool_role = [ldap_val_ucsschool_role]

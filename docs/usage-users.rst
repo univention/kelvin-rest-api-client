@@ -43,6 +43,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             birthday: datetime.date = None,
             disabled: bool = False,
             email: str = None,
+            expiration_date: datetime.date = None,
             kelvin_password_hashes: PasswordsHashes = None,
             password: str = None,
             record_uid: str = None,
@@ -63,6 +64,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
         self.birthday = birthday
         self.disabled = disabled
         self.email = email
+        self.expiration_date = expiration_date
         self.kelvin_password_hashes = kelvin_password_hashes
         self.password = password
         self.record_uid = record_uid
@@ -84,6 +86,9 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             ...
         def as_dict(self) -> Dict[str, Any]:
             ...
+
+.. note::
+    The field ``expiration_date`` was added to the Kelvin REST API in version ``1.5.1``. The client works with prior server versions, but the attribute will not be read or set.
 
 UserResource class
 ------------------
@@ -148,6 +153,7 @@ Retrieve user
      'birthday': None,
      'disabled': False,
      'email': None,
+     'expiration_date': None,
      'kelvin_password_hashes': None,
      'password': None,
      'record_uid': 'test1',

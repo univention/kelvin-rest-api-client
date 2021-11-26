@@ -1,5 +1,6 @@
 import base64
 import copy
+import datetime
 import logging
 import os
 import random
@@ -656,9 +657,10 @@ class TestUser:
     schools: List[str]
     firstname: str
     lastname: str
-    birthday: str = None
+    birthday: datetime.date = None
     disabled: bool = False
     email: str = None
+    expiration_date: datetime.date = None
     password: str = None
     record_uid: str = None
     roles: List[str] = None
@@ -680,11 +682,10 @@ class UserFactory(factory.Factory):
     schools = factory.List([])
     firstname = factory.Faker("first_name")
     lastname = factory.Faker("last_name")
-    birthday = factory.LazyFunction(
-        lambda: fake.date_of_birth(minimum_age=6, maximum_age=65).strftime("%Y-%m-%d")
-    )
+    birthday = factory.Faker("date_of_birth", minimum_age=6, maximum_age=18)
     disabled = False
     email = None
+    expiration_date = factory.Faker("date_between", start_date="+1y", end_date="+10y")
     password = factory.Faker("password", length=20)
     record_uid = factory.LazyAttribute(lambda o: o.name)
     roles = factory.List([])
@@ -760,6 +761,10 @@ def new_school_user(
         del data["ucsschool_roles"]
         del data["url"]
         json_data = copy.deepcopy(data)
+        if json_data["birthday"]:
+            json_data["birthday"] = json_data["birthday"].strftime("%Y-%m-%d")
+        if json_data["expiration_date"]:
+            json_data["expiration_date"] = json_data["expiration_date"].strftime("%Y-%m-%d")
         json_data["roles"] = [
             URL_ROLE_OBJECT.format(host=host, name=role) for role in json_data["roles"]
         ]
@@ -793,6 +798,8 @@ def new_school_user(
         for attr in ("roles", "schools"):
             obj[attr] = [url.rsplit("/", 1)[-1] for url in obj[attr]]
         obj["password"] = user_obj.password
+        obj["birthday"] = datetime.datetime.strptime(obj["birthday"], "%Y-%m-%d").date()
+        obj["expiration_date"] = datetime.datetime.strptime(obj["expiration_date"], "%Y-%m-%d").date()
         return TestUser(**obj)
 
     yield _func
@@ -1049,3 +1056,18 @@ async def schedule_delete_ou_using_ssh(delete_ou_using_ssh):
 
     for ou_name in ous_created:
         await delete_ou_using_ssh(ou_name)
+
+
+@pytest.fixture
+async def mail_domain(ldap_access):
+    mail_domain_objs = await ldap_access.search(
+        filter_s="(univentionObjectType=mail/domain)", attributes=["cn"]
+    )
+    if not mail_domain_objs:
+        raise AssertionError(  # pragma: no cover
+            "To run the tests properly you need to have have at least one mail domain. "
+            "Execute *on the host*: "
+            'udm mail/domain create --position "cn=domain,cn=mail,$(ucr get ldap/base)" '
+            '--set name="$(ucr get domainname)"'
+        )
+    return mail_domain_objs[0]["cn"].value

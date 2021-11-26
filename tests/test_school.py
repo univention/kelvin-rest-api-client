@@ -128,10 +128,18 @@ async def test_create_minimal(
     assert ldap_obj["ucsschoolRole"].value == f"school:school:{school_obj.name}"
     assert ldap_obj["displayName"].value == school_obj.name
     dc_base_dn = f"cn=dc,cn=server,cn=computers,ou={school_obj.name},{base_dn}"
-    class_share_file_server_dn_dn = f"cn=dc{school_obj.name},{dc_base_dn}"
-    home_share_file_server_dn = f"cn=dc{school_obj.name},{dc_base_dn}"
-    assert ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
-    assert ldap_obj["ucsschoolHomeShareFileServer"].value == home_share_file_server_dn
+    class_share_file_server_dns = [f"cn=dc{school_obj.name},{dc_base_dn}"]
+    home_share_file_server_dns = [f"cn=dc{school_obj.name},{dc_base_dn}"]
+    single_server_objs = await ldap_access.search(
+        filter_s=f"(ucsschoolRole=single_master:school:{school_obj.name})", attributes=["cn"]
+    )
+    if single_server_objs:
+        single_server_cn = single_server_objs[0]["cn"].value
+        single_server_dn = f"cn={single_server_cn},cn=dc,cn=computers,{base_dn}"
+        class_share_file_server_dns.append(single_server_dn)
+        home_share_file_server_dns.append(single_server_dn)
+    assert ldap_obj["ucsschoolClassShareFileServer"].value in class_share_file_server_dns
+    assert ldap_obj["ucsschoolHomeShareFileServer"].value in home_share_file_server_dns
     # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
 
 

@@ -30,6 +30,7 @@
 import base64
 import datetime
 import logging
+import warnings
 from typing import Any, Dict, Iterable, List, Type, get_type_hints
 
 from .base import KelvinObject, KelvinResource
@@ -98,6 +99,7 @@ class User(KelvinObject):
         "birthday",
         "disabled",
         "email",
+        "expiration_date",
         "kelvin_password_hashes",
         "password",
         "record_uid",
@@ -117,6 +119,7 @@ class User(KelvinObject):
         birthday: datetime.date = None,
         disabled: bool = False,
         email: str = None,
+        expiration_date: datetime.date = None,
         password: str = None,
         record_uid: str = None,
         roles: List[str],
@@ -144,6 +147,7 @@ class User(KelvinObject):
         self.birthday = birthday
         self.disabled = disabled
         self.email = email
+        self.expiration_date = expiration_date
         self.password = password
         self.record_uid = record_uid
         self.roles = roles
@@ -158,6 +162,19 @@ class User(KelvinObject):
         for attr in ("roles", "schools"):
             # turn urls to names ('school' will be done in super class)
             response[attr] = [url.rsplit("/", 1)[-1] for url in response[attr]]
+        if response["birthday"]:
+            response["birthday"] = datetime.datetime.strptime(response["birthday"], "%Y-%m-%d").date()
+        if "expiration_date" not in response:
+            warnings.warn(
+                "User attribute in Kelvin REST API response missing 'expiration_date' attribute. Server "
+                "version probably < '1.5.1'.",
+                RuntimeWarning,
+            )
+            response["expiration_date"] = None
+        elif response["expiration_date"]:
+            response["expiration_date"] = datetime.datetime.strptime(
+                response["expiration_date"], "%Y-%m-%d"
+            ).date()
         return super()._from_kelvin_response(response)
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
@@ -171,6 +188,10 @@ class User(KelvinObject):
             data["kelvin_password_hashes"] = self.kelvin_password_hashes.as_dict()
         else:
             del data["kelvin_password_hashes"]
+        if data["birthday"]:
+            data["birthday"] = data["birthday"].strftime("%Y-%m-%d")
+        if data["expiration_date"]:
+            data["expiration_date"] = data["expiration_date"].strftime("%Y-%m-%d")
         return data
 
 

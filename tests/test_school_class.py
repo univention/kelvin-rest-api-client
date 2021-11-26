@@ -178,6 +178,7 @@ async def test_create(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
+    mail_domain,
     new_school_class_test_obj,
     schedule_delete_obj,
     new_school_user,
@@ -190,7 +191,7 @@ async def test_create(
     async with Session(**kelvin_session_kwargs) as session:
         sc_kwargs = asdict(sc_data)
         sc_obj = SchoolClass(session=session, **sc_kwargs)
-        sc_obj.udm_properties = {"mailAddress": f"{fake.first_name()}@{test_server_configuration.host}"}
+        sc_obj.udm_properties = {"mailAddress": f"{fake.first_name()}@{mail_domain}"}
         schedule_delete_obj(object_type="class", school=sc_data.school, name=sc_data.name)
         await sc_obj.save()
         print("Created new SchoolClass: {!r}".format(sc_obj.as_dict()))
@@ -211,12 +212,13 @@ async def test_create(
 async def test_modify(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
+    mail_domain,
     new_school_class,
     new_school_class_test_obj,
     test_server_configuration,
 ):
     sc1_dn, sc1_attr = await new_school_class(
-        udm_properties={"mailAddress": f"{fake.first_name()}@{test_server_configuration.host}"}
+        udm_properties={"mailAddress": f"{fake.first_name()}@{mail_domain}"}
     )
     new_data = asdict(new_school_class_test_obj())
     school = sc1_attr["school"]
