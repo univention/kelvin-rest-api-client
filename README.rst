@@ -81,6 +81,27 @@ To create the schools run *on the UCS DC Master*:
     $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL
     $ /usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2
 
+Furthermore an email domain must exist:
+
+.. code-block:: console
+
+    $ udm mail/domain create \
+        --ignore_exists \
+        --position "cn=domain,cn=mail,$(ucr get ldap/base)" \
+        --set name="$(ucr get domainname)"
+
+Since version ``1.5.0`` the Kelvin REST API supports UDM properties in all resources. A configuration is required for the tests for this feature:
+
+.. code-block:: console
+
+    $ cat > /etc/ucsschool/kelvin/mapped_udm_properties.json <<__EOF__
+    {
+        "user": ["title"],
+        "school_class": ["mailAddress"],
+        "school": ["description"]
+    }
+    __EOF__
+
 The provided UCS Docker containers already contain both OUs.
 They can be started using the Makefile:
 
