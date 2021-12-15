@@ -1,10 +1,31 @@
-# Config file for automatic testing at travis-ci.org
-
 language: python
 python:
-  - 3.7
-  - 3.8
-  - 3.9
+    - "3.7"
+    - "3.8"
+    - "3.9"
+
+os: linux
+dist: focal
+addons:
+    snaps:
+        - lxd
+
+before_install:
+    - sudo timedatectl set-timezone Europe/Berlin
+    - wget https://download.software-univention.de/download/tarballs/ucs5.0-1e175-ucsschool5.0v1-kelvin151.tar.xz https://download.software-univention.de/download/tarballs/ucs5.0-1e175-ucsschool5.0v1-kelvin151-metadata.tar.xz https://download.software-univention.de/download/tarballs/ucs5.0-1e175-ucsschool5.0v1-kelvin151.SHA256
+    - sha256sum -c ucs5.0-1e175-ucsschool5.0v1-kelvin151.SHA256
+    - sudo lxd init --auto --storage-backend dir
+    - sudo lxc image import ucs5.0-1e175-ucsschool5.0v1-kelvin151-metadata.tar.xz ucs5.0-1e175-ucsschool5.0v1-kelvin151.tar.xz --alias ucs5ucsschool5kelvin
+    - sudo lxc launch ucs5ucsschool5kelvin kelvin -c security.privileged=true -c security.nesting=true -c raw.lxc=lxc.apparmor.profile=unconfined
+    - sleep 60
+    - sudo lxc list
+    - sudo lxc exec kelvin -- univention-app shell ucsschool-kelvin-rest-api sh -c 'echo -e "domain uni.dtr\nnameserver 172.17.42.1" > /etc/resolv.conf'
+    - sudo lxc exec kelvin -- univention-app shell ucsschool-kelvin-rest-api sh -c 'echo "172.17.42.1 m40.uni.dtr m40" >> /etc/hosts'
+    - sudo lxc exec kelvin -- univention-app shell ucsschool-kelvin-rest-api /etc/init.d/ucsschool-kelvin-rest-api restart
+    - sleep 15
+    - echo "$(sudo grep kelvin /var/snap/lxd/common/lxd/networks/lxdbr0/dnsmasq.leases | cut -d ' ' -f 3)" > IP_UCS
+    - cat IP_UCS
+    - sed -e "s/10.20.30.40/$(cat IP_UCS)/g" -e "s/dc=example,dc=com/dc=uni,dc=dtr/g" -e "s/s3cr3t/univention/g" tests/test_server_example.yaml > tests/test_server.yaml
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -U tox-travis

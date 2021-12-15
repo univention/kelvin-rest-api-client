@@ -216,6 +216,3 @@ stop-and-remove-docker-containers: ## stop and remove docker containers (not ima
 	docker stop --time 0 $(KELVIN_CONTAINER) || true
 	docker rm $(UCS_CONTAINER) || true
 	docker rm $(KELVIN_CONTAINER) || true
-
-patch-ldap3:
-	find -name port_validators.py -exec sed --in-place "s/return'Cannot/return 'Cannot/g" '{}' \;
