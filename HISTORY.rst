@@ -2,6 +2,11 @@
 History
 =======
 
+> 1.5.1
+-------
+
+* Automatic tests now run with Python 3.7 - 3.10.
+
 1.5.1 (2021-11-30)
 ------------------
 
