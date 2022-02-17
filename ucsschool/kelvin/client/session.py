@@ -168,7 +168,7 @@ class Session:
         if "headers" not in kwargs:
             kwargs["headers"] = await self.json_headers
         if "timeout" not in kwargs:
-            kwargs["timeout"] = 10.0
+            kwargs["timeout"] = self.kwargs.get("timeout", 10.0)
         response: httpx.Response = await async_request_method(url, **kwargs)
         try:
             resp_json = response.json()

@@ -50,3 +50,49 @@ async def test_session_warn_max_client_tasks(arg_client_tasks, kelvin_session_kw
             assert len(w) == 1
             assert issubclass(w[-1].category, BadSettingsWarning)
             assert "max_client_tasks" in str(w[-1].message)
+
+
+@pytest.mark.asyncio
+async def test_session_default_timeout(kelvin_session_kwargs, mocker):
+    async with Session(**kelvin_session_kwargs) as session:
+        mocker.patch.object(session.client, "get", side_effect=NotImplementedError)
+        try:
+            await session.get("http://example.com")
+        except NotImplementedError:
+            pass
+        assert session.client.get.call_args.kwargs["timeout"] == 10.0
+
+
+@pytest.mark.asyncio
+async def test_session_timeout(kelvin_session_kwargs, mocker):
+    kelvin_session_kwargs = dict(kelvin_session_kwargs, timeout=5)
+    async with Session(**kelvin_session_kwargs) as session:
+        mocker.patch.object(session.client, "get", side_effect=NotImplementedError)
+        try:
+            await session.get("http://example.com")
+        except NotImplementedError:
+            pass
+        assert session.client.get.call_args.kwargs["timeout"] == 5
+
+
+@pytest.mark.asyncio
+async def test_session_explicit_timeout(kelvin_session_kwargs, mocker):
+    async with Session(**kelvin_session_kwargs) as session:
+        mocker.patch.object(session.client, "get", side_effect=NotImplementedError)
+        try:
+            await session.get("http://example.com", timeout=7)
+        except NotImplementedError:
+            pass
+        assert session.client.get.call_args.kwargs["timeout"] == 7
+
+
+@pytest.mark.asyncio
+async def test_session_override_timeout(kelvin_session_kwargs, mocker):
+    kelvin_session_kwargs = dict(kelvin_session_kwargs, timeout=4)
+    async with Session(**kelvin_session_kwargs) as session:
+        mocker.patch.object(session.client, "get", side_effect=NotImplementedError)
+        try:
+            await session.get("http://example.com", timeout=6)
+        except NotImplementedError:
+            pass
+        assert session.client.get.call_args.kwargs["timeout"] == 6
