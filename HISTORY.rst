@@ -2,10 +2,11 @@
 History
 =======
 
-> 1.5.1
--------
+1.5.2 (2022-02-22)
+------------------
 
 * Automatic tests now run with Python 3.7 - 3.10.
+* Fixed: The timeout attribute from a session instance is now used for requests.
 
 1.5.1 (2021-11-30)
 ------------------
