@@ -25,6 +25,7 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import sys
 import warnings
 
 import pytest
@@ -32,6 +33,7 @@ from async_property import async_property
 
 from ucsschool.kelvin.client.session import BadSettingsWarning, Session
 
+_PYTHON_VERSION = sys.version_info[:2]
 kelvin_session_kwargs_mock = {
     "username": "username",
     "password": "password",
@@ -44,6 +46,13 @@ class SessionMock:
     @async_property
     async def token(self) -> str:
         return "Token"
+
+
+def call_kwargs(call_args):
+    if _PYTHON_VERSION < (3, 8):
+        return call_args[1]
+    else:
+        return call_args.kwargs
 
 
 @pytest.mark.asyncio
@@ -75,7 +84,7 @@ async def test_session_default_timeout(mocker):
             await session.get("http://example.com")
         except NotImplementedError:
             pass
-        assert session.client.get.call_args.kwargs["timeout"] == 10.0
+        assert call_kwargs(session.client.get.call_args)["timeout"] == 10.0
 
 
 @pytest.mark.asyncio
@@ -88,7 +97,7 @@ async def test_session_timeout(mocker):
             await session.get("http://example.com")
         except NotImplementedError:
             pass
-        assert session.client.get.call_args.kwargs["timeout"] == 5
+        assert call_kwargs(session.client.get.call_args)["timeout"] == 5
 
 
 @pytest.mark.asyncio
@@ -100,7 +109,7 @@ async def test_session_explicit_timeout(mocker):
             await session.get("http://example.com", timeout=7)
         except NotImplementedError:
             pass
-        assert session.client.get.call_args.kwargs["timeout"] == 7
+        assert call_kwargs(session.client.get.call_args)["timeout"] == 7
 
 
 @pytest.mark.asyncio
@@ -113,4 +122,4 @@ async def test_session_override_timeout(mocker):
             await session.get("http://example.com", timeout=6)
         except NotImplementedError:
             pass
-        assert session.client.get.call_args.kwargs["timeout"] == 6
+        assert call_kwargs(session.client.get.call_args)["timeout"] == 6
