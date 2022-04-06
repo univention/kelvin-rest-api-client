@@ -34,8 +34,6 @@ from ucsschool.kelvin.client import SchoolResource, Session
 
 fake = Faker()
 logger = logging.getLogger(__name__)
-filters = {'Authorization': "'Authorization': '**********'", 'username': "'username': '**********'",
-           'password': "'password': '**********'", }
 
 
 async def get_school_object(new_school, kelvin_session_kwargs):
@@ -46,79 +44,25 @@ async def get_school_object(new_school, kelvin_session_kwargs):
         return objs
 
 
+@pytest.mark.parametrize("log_level", [
+    logging.CRITICAL,
+    logging.ERROR,
+    logging.WARNING,
+    logging.INFO,
+    logging.DEBUG,
+    logging.NOTSET])
 @pytest.mark.asyncio
-async def test_log_level_critical(caplog, new_school, kelvin_session_kwargs):
+async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, log_level):
+    filters = {'Authorization': "'Authorization': '**********'",
+               'username': f"'username': '{kelvin_session_kwargs['username']}'",
+               'password': "'password': '**********'", }
 
-    with caplog.at_level(logging.CRITICAL):
+    with caplog.at_level(log_level):
         await get_school_object(new_school, kelvin_session_kwargs)
         for line in caplog.text.split("\n"):
             for key in filters:
                 if key in line:
                     assert filters[key] in line
                 if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
-
-
-@pytest.mark.asyncio
-async def test_log_level_error(caplog, new_school, kelvin_session_kwargs):
-
-    with caplog.at_level(logging.ERROR):
-        await get_school_object(new_school, kelvin_session_kwargs)
-        for line in caplog.text.split("\n"):
-            for key in filters:
-                if key in line:
-                    assert filters[key] in line
-                if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
-
-
-@pytest.mark.asyncio
-async def test_log_level_warning(caplog, new_school, kelvin_session_kwargs):
-
-    with caplog.at_level(logging.WARNING):
-        await get_school_object(new_school, kelvin_session_kwargs)
-        for line in caplog.text.split("\n"):
-            for key in filters:
-                if key in line:
-                    assert filters[key] in line
-                if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
-
-
-@pytest.mark.asyncio
-async def test_log_level_info(caplog, new_school, kelvin_session_kwargs):
-
-    with caplog.at_level(logging.INFO):
-        await get_school_object(new_school, kelvin_session_kwargs)
-        for line in caplog.text.split("\n"):
-            for key in filters:
-                if key in line:
-                    assert filters[key] in line
-                if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
-
-
-@pytest.mark.asyncio
-async def test_log_level_debug(caplog, new_school, kelvin_session_kwargs):
-
-    with caplog.at_level(logging.DEBUG):
-        await get_school_object(new_school, kelvin_session_kwargs)
-        for line in caplog.text.split("\n"):
-            for key in filters:
-                if key in line:
-                    assert filters[key] in line
-                if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
-
-
-@pytest.mark.asyncio
-async def test_log_level_notset(caplog, new_school, kelvin_session_kwargs):
-
-    with caplog.at_level(logging.NOTSET):
-        await get_school_object(new_school, kelvin_session_kwargs)
-        for line in caplog.text.split("\n"):
-            for key in filters:
-                if key in line:
-                    assert filters[key] in line
-                if key in kelvin_session_kwargs:
-                    assert kelvin_session_kwargs[key] not in line
+                    if not key == 'username':
+                        assert kelvin_session_kwargs[key] not in line

@@ -183,8 +183,8 @@ class Session:
         if "Authorization" in kwargs["headers"]:
             kwargs["headers"]["Authorization"] = 10 * "*"
         if "data" in kwargs:
-            kwargs["data"]["username"] = 10 * "*"
-            kwargs["data"]["password"] = 10 * "*"
+            if "password" in kwargs["data"]:
+                kwargs["data"]["password"] = 10 * "*"
 
         logger.debug(
             "%s %r (**%r) -> %r %r%s",
