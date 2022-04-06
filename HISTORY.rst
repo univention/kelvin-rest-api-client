@@ -2,6 +2,12 @@
 History
 =======
 
+1.5.2.1 (2022-04-05)
+--------------------
+
+* Fixed: Logger does replace values of credentials.
+* Added automatic tests for log output.
+
 1.5.2 (2022-02-22)
 ------------------
 
