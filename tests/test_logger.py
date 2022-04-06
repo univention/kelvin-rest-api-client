@@ -44,18 +44,24 @@ async def get_school_object(new_school, kelvin_session_kwargs):
         return objs
 
 
-@pytest.mark.parametrize("log_level", [
-    pytest.param(logging.CRITICAL, id="CRITICAL"),
-    pytest.param(logging.CRITICAL, id="ERROR"),
-    pytest.param(logging.CRITICAL, id="WARNING"),
-    pytest.param(logging.CRITICAL, id="INFO"),
-    pytest.param(logging.CRITICAL, id="DEBUG"),
-    pytest.param(logging.CRITICAL, id="NOTSET"), ])
+@pytest.mark.parametrize(
+    "log_level",
+    [
+        pytest.param(logging.CRITICAL, id="log_level_CRITICAL"),
+        pytest.param(logging.CRITICAL, id="log_level_ERROR"),
+        pytest.param(logging.CRITICAL, id="log_level_WARNING"),
+        pytest.param(logging.CRITICAL, id="log_level_INFO"),
+        pytest.param(logging.CRITICAL, id="log_level_DEBUG"),
+        pytest.param(logging.CRITICAL, id="log_level_NOTSET"),
+    ],
+)
 @pytest.mark.asyncio
 async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, log_level):
-    filters = {'Authorization': "'Authorization': '**********'",
-               'username': f"'username': '{kelvin_session_kwargs['username']}'",
-               'password': "'password': '**********'", }
+    filters = {
+        "Authorization": "'Authorization': '**********'",
+        "username": f"'username': '{kelvin_session_kwargs['username']}'",
+        "password": "'password': '**********'",
+    }
 
     with caplog.at_level(log_level):
         await get_school_object(new_school, kelvin_session_kwargs)
@@ -64,5 +70,5 @@ async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, l
                 if key in line:
                     assert filters[key] in line
                 if key in kelvin_session_kwargs:
-                    if not key == 'username':
+                    if not key == "username":
                         assert kelvin_session_kwargs[key] not in line
