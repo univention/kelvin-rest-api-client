@@ -47,12 +47,12 @@ async def get_school_object(new_school, kelvin_session_kwargs):
 @pytest.mark.parametrize(
     "log_level",
     [
-        pytest.param(logging.CRITICAL, id="log_level_CRITICAL"),
-        pytest.param(logging.CRITICAL, id="log_level_ERROR"),
-        pytest.param(logging.CRITICAL, id="log_level_WARNING"),
-        pytest.param(logging.CRITICAL, id="log_level_INFO"),
-        pytest.param(logging.CRITICAL, id="log_level_DEBUG"),
-        pytest.param(logging.CRITICAL, id="log_level_NOTSET"),
+        pytest.param(logging.CRITICAL, id="log_CRITICAL"),
+        pytest.param(logging.ERROR, id="log_ERROR"),
+        pytest.param(logging.WARNING, id="log_WARNING"),
+        pytest.param(logging.INFO, id="log_INFO"),
+        pytest.param(logging.DEBUG, id="log_DEBUG"),
+        pytest.param(logging.NOTSET, id="log_NOTSET"),
     ],
 )
 @pytest.mark.asyncio
