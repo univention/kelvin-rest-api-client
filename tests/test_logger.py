@@ -36,12 +36,11 @@ fake = Faker()
 logger = logging.getLogger(__name__)
 
 
-async def get_school_object(new_school, kelvin_session_kwargs):
-    school1, school2 = new_school(2)
+async def search_school(new_school, kelvin_session_kwargs):
+    new_school(1)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [obj async for obj in SchoolResource(session=session).search()]
-        return objs
+        SchoolResource(session=session).search()
 
 
 @pytest.mark.parametrize(
@@ -64,7 +63,7 @@ async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, l
     }
 
     with caplog.at_level(log_level):
-        await get_school_object(new_school, kelvin_session_kwargs)
+        await search_school(new_school, kelvin_session_kwargs)
         for line in caplog.text.split("\n"):
             for key in filters:
                 if key in line:
