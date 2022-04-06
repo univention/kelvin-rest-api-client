@@ -45,12 +45,12 @@ async def get_school_object(new_school, kelvin_session_kwargs):
 
 
 @pytest.mark.parametrize("log_level", [
-    logging.CRITICAL,
-    logging.ERROR,
-    logging.WARNING,
-    logging.INFO,
-    logging.DEBUG,
-    logging.NOTSET])
+    pytest.param(logging.CRITICAL, id="CRITICAL"),
+    pytest.param(logging.CRITICAL, id="ERROR"),
+    pytest.param(logging.CRITICAL, id="WARNING"),
+    pytest.param(logging.CRITICAL, id="INFO"),
+    pytest.param(logging.CRITICAL, id="DEBUG"),
+    pytest.param(logging.CRITICAL, id="NOTSET"), ])
 @pytest.mark.asyncio
 async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, log_level):
     filters = {'Authorization': "'Authorization': '**********'",
