@@ -65,9 +65,9 @@ async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, l
     with caplog.at_level(log_level):
         await search_school(new_school, kelvin_session_kwargs)
         for line in caplog.text.split("\n"):
-            for key in filters:
+            for key, value in filters.items():
                 if key in line:
-                    assert filters[key] in line
+                    assert value in line
                 if key in kelvin_session_kwargs:
-                    if not key == "username":
+                    if key != "username":
                         assert kelvin_session_kwargs[key] not in line
