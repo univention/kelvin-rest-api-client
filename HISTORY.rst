@@ -5,7 +5,7 @@ History
 1.5.2.1 (2022-04-05)
 --------------------
 
-* Fixed: Logger does replace values of credentials.
+* Fixed: Logger does replace values of credentials with placeholders.
 
 1.5.2 (2022-02-22)
 ------------------

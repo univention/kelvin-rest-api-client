@@ -68,6 +68,6 @@ async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, l
             for key, value in filters.items():
                 if key in line:
                     assert value in line
-                if key in kelvin_session_kwargs:
-                    if key != "username":
-                        assert kelvin_session_kwargs[key] not in line
+                # exclude the username from masking
+                if key in kelvin_session_kwargs and key != "username":
+                    assert kelvin_session_kwargs[key] not in line
