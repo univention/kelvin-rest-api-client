@@ -179,6 +179,13 @@ class Session:
         except ValueError:
             detail = ""
             resp_json = {}
+
+        if "Authorization" in kwargs["headers"]:
+            kwargs["headers"]["Authorization"] = 10 * "*"
+        if "data" in kwargs:
+            if "password" in kwargs["data"]:
+                kwargs["data"]["password"] = 10 * "*"
+
         logger.debug(
             "%s %r (**%r) -> %r %r%s",
             async_request_method.__name__.upper(),
