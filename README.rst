@@ -204,7 +204,7 @@ Credits
     :alt: Documentation Status
     :target: https://kelvin-rest-api-client.readthedocs.io/en/latest/?badge=latest
 .. |travisci| image:: https://travis-ci.com/univention/kelvin-rest-api-client.svg?branch=master
-    :target: https://travis-ci.com/univention/kelvin-rest-api-client
+    :target: https://app.travis-ci.com/github/univention/kelvin-rest-api-client
 .. |bandit| image:: https://img.shields.io/badge/security-bandit-yellow.svg
     :alt: Security: bandit
     :target: https://github.com/PyCQA/bandit
