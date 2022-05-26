@@ -173,6 +173,7 @@ async def test_get_with_users(
     compare_kelvin_obj_with_test_data(obj, dn=sc_dn, **sc_attr)
 
 
+@pytest.mark.parametrize("create_share", [True, False])
 @pytest.mark.asyncio
 async def test_create(
     compare_kelvin_obj_with_test_data,
@@ -183,11 +184,13 @@ async def test_create(
     schedule_delete_obj,
     new_school_user,
     test_server_configuration,
+    create_share,
 ):
     sc_data = new_school_class_test_obj()
     user1 = await new_school_user(school=sc_data.school)
     user2 = await new_school_user(school=sc_data.school)
     sc_data.users = [user1.name, user2.name]
+    sc_data.create_share = create_share
     async with Session(**kelvin_session_kwargs) as session:
         sc_kwargs = asdict(sc_data)
         sc_obj = SchoolClass(session=session, **sc_kwargs)
@@ -206,6 +209,14 @@ async def test_create(
     assert ldap_obj["description"].value == sc_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
     assert ldap_obj["mailPrimaryAddress"] == sc_obj.udm_properties["mailAddress"]
+    share_ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolShare))"
+    share_ldap_objs = await ldap_access.search(filter_s=share_ldap_filter)
+    if create_share:
+        assert len(share_ldap_objs) == 1
+        share_ldap_obj = share_ldap_objs[0]
+        assert share_ldap_obj["cn"].value == f"{sc_data.school}-{sc_data.name}"
+    else:
+        assert len(share_ldap_objs) == 0
 
 
 @pytest.mark.asyncio

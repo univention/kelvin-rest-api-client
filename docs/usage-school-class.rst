@@ -36,6 +36,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following attr
             *,
             description: str = None,
             users: List[str] = None,
+            create_share: bool = True,
             udm_properties: Dict[str, Any] = None,
             ucsschool_roles: List[str] = None,
             dn: str = None,
@@ -46,6 +47,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following attr
             self.school = school
             self.description = description
             self.users = users
+            self.create_share = create_share
             self.udm_properties = udm_properties or {}
             self.ucsschool_roles = ucsschool_roles
             self.dn = dn
@@ -99,6 +101,7 @@ They will however not be deleted automatically if they are removed from all user
             school="DEMOSCHOOL",
             description="A test class",
             users=["demo_student", "demo_teacher"],
+            create_share=True,
             session=session,
         )
         await sc.save()
@@ -109,6 +112,7 @@ They will however not be deleted automatically if they are removed from all user
      'school': 'DEMOSCHOOL',
      'description': 'A test class',
      'users': ['demo_student', 'demo_teacher'],
+     'create_share': True,
      'udm_properties': {},
      'dn': 'cn=DEMOSCHOOL-testclass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
@@ -187,6 +191,7 @@ It is necessary to pass both ``name`` and ``school`` arguments to the :py:meth:`
      'school': 'DEMOSCHOOL',
      'description': 'A test class',
      'users': ['demo_student', 'demo_teacher'],
+     'create_share': True,
      'dn': 'cn=DEMOSCHOOL-testclass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 
@@ -241,6 +246,7 @@ Get the current school class object, change some attributes and save the changes
      'school': 'DEMOSCHOOL',
      'description': 'new description',
      'users': ['demo_student'],
+     'create_share': True,
      'dn': 'cn=DEMOSCHOOL-testclass,cn=klassen,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 

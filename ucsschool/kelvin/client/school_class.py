@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class SchoolClass(KelvinObject):
     _class_display_name = "School class"
-    _kelvin_attrs = KelvinObject._kelvin_attrs + ["school", "description", "users"]
+    _kelvin_attrs = KelvinObject._kelvin_attrs + ["school", "description", "users", "create_share"]
 
     def __init__(
         self,
@@ -48,6 +48,7 @@ class SchoolClass(KelvinObject):
         *,
         description: str = None,
         users: List[str] = None,
+        create_share: bool = True,
         ucsschool_roles: List[str] = None,
         udm_properties: Dict[str, Any] = None,
         dn: str = None,
@@ -65,6 +66,7 @@ class SchoolClass(KelvinObject):
         self.school = school
         self.description = description
         self.users = users
+        self.create_share = create_share
         self._resource_class = SchoolClassResource
 
     @classmethod

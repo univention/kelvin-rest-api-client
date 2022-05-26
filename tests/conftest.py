@@ -562,6 +562,7 @@ class TestSchoolClass:
     school: str
     description: str = None
     users: List[str] = None
+    create_share: bool = True
     ucsschool_roles: List[str] = None
     udm_properties: Dict[str, Any] = None
     dn: str = None
@@ -576,6 +577,7 @@ class SchoolClassFactory(factory.Factory):
     school = "DEMOSCHOOL"
     description = factory.Faker("text", max_nb_chars=50)
     users = factory.List([])
+    create_share = True
     ucsschool_roles = factory.List([])
     udm_properties = factory.Dict({"mailAddress": None})
     dn = ""
