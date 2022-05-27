@@ -10,6 +10,7 @@ from .exceptions import InvalidRequest, InvalidToken, KelvinClientError, NoObjec
 from .role import Role, RoleResource
 from .school import School, SchoolResource
 from .school_class import SchoolClass, SchoolClassResource
+from .workgroup import WorkGroup, WorkGroupResource
 from .session import Session
 from .user import PasswordsHashes, User, UserResource
 
@@ -31,6 +32,8 @@ __all__ = [
     "RoleResource",
     "User",
     "UserResource",
+    "WorkGroup",
+    "WorkGroupResource",
 ]
 
 

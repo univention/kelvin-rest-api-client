@@ -44,6 +44,9 @@ URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
 URL_USER_RESOURCE = f"{URL_BASE}/{API_VERSION}/users/"
 URL_USER_COLLECTION = URL_USER_RESOURCE
 URL_USER_OBJECT = f"{URL_USER_COLLECTION}{{name}}"
+URL_WORKGROUP_RESOURCE = f"{URL_BASE}/{API_VERSION}/workgroups/"
+URL_WORKGROUP_COLLECTION = f"{URL_WORKGROUP_RESOURCE}?school={{school}}"
+URL_WORKGROUP_OBJECT = f"{URL_WORKGROUP_RESOURCE}{{school}}/{{name}}"
 UDM_DOCKER_CONTAINER_NAME = "udm_rest_only"
 KELVIN_DOCKER_CONTAINER_NAME = "kelvin-api"
 
@@ -644,6 +647,99 @@ async def new_school_class(
 
 
 @dataclass
+class TestWorkGroup:
+    name: str
+    school: str
+    description: str = None
+    users: List[str] = None
+    email: str = None
+    allowed_email_senders_users: List[str] = None
+    allowed_email_senders_groups: List[str] = None
+    create_share: bool = True
+    ucsschool_roles: List[str] = None
+    udm_properties: Dict[str, Any] = None
+    dn: str = None
+    url: str = None
+
+
+class WorkGroupFactory(factory.Factory):
+    class Meta:
+        model = TestWorkGroup
+
+    name = factory.LazyFunction(lambda: f"test.{fake.user_name()}")
+    school = "DEMOSCHOOL"
+    description = factory.Faker("text", max_nb_chars=50)
+    users = factory.List([])
+    email = None
+    allowed_email_senders_users = []
+    allowed_email_senders_groups = []
+    create_share = True
+    ucsschool_roles = factory.List([])
+    udm_properties = factory.Dict({})
+    dn = ""
+    url = ""
+
+
+@pytest.fixture
+def new_workgroup_test_obj() -> Callable[[], TestWorkGroup]:
+    return lambda: WorkGroupFactory()
+
+
+@pytest.fixture
+async def new_workgroup(
+    new_school,
+    kelvin_session_kwargs,
+    ldap_access,
+    new_workgroup_test_obj,
+    http_request,
+    schedule_delete_obj,
+):
+    """Create a new workgroup"""
+
+    host = kelvin_session_kwargs["host"]
+    collection_url = URL_WORKGROUP_RESOURCE.format(host=host)
+
+    async def _func(**kwargs) -> Tuple[str, Dict[str, Any]]:
+        if "name" not in kwargs:
+            kwargs["name"] = f"test.{fake.first_name()}"
+        name = kwargs["name"]
+        if "school" not in kwargs:
+            test_school = new_school(1)[0]
+            kwargs["school"] = test_school.name
+        school = kwargs["school"]
+        sc_data = new_workgroup_test_obj()
+        for k, v in kwargs.items():
+            setattr(sc_data, k, v)
+        data = asdict(sc_data)
+        del data["dn"]
+        del data["ucsschool_roles"]
+        del data["url"]
+        json_data = copy.deepcopy(data)
+        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
+        json_data["users"] = [
+            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
+        ]
+        schedule_delete_obj(object_type="class", school=school, name=name)
+        obj = http_request("post", url=collection_url, json=json_data)
+        dn = obj["dn"]
+        logger.info("Created new workgroup: %r", obj)
+
+        dn0, _ = dn.split(",", 1)
+        assert dn0 == f"cn={school}-{name}"
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))")
+        assert len(ldap_objs) == 1
+        ldap_obj = ldap_objs[0]
+        assert ldap_obj.entry_dn == dn
+        assert ldap_obj["cn"].value == f"{school}-{name}"
+        assert "ucsschoolGroup" in ldap_obj["objectClass"]
+        assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{school}"
+
+        return dn, data
+
+    yield _func
+
+
+@dataclass
 class TestUserPasswordsHashes:
     user_password: List[str]
     samba_nt_password: str
@@ -814,6 +910,7 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
         "class": URL_CLASS_OBJECT,
         "school": URL_SCHOOL_OBJECT,
         "user": URL_USER_OBJECT,
+        "workgroup": URL_WORKGROUP_OBJECT,
     }
 
     def _func(object_type: str, **search_args) -> None:
