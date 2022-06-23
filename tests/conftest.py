@@ -763,6 +763,7 @@ class TestUser:
     record_uid: str = None
     roles: List[str] = None
     school_classes: Dict[str, List[str]] = None
+    workgroups: Dict[str, List[str]] = None
     source_uid: str = None
     udm_properties: Dict[str, Any] = None
     ucsschool_roles: List[str] = None
@@ -788,6 +789,7 @@ class UserFactory(factory.Factory):
     record_uid = factory.LazyAttribute(lambda o: o.name)
     roles = factory.List([])
     school_classes = factory.Dict({})
+    workgroups = factory.Dict({})
     source_uid = "TESTID"
     udm_properties = factory.Dict({"title": None})
     ucsschool_roles = factory.List([])

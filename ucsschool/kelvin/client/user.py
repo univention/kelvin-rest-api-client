@@ -106,6 +106,7 @@ class User(KelvinObject):
         "roles",
         "schools",
         "school_classes",
+        "workgroups",
         "source_uid",
     ]
 
@@ -125,6 +126,7 @@ class User(KelvinObject):
         roles: List[str],
         schools: List[str],
         school_classes: Dict[str, List[str]] = None,
+        workgroups: Dict[str, List[str]] = None,
         source_uid: str = None,
         udm_properties: Dict[str, Any] = None,
         ucsschool_roles: List[str] = None,
@@ -154,6 +156,7 @@ class User(KelvinObject):
         self.roles = roles
         self.schools = schools
         self.school_classes = school_classes or {}
+        self.workgroups = workgroups or {}
         self.source_uid = source_uid
         self.kelvin_password_hashes = kelvin_password_hashes
         self._resource_class = UserResource
