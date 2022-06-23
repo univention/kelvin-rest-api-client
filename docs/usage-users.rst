@@ -50,6 +50,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             roles: List[str],
             schools: List[str],
             school_classes: Dict[str, List[str]] = None,
+            workgroups: Dict[str, List[str]] = None,
             source_uid: str = None,
             udm_properties: Dict[str, Any] = None,
             ucsschool_roles: List[str] = None,
@@ -72,6 +73,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
         self.roles = roles
         self.schools = schools
         self.school_classes = school_classes or {}
+        self.workgroups = workgroups or {}
         self.source_uid = source_uid
         self.udm_properties = udm_properties or {}
         self.ucsschool_roles = ucsschool_roles
@@ -161,6 +163,7 @@ Retrieve user
      'roles': ['student'],
      'schools': ['DEMOSCHOOL'],
      'school_classes': {},
+     'workgroups': {},
      'source_uid': 'TESTID',
      'udm_properties': {},
      'dn': 'uid=test1,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=example,dc=com',
