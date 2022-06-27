@@ -108,6 +108,4 @@ class WorkGroupResource(KelvinResource):
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
-            raise InvalidRequest(
-                "Argument 'school' for searching workgroups must be exact."
-            )
+            raise InvalidRequest("Argument 'school' for searching workgroups must be exact.")
