@@ -37,9 +37,14 @@ from .session import Session
 logger = logging.getLogger(__name__)
 
 
-class SchoolClass(KelvinObject):
-    _class_display_name = "School class"
-    _kelvin_attrs = KelvinObject._kelvin_attrs + ["school", "description", "users", "create_share"]
+class WorkGroup(KelvinObject):
+    _class_display_name = "Workgroup"
+    _kelvin_attrs = KelvinObject._kelvin_attrs + [
+        "school",
+        "description",
+        "users",
+        "create_share",
+    ]
 
     def __init__(
         self,
@@ -48,6 +53,9 @@ class SchoolClass(KelvinObject):
         *,
         description: str = None,
         users: List[str] = None,
+        email: str = None,
+        allowed_email_senders_users: List[str] = [],
+        allowed_email_senders_groups: List[str] = [],
         create_share: bool = True,
         ucsschool_roles: List[str] = None,
         udm_properties: Dict[str, Any] = None,
@@ -66,11 +74,14 @@ class SchoolClass(KelvinObject):
         self.school = school
         self.description = description
         self.users = users
+        self.email = email
+        self.allowed_email_senders_users = allowed_email_senders_users
+        self.allowed_email_senders_groups = allowed_email_senders_groups
         self.create_share = create_share
-        self._resource_class = SchoolClassResource
+        self._resource_class = WorkGroupResource
 
     @classmethod
-    def _from_kelvin_response(cls, response: Dict[str, Any]) -> "SchoolClass":
+    def _from_kelvin_response(cls, response: Dict[str, Any]) -> "WorkGroup":
         # user urls to user names
         response["users"] = [url.rsplit("/", 1)[-1] for url in response["users"]]
         # 'school' will be done in super class
@@ -83,18 +94,20 @@ class SchoolClass(KelvinObject):
         return data
 
 
-class SchoolClassResource(KelvinResource):
+class WorkGroupResource(KelvinResource):
     class Meta:
-        kelvin_object: Type[KelvinObject] = SchoolClass
+        kelvin_object: Type[KelvinObject] = WorkGroup
         required_get_attrs: Iterable[str] = ("name", "school")
         required_search_attrs: Iterable[str] = ("school",)
 
     def __init__(self, session: Session):
         super().__init__(session=session)
-        self.collection_url = self.session.urls["class"]
-        self.object_url = f"{self.session.urls['class']}{{school}}/{{name}}"
+        self.collection_url = self.session.urls["workgroup"]
+        self.object_url = f"{self.session.urls['workgroup']}{{school}}/{{name}}"
 
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
-            raise InvalidRequest("Argument 'school' for searching school classes must be exact.")
+            raise InvalidRequest(
+                "Argument 'school' for searching workgroups must be exact."
+            )

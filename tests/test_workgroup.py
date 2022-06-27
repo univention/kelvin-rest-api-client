@@ -31,7 +31,7 @@ import ldap3
 import pytest
 from faker import Faker
 
-from ucsschool.kelvin.client import InvalidRequest, NoObject, SchoolClass, SchoolClassResource, Session
+from ucsschool.kelvin.client import InvalidRequest, NoObject, WorkGroup, WorkGroupResource, Session
 
 fake = Faker()
 
@@ -39,9 +39,9 @@ fake = Faker()
 API_VERSION = "v1"
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
-URL_CLASS_RESOURCE = f"{URL_BASE}/{API_VERSION}/classes/"
-URL_CLASS_COLLECTION = f"{URL_CLASS_RESOURCE}?school={{school}}"
-URL_CLASS_OBJECT = f"{URL_CLASS_RESOURCE}{{school}}/{{name}}"
+URL_WORKGROUP_RESOURCE = f"{URL_BASE}/{API_VERSION}/workgroups/"
+URL_WORKGROUP_COLLECTION = f"{URL_WORKGROUP_RESOURCE}?school={{school}}"
+URL_WORKGROUP_OBJECT = f"{URL_WORKGROUP_RESOURCE}{{school}}/{{name}}"
 URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
 URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
 URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
@@ -52,17 +52,17 @@ async def test_search_no_name_arg(
     compare_kelvin_obj_with_test_data,
     new_school,
     kelvin_session_kwargs,
-    new_school_class,
+    new_workgroup,
 ):
     school = new_school(1)[0]
     school_name = school.name
-    sc1_dn, sc1_attr = await new_school_class(school=school_name)
-    sc2_dn, sc2_attr = await new_school_class(school=school_name)
+    sc1_dn, sc1_attr = await new_workgroup(school=school_name)
+    sc2_dn, sc2_attr = await new_workgroup(school=school_name)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [obj async for obj in SchoolClassResource(session=session).search(school=school_name)]
+        objs = [obj async for obj in WorkGroupResource(session=session).search(school=school_name)]
 
-    assert objs, f"No SchoolClass in school {school!r} found."
+    assert objs, f"No WorkGroup in school {school!r} found."
     assert len(objs) >= 2
     assert sc1_dn in [sc.dn for sc in objs]
     assert sc2_dn in [sc.dn for sc in objs]
@@ -78,14 +78,14 @@ async def test_search_partial_name_arg(
     compare_kelvin_obj_with_test_data,
     new_school,
     kelvin_session_kwargs,
-    new_school_class,
+    new_workgroup,
 ):
     school = new_school(1)[0]
     school_name = school.name
     # don't use usual name starting with 'test.', as leftovers of previous
     # tests will also match 'test.*'
     name = f"{fake.first_name()}{fake.first_name()}"
-    sc1_dn, sc1_attr = await new_school_class(school=school_name, name=name)
+    sc1_dn, sc1_attr = await new_workgroup(school=school_name, name=name)
     name_len = len(name)
     name_begin = name[: int(name_len / 2)]
     name_end = name[len(name_begin) :]
@@ -93,20 +93,20 @@ async def test_search_partial_name_arg(
     async with Session(**kelvin_session_kwargs) as session:
         objs1 = [
             obj
-            async for obj in SchoolClassResource(session=session).search(
+            async for obj in WorkGroupResource(session=session).search(
                 school=school_name, name=f"{name_begin}*"
             )
         ]
         objs2 = [
             obj
-            async for obj in SchoolClassResource(session=session).search(
+            async for obj in WorkGroupResource(session=session).search(
                 school=school_name, name=f"*{name_end}"
             )
         ]
-    assert objs1, f"No SchoolClass for school={school_name!r} and name='{name_begin}*' found."
+    assert objs1, f"No WorkGroup for school={school_name!r} and name='{name_begin}*' found."
     assert len(objs1) == 1
     assert sc1_dn == objs1[0].dn
-    assert objs2, f"No SchoolClass for school={school_name!r} and name='*{name_end}' found."
+    assert objs2, f"No WorkGroup for school={school_name!r} and name='*{name_end}' found."
     assert len(objs2) == 1
     assert sc1_dn == objs2[0].dn
 
@@ -122,20 +122,20 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
         with pytest.raises(InvalidRequest):
             assert [
                 obj
-                async for obj in SchoolClassResource(session=session).search(
+                async for obj in WorkGroupResource(session=session).search(
                     school=f"{school_name_begin}*"
                 )
             ]
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_class):
-    sc1_dn, sc1_attr = await new_school_class()
+async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_workgroup):
+    sc1_dn, sc1_attr = await new_workgroup()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
-    url = URL_CLASS_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
+    url = URL_WORKGROUP_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await SchoolClassResource(session=session).get_from_url(url)
+        obj = await WorkGroupResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
 
 
@@ -144,11 +144,11 @@ async def test_get_no_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school,
-    new_school_class,
+    new_workgroup,
 ):
-    sc_dn, sc_attr = await new_school_class()
+    sc_dn, sc_attr = await new_workgroup()
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await SchoolClassResource(session=session).get(
+        obj = await WorkGroupResource(session=session).get(
             school=sc_attr["school"], name=sc_attr["name"]
         )
     compare_kelvin_obj_with_test_data(obj, dn=sc_dn, **sc_attr)
@@ -159,14 +159,14 @@ async def test_get_with_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school,
-    new_school_class,
+    new_workgroup,
     new_school_user,
 ):
     user1 = await new_school_user()
     user2 = await new_school_user(school=user1.school)
-    sc_dn, sc_attr = await new_school_class(school=user1.school, users=[user1.name, user2.name])
+    sc_dn, sc_attr = await new_workgroup(school=user1.school, users=[user1.name, user2.name])
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await SchoolClassResource(session=session).get(
+        obj = await WorkGroupResource(session=session).get(
             school=sc_attr["school"], name=sc_attr["name"]
         )
     assert set(obj.users) == {user1.name, user2.name}
@@ -180,24 +180,23 @@ async def test_create(
     kelvin_session_kwargs,
     ldap_access,
     mail_domain,
-    new_school_class_test_obj,
+    new_workgroup_test_obj,
     schedule_delete_obj,
     new_school_user,
     test_server_configuration,
     create_share,
 ):
-    sc_data = new_school_class_test_obj()
+    sc_data = new_workgroup_test_obj()
     user1 = await new_school_user(school=sc_data.school)
     user2 = await new_school_user(school=sc_data.school)
     sc_data.users = [user1.name, user2.name]
     sc_data.create_share = create_share
     async with Session(**kelvin_session_kwargs) as session:
         sc_kwargs = asdict(sc_data)
-        sc_obj = SchoolClass(session=session, **sc_kwargs)
-        sc_obj.udm_properties = {"mailAddress": f"{fake.first_name()}@{mail_domain}"}
-        schedule_delete_obj(object_type="class", school=sc_data.school, name=sc_data.name)
+        sc_obj = WorkGroup(session=session, **sc_kwargs)
+        schedule_delete_obj(object_type="workgroup", school=sc_data.school, name=sc_data.name)
         await sc_obj.save()
-        print("Created new SchoolClass: {!r}".format(sc_obj.as_dict()))
+        print("Created new WorkGroup: {!r}".format(sc_obj.as_dict()))
 
     ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolGroup))"
     ldap_objs = await ldap_access.search(filter_s=ldap_filter)
@@ -205,10 +204,9 @@ async def test_create(
     ldap_obj = ldap_objs[0]
     assert ldap_obj.entry_dn == sc_obj.dn
     assert ldap_obj["cn"].value == f"{sc_data.school}-{sc_data.name}"
-    assert ldap_obj["ucsschoolRole"].value == f"school_class:school:{sc_data.school}"
+    assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{sc_data.school}"
     assert ldap_obj["description"].value == sc_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
-    assert ldap_obj["mailPrimaryAddress"] == sc_obj.udm_properties["mailAddress"]
     share_ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolShare))"
     share_ldap_objs = await ldap_access.search(filter_s=share_ldap_filter)
     if create_share:
@@ -224,62 +222,29 @@ async def test_modify(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     mail_domain,
-    new_school_class,
-    new_school_class_test_obj,
+    new_workgroup,
+    new_workgroup_test_obj,
     test_server_configuration,
 ):
-    sc1_dn, sc1_attr = await new_school_class(
-        udm_properties={"mailAddress": f"{fake.first_name()}@{mail_domain}"}
+    sc1_dn, sc1_attr = await new_workgroup(
     )
-    new_data = asdict(new_school_class_test_obj())
+    new_data = asdict(new_workgroup_test_obj())
     school = sc1_attr["school"]
     name = sc1_attr["name"]
     async with Session(**kelvin_session_kwargs) as session:
-        sc_resource = SchoolClassResource(session=session)
-        obj: SchoolClass = await sc_resource.get(school=school, name=name)
+        sc_resource = WorkGroupResource(session=session)
+        obj: WorkGroup = await sc_resource.get(school=school, name=name)
         compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
         for k, v in new_data.items():
             if k not in ("school", "name", "dn", "url", "ucsschool_roles"):
                 setattr(obj, k, v)
-        new_obj: SchoolClass = await obj.save()
+        new_obj: WorkGroup = await obj.save()
         assert new_obj is obj
         assert new_obj.as_dict() == obj.as_dict()
         # load fresh object
-        fresh_obj: SchoolClass = await sc_resource.get(school=school, name=name)
+        fresh_obj: WorkGroup = await sc_resource.get(school=school, name=name)
         assert fresh_obj.as_dict() == new_obj.as_dict()
         compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
-
-
-@pytest.mark.asyncio
-async def test_move_change_name(
-    compare_kelvin_obj_with_test_data,
-    kelvin_session_kwargs,
-    new_school_class,
-    schedule_delete_obj,
-):
-    sc1_dn, sc1_attr = await new_school_class()
-    school = sc1_attr["school"]
-    old_name = sc1_attr["name"]
-    new_name = fake.first_name()
-    assert old_name != new_name
-    async with Session(**kelvin_session_kwargs) as session:
-        sc_resource = SchoolClassResource(session=session)
-        obj: SchoolClass = await sc_resource.get(school=school, name=old_name)
-        assert obj.name == old_name
-        compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
-        obj.name = new_name
-        old_url = obj.url
-        schedule_delete_obj(object_type="class", school=school, name=new_name)
-
-        new_obj: SchoolClass = await obj.save()
-        assert new_obj is obj
-        assert new_obj.name == new_name
-        assert new_obj.url != old_url
-        # load fresh object
-        fresh_obj: SchoolClass = await sc_resource.get(school=school, name=new_name)
-        assert fresh_obj.name == new_name
-        assert fresh_obj.url != old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
 
 
 @pytest.mark.asyncio
@@ -287,10 +252,10 @@ async def test_move_change_school(
     compare_kelvin_obj_with_test_data,
     new_school,
     kelvin_session_kwargs,
-    new_school_class,
+    new_workgroup,
     schedule_delete_obj,
 ):
-    sc1_dn, sc1_attr = await new_school_class()
+    sc1_dn, sc1_attr = await new_workgroup()
     old_school = sc1_attr["school"]
     school1, school2 = new_school(2)
     ou1, ou2 = school1.name, school2.name
@@ -298,32 +263,32 @@ async def test_move_change_school(
     new_school_ = ou1 if old_school == ou2 else ou2
     assert old_school != new_school_
     async with Session(**kelvin_session_kwargs) as session:
-        sc_resource = SchoolClassResource(session=session)
-        obj: SchoolClass = await sc_resource.get(school=old_school, name=name)
+        sc_resource = WorkGroupResource(session=session)
+        obj: WorkGroup = await sc_resource.get(school=old_school, name=name)
         assert obj.school == old_school
         compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
         obj.school = new_school_
-        schedule_delete_obj(object_type="class", school=new_school_, name=name)
+        schedule_delete_obj(object_type="workgroup", school=new_school_, name=name)
 
         with pytest.raises(InvalidRequest) as exc_info:
             await obj.save()
-        assert "Moving of class to other school is not allowed" in exc_info.value.args[0]
+        assert "Moving a workgroup to another school is not allowed" in exc_info.value.args[0]
 
 
 @pytest.mark.asyncio
-async def test_delete(kelvin_session_kwargs, new_school_class):
-    sc1_dn, sc1_attr = await new_school_class()
+async def test_delete(kelvin_session_kwargs, new_workgroup):
+    sc1_dn, sc1_attr = await new_workgroup()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await SchoolClassResource(session=session).get(school=school, name=name)
+        obj = await WorkGroupResource(session=session).get(school=school, name=name)
         assert obj
         res = await obj.delete()
         assert res is None
 
     async with Session(**kelvin_session_kwargs) as session:
         with pytest.raises(NoObject):
-            await SchoolClassResource(session=session).get(school=school, name=name)
+            await WorkGroupResource(session=session).get(school=school, name=name)
 
 
 @pytest.mark.asyncio
@@ -331,16 +296,16 @@ async def test_reload(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
-    new_school_class,
+    new_workgroup,
 ):
-    sc1_dn, sc1_attr = await new_school_class()
+    sc1_dn, sc1_attr = await new_workgroup()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
     description_old = sc1_attr["description"]
     description_new = fake.text(max_nb_chars=50)
 
     async with Session(**kelvin_session_kwargs) as session:
-        obj: SchoolClass = await SchoolClassResource(session=session).get(school=school, name=name)
+        obj: WorkGroup = await WorkGroupResource(session=session).get(school=school, name=name)
         assert obj.description == description_old
         await obj.reload()
         assert obj.description == description_old
