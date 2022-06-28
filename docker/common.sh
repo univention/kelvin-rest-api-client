@@ -16,7 +16,7 @@ export UDM_ONLY_TARGET_DOCKER_IMG_VERSION="${UDM_ONLY_TARGET_DOCKER_IMG}:${UCS_R
 export UDM_ONLY_TARGET_DOCKER_IMG_LATEST="${UDM_ONLY_TARGET_DOCKER_IMG}:${UCS_REPOS}-latest"
 
 export KELVIN_CONTAINER=kelvin-api
-export KELVIN_REST_API_VERSION="1.5.2"
+export KELVIN_REST_API_VERSION="1.5.5"
 export KELVIN_REST_API_IMG="${DOCKER_REGISTRY}/ucsschool-kelvin-rest-api:${KELVIN_REST_API_VERSION}"
 export KELVIN_API_LOG_FILE="/var/log/univention/ucsschool-kelvin-rest-api/http.log"
 

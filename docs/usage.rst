@@ -20,6 +20,7 @@ Section :ref:`Authentication and authorization <auth>` describes its usage.
    usage-school
    usage-school-class
    usage-users
+   usage-workgroups
 
 
 

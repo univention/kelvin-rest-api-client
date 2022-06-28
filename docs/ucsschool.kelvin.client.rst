@@ -14,6 +14,7 @@ Submodules
    ucsschool.kelvin.client.school_class
    ucsschool.kelvin.client.session
    ucsschool.kelvin.client.user
+   ucsschool.kelvin.client.workgroup
 
 Module contents
 ---------------

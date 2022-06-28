@@ -31,7 +31,7 @@ import ldap3
 import pytest
 from faker import Faker
 
-from ucsschool.kelvin.client import InvalidRequest, NoObject, WorkGroup, WorkGroupResource, Session
+from ucsschool.kelvin.client import InvalidRequest, NoObject, Session, WorkGroup, WorkGroupResource
 
 fake = Faker()
 
@@ -226,8 +226,7 @@ async def test_modify(
     new_workgroup_test_obj,
     test_server_configuration,
 ):
-    sc1_dn, sc1_attr = await new_workgroup(
-    )
+    sc1_dn, sc1_attr = await new_workgroup()
     new_data = asdict(new_workgroup_test_obj())
     school = sc1_attr["school"]
     name = sc1_attr["name"]
