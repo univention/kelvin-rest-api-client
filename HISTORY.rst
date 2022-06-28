@@ -2,7 +2,7 @@
 History
 =======
 
-1.6.3 (2022-06-27)
+1.6.0 (2022-06-27)
 --------------------
 
 * Add support for workgroup resource.
