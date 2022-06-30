@@ -2,6 +2,11 @@
 History
 =======
 
+1.6.1 (2022-06-30)
+--------------------
+
+* Ignore unknown attributes in KelvinObject child classes.
+
 1.6.0 (2022-06-27)
 --------------------
 
