@@ -54,6 +54,7 @@ class SchoolClass(KelvinObject):
         dn: str = None,
         url: str = None,
         session: Session = None,
+        **kwargs,
     ):
         super().__init__(
             name=name,

@@ -56,6 +56,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             dn: str = None,
             url: str = None,
             session: Session = None,
+            **kwargs,
         ):
         self.name = name
         self.school = school

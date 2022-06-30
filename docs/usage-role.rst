@@ -25,6 +25,7 @@ The :py:class:`ucsschool.kelvin.client.Role` class has the following attributes 
             display_name: str = None,
             url: str = None,
             session: Session = None,
+            **kwargs,
         ):
             self.name = name
             self.display_name = display_name

@@ -47,6 +47,7 @@ class Role(KelvinObject):
         display_name: str = None,
         url: str = None,
         session: Session = None,
+        **kwargs,
     ):
         super().__init__(
             name=name, ucsschool_roles=None, udm_properties=None, dn=None, url=url, session=session

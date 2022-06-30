@@ -49,6 +49,7 @@ The :py:class:`ucsschool.kelvin.client.School` class has the following attribute
             dn: str = None,
             url: str = None,
             session: Session = None,
+            **kwargs,
         ):
             self.name = name
             self.display_name = display_name
