@@ -2,7 +2,7 @@
 Python UCS\@school Kelvin REST API Client
 =========================================
 
-|python| |license| |code style| |bandit| |codecov| |docspassing| |travisci| |gh Code Linting| |gh Integration tests|
+|python| |license| |code style| |bandit| |codecov| |docspassing| |gh Code Linting| |gh Integration tests|
 
 Python library to interact with the `UCS\@school Kelvin REST API`_.
 
@@ -16,7 +16,7 @@ Features
 * Asynchronous
 * Automatic handling of HTTP(S) sessions
 * Type annotations
-* 97% test coverage (unittests + integration tests)
+* ~95% test coverage (unittests + integration tests)
 * Python 3.7, 3.8, 3.9, 3.10
 
 
