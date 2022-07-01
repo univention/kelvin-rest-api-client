@@ -52,6 +52,7 @@ class KelvinObject(ABC):
         dn: str = None,
         url: str = None,
         session: Session = None,
+        **kwargs,
     ):
         self.name = name
         self.ucsschool_roles = ucsschool_roles
