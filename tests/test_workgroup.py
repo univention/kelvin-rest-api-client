@@ -75,7 +75,6 @@ async def test_search_no_name_arg(
 
 @pytest.mark.asyncio
 async def test_search_partial_name_arg(
-    compare_kelvin_obj_with_test_data,
     new_school,
     kelvin_session_kwargs,
     new_workgroup,
@@ -143,7 +142,6 @@ async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kw
 async def test_get_no_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
-    new_school,
     new_workgroup,
 ):
     wg_dn, wg_attr = await new_workgroup()
@@ -158,7 +156,6 @@ async def test_get_no_users(
 async def test_get_with_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
-    new_school,
     new_workgroup,
     new_school_user,
 ):
@@ -176,14 +173,12 @@ async def test_get_with_users(
 @pytest.mark.parametrize("create_share", [True, False])
 @pytest.mark.asyncio
 async def test_create(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     mail_domain,
     new_workgroup_test_obj,
     schedule_delete_obj,
     new_school_user,
-    test_server_configuration,
     create_share,
 ):
     wg_data = new_workgroup_test_obj()
@@ -224,7 +219,6 @@ async def test_modify(
     mail_domain,
     new_workgroup,
     new_workgroup_test_obj,
-    test_server_configuration,
 ):
     wg1_dn, wg1_attr = await new_workgroup()
     new_data = asdict(new_workgroup_test_obj())
@@ -292,7 +286,6 @@ async def test_delete(kelvin_session_kwargs, new_workgroup):
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_workgroup,

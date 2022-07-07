@@ -217,7 +217,6 @@ async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new
 @pytest.mark.asyncio
 async def test_create(
     check_password,
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_user_test_obj,
@@ -269,7 +268,7 @@ async def test_create(
     wg_ldap_objs = await ldap_access.search(filter_s=wg_ldap_filter)
     assert len(wg_ldap_objs) == 1
     wg_ldap_obj = wg_ldap_objs[0]
-    assert user_obj.dn in wg_ldap_obj.uniqueMember
+    assert user_obj.dn in wg_ldap_obj.uniqueMember, wg_ldap_obj
 
 
 @pytest.mark.asyncio
@@ -449,7 +448,6 @@ async def test_delete(kelvin_session_kwargs, new_school_user):
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_school_user,
