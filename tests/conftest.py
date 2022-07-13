@@ -719,7 +719,7 @@ async def new_workgroup(
         json_data["users"] = [
             URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
         ]
-        schedule_delete_obj(object_type="class", school=school, name=name)
+        schedule_delete_obj(object_type="workgroup", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
         dn = obj["dn"]
         logger.info("Created new workgroup: %r", obj)
