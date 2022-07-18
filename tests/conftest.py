@@ -719,7 +719,7 @@ async def new_workgroup(
         json_data["users"] = [
             URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
         ]
-        schedule_delete_obj(object_type="class", school=school, name=name)
+        schedule_delete_obj(object_type="workgroup", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
         dn = obj["dn"]
         logger.info("Created new workgroup: %r", obj)
@@ -763,6 +763,7 @@ class TestUser:
     record_uid: str = None
     roles: List[str] = None
     school_classes: Dict[str, List[str]] = None
+    workgroups: Dict[str, List[str]] = None
     source_uid: str = None
     udm_properties: Dict[str, Any] = None
     ucsschool_roles: List[str] = None
@@ -788,6 +789,7 @@ class UserFactory(factory.Factory):
     record_uid = factory.LazyAttribute(lambda o: o.name)
     roles = factory.List([])
     school_classes = factory.Dict({})
+    workgroups = factory.Dict({})
     source_uid = "TESTID"
     udm_properties = factory.Dict({"title": None})
     ucsschool_roles = factory.List([])

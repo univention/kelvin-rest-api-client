@@ -56,26 +56,25 @@ async def test_search_no_name_arg(
 ):
     school = new_school(1)[0]
     school_name = school.name
-    sc1_dn, sc1_attr = await new_workgroup(school=school_name)
-    sc2_dn, sc2_attr = await new_workgroup(school=school_name)
+    wg1_dn, wg1_attr = await new_workgroup(school=school_name)
+    wg2_dn, wg2_attr = await new_workgroup(school=school_name)
 
     async with Session(**kelvin_session_kwargs) as session:
         objs = [obj async for obj in WorkGroupResource(session=session).search(school=school_name)]
 
     assert objs, f"No WorkGroup in school {school!r} found."
     assert len(objs) >= 2
-    assert sc1_dn in [sc.dn for sc in objs]
-    assert sc2_dn in [sc.dn for sc in objs]
+    assert wg1_dn in [wg.dn for wg in objs]
+    assert wg2_dn in [wg.dn for wg in objs]
     for obj in objs:
-        if obj.dn == sc1_dn:
-            compare_kelvin_obj_with_test_data(obj, **sc1_attr)
-        if obj.dn == sc2_dn:
-            compare_kelvin_obj_with_test_data(obj, **sc2_attr)
+        if obj.dn == wg1_dn:
+            compare_kelvin_obj_with_test_data(obj, **wg1_attr)
+        if obj.dn == wg2_dn:
+            compare_kelvin_obj_with_test_data(obj, **wg2_attr)
 
 
 @pytest.mark.asyncio
 async def test_search_partial_name_arg(
-    compare_kelvin_obj_with_test_data,
     new_school,
     kelvin_session_kwargs,
     new_workgroup,
@@ -85,7 +84,7 @@ async def test_search_partial_name_arg(
     # don't use usual name starting with 'test.', as leftovers of previous
     # tests will also match 'test.*'
     name = f"{fake.first_name()}{fake.first_name()}"
-    sc1_dn, sc1_attr = await new_workgroup(school=school_name, name=name)
+    wg1_dn, wg1_attr = await new_workgroup(school=school_name, name=name)
     name_len = len(name)
     name_begin = name[: int(name_len / 2)]
     name_end = name[len(name_begin) :]
@@ -105,10 +104,10 @@ async def test_search_partial_name_arg(
         ]
     assert objs1, f"No WorkGroup for school={school_name!r} and name='{name_begin}*' found."
     assert len(objs1) == 1
-    assert sc1_dn == objs1[0].dn
+    assert wg1_dn == objs1[0].dn
     assert objs2, f"No WorkGroup for school={school_name!r} and name='*{name_end}' found."
     assert len(objs2) == 1
-    assert sc1_dn == objs2[0].dn
+    assert wg1_dn == objs2[0].dn
 
 
 @pytest.mark.asyncio
@@ -130,89 +129,85 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
 
 @pytest.mark.asyncio
 async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_workgroup):
-    sc1_dn, sc1_attr = await new_workgroup()
-    school = sc1_attr["school"]
-    name = sc1_attr["name"]
+    wg1_dn, wg1_attr = await new_workgroup()
+    school = wg1_attr["school"]
+    name = wg1_attr["name"]
     url = URL_WORKGROUP_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get_from_url(url)
-    compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
+    compare_kelvin_obj_with_test_data(obj, dn=wg1_dn, **wg1_attr)
 
 
 @pytest.mark.asyncio
 async def test_get_no_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
-    new_school,
     new_workgroup,
 ):
-    sc_dn, sc_attr = await new_workgroup()
+    wg_dn, wg_attr = await new_workgroup()
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get(
-            school=sc_attr["school"], name=sc_attr["name"]
+            school=wg_attr["school"], name=wg_attr["name"]
         )
-    compare_kelvin_obj_with_test_data(obj, dn=sc_dn, **sc_attr)
+    compare_kelvin_obj_with_test_data(obj, dn=wg_dn, **wg_attr)
 
 
 @pytest.mark.asyncio
 async def test_get_with_users(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
-    new_school,
     new_workgroup,
     new_school_user,
 ):
     user1 = await new_school_user()
     user2 = await new_school_user(school=user1.school)
-    sc_dn, sc_attr = await new_workgroup(school=user1.school, users=[user1.name, user2.name])
+    wg_dn, wg_attr = await new_workgroup(school=user1.school, users=[user1.name, user2.name])
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get(
-            school=sc_attr["school"], name=sc_attr["name"]
+            school=wg_attr["school"], name=wg_attr["name"]
         )
     assert set(obj.users) == {user1.name, user2.name}
-    compare_kelvin_obj_with_test_data(obj, dn=sc_dn, **sc_attr)
+    compare_kelvin_obj_with_test_data(obj, dn=wg_dn, **wg_attr)
 
 
 @pytest.mark.parametrize("create_share", [True, False])
 @pytest.mark.asyncio
 async def test_create(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     mail_domain,
     new_workgroup_test_obj,
     schedule_delete_obj,
     new_school_user,
-    test_server_configuration,
     create_share,
 ):
-    sc_data = new_workgroup_test_obj()
-    user1 = await new_school_user(school=sc_data.school)
-    user2 = await new_school_user(school=sc_data.school)
-    sc_data.users = [user1.name, user2.name]
-    sc_data.create_share = create_share
+    wg_data = new_workgroup_test_obj()
+    user1 = await new_school_user(school=wg_data.school)
+    user2 = await new_school_user(school=wg_data.school)
+    wg_data.users = [user1.name, user2.name]
+    wg_data.create_share = create_share
     async with Session(**kelvin_session_kwargs) as session:
-        sc_kwargs = asdict(sc_data)
-        sc_obj = WorkGroup(session=session, **sc_kwargs)
-        schedule_delete_obj(object_type="workgroup", school=sc_data.school, name=sc_data.name)
-        await sc_obj.save()
-        print("Created new WorkGroup: {!r}".format(sc_obj.as_dict()))
+        wg_kwargs = asdict(wg_data)
+        wg_obj = WorkGroup(session=session, **wg_kwargs)
+        schedule_delete_obj(object_type="workgroup", school=wg_data.school, name=wg_data.name)
+        await wg_obj.save()
+        print("Created new WorkGroup: {!r}".format(wg_obj.as_dict()))
 
-    ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolGroup))"
+    ldap_filter = f"(&(cn={wg_data.school}-{wg_data.name})(objectClass=ucsschoolGroup))"
     ldap_objs = await ldap_access.search(filter_s=ldap_filter)
     assert len(ldap_objs) == 1
     ldap_obj = ldap_objs[0]
-    assert ldap_obj.entry_dn == sc_obj.dn
-    assert ldap_obj["cn"].value == f"{sc_data.school}-{sc_data.name}"
-    assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{sc_data.school}"
-    assert ldap_obj["description"].value == sc_obj.description
+    assert ldap_obj.entry_dn == wg_obj.dn
+    assert ldap_obj["cn"].value == f"{wg_data.school}-{wg_data.name}"
+    assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{wg_data.school}"
+    assert ldap_obj["description"].value == wg_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
-    share_ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolShare))"
+    share_ldap_filter = f"(&(cn={wg_data.school}-{wg_data.name})(objectClass=ucsschoolShare))"
     share_ldap_objs = await ldap_access.search(filter_s=share_ldap_filter)
     if create_share:
         assert len(share_ldap_objs) == 1
         share_ldap_obj = share_ldap_objs[0]
-        assert share_ldap_obj["cn"].value == f"{sc_data.school}-{sc_data.name}"
+        assert share_ldap_obj["cn"].value == f"{wg_data.school}-{wg_data.name}"
     else:
         assert len(share_ldap_objs) == 0
 
@@ -224,16 +219,15 @@ async def test_modify(
     mail_domain,
     new_workgroup,
     new_workgroup_test_obj,
-    test_server_configuration,
 ):
-    sc1_dn, sc1_attr = await new_workgroup()
+    wg1_dn, wg1_attr = await new_workgroup()
     new_data = asdict(new_workgroup_test_obj())
-    school = sc1_attr["school"]
-    name = sc1_attr["name"]
+    school = wg1_attr["school"]
+    name = wg1_attr["name"]
     async with Session(**kelvin_session_kwargs) as session:
-        sc_resource = WorkGroupResource(session=session)
-        obj: WorkGroup = await sc_resource.get(school=school, name=name)
-        compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
+        wg_resource = WorkGroupResource(session=session)
+        obj: WorkGroup = await wg_resource.get(school=school, name=name)
+        compare_kelvin_obj_with_test_data(obj, dn=wg1_dn, **wg1_attr)
         for k, v in new_data.items():
             if k not in ("school", "name", "dn", "url", "ucsschool_roles"):
                 setattr(obj, k, v)
@@ -241,7 +235,7 @@ async def test_modify(
         assert new_obj is obj
         assert new_obj.as_dict() == obj.as_dict()
         # load fresh object
-        fresh_obj: WorkGroup = await sc_resource.get(school=school, name=name)
+        fresh_obj: WorkGroup = await wg_resource.get(school=school, name=name)
         assert fresh_obj.as_dict() == new_obj.as_dict()
         compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
 
@@ -254,18 +248,18 @@ async def test_move_change_school(
     new_workgroup,
     schedule_delete_obj,
 ):
-    sc1_dn, sc1_attr = await new_workgroup()
-    old_school = sc1_attr["school"]
+    wg1_dn, wg1_attr = await new_workgroup()
+    old_school = wg1_attr["school"]
     school1, school2 = new_school(2)
     ou1, ou2 = school1.name, school2.name
-    name = sc1_attr["name"]
+    name = wg1_attr["name"]
     new_school_ = ou1 if old_school == ou2 else ou2
     assert old_school != new_school_
     async with Session(**kelvin_session_kwargs) as session:
-        sc_resource = WorkGroupResource(session=session)
-        obj: WorkGroup = await sc_resource.get(school=old_school, name=name)
+        wg_resource = WorkGroupResource(session=session)
+        obj: WorkGroup = await wg_resource.get(school=old_school, name=name)
         assert obj.school == old_school
-        compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
+        compare_kelvin_obj_with_test_data(obj, dn=wg1_dn, **wg1_attr)
         obj.school = new_school_
         schedule_delete_obj(object_type="workgroup", school=new_school_, name=name)
 
@@ -276,9 +270,9 @@ async def test_move_change_school(
 
 @pytest.mark.asyncio
 async def test_delete(kelvin_session_kwargs, new_workgroup):
-    sc1_dn, sc1_attr = await new_workgroup()
-    school = sc1_attr["school"]
-    name = sc1_attr["name"]
+    wg1_dn, wg1_attr = await new_workgroup()
+    school = wg1_attr["school"]
+    name = wg1_attr["name"]
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get(school=school, name=name)
         assert obj
@@ -292,15 +286,14 @@ async def test_delete(kelvin_session_kwargs, new_workgroup):
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_workgroup,
 ):
-    sc1_dn, sc1_attr = await new_workgroup()
-    school = sc1_attr["school"]
-    name = sc1_attr["name"]
-    description_old = sc1_attr["description"]
+    wg1_dn, wg1_attr = await new_workgroup()
+    school = wg1_attr["school"]
+    name = wg1_attr["name"]
+    description_old = wg1_attr["description"]
     description_new = fake.text(max_nb_chars=50)
 
     async with Session(**kelvin_session_kwargs) as session:

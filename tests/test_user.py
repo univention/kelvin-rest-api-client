@@ -217,13 +217,15 @@ async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new
 @pytest.mark.asyncio
 async def test_create(
     check_password,
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_user_test_obj,
     schedule_delete_obj,
+    new_workgroup,
 ):
     user_data = new_user_test_obj()
+    wg_dn, wg_attr = await new_workgroup(school=user_data.school, users=[])
+    user_data.workgroups = {wg_attr["school"]: [wg_attr["name"]]}
 
     async with Session(**kelvin_session_kwargs) as session:
         user_obj = User(session=session, **asdict(user_data))
@@ -261,6 +263,12 @@ async def test_create(
     assert ldap_obj["ucsschoolSourceUID"] == user_data.source_uid
     await check_password(ldap_obj.entry_dn, user_data.password)
     assert ldap_obj["title"] == user_obj.udm_properties["title"]
+    # check that user was added to workgroup
+    wg_ldap_filter = f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+    wg_ldap_objs = await ldap_access.search(filter_s=wg_ldap_filter)
+    assert len(wg_ldap_objs) == 1
+    wg_ldap_obj = wg_ldap_objs[0]
+    assert user_obj.dn in wg_ldap_obj.uniqueMember, wg_ldap_obj
 
 
 @pytest.mark.asyncio
@@ -292,8 +300,11 @@ async def test_modify(
     kelvin_session_kwargs,
     new_school_user,
     new_user_test_obj,
+    new_workgroup,
+    ldap_access,
 ):
     user = await new_school_user()
+    wg_dn, wg_attr = await new_workgroup(school=user.school, users=[])
     new_data = asdict(
         new_user_test_obj(
             name=user.name,
@@ -302,6 +313,7 @@ async def test_modify(
             schools=user.schools,
             ucsschool_roles=user.ucsschool_roles,
             udm_properties={"title": fake.first_name()},
+            workgroups={wg_attr["school"]: [wg_attr["name"]]},
         )
     )
     async with Session(**kelvin_session_kwargs) as session:
@@ -320,6 +332,12 @@ async def test_modify(
         compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
         compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
         await check_password(fresh_obj.dn, new_data["password"])
+        # check that user was added to workgroup
+        wg_ldap_filter = f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+        wg_ldap_objs = await ldap_access.search(filter_s=wg_ldap_filter)
+        assert len(wg_ldap_objs) == 1
+        wg_ldap_obj = wg_ldap_objs[0]
+        assert obj.dn in wg_ldap_obj.uniqueMember
 
 
 @pytest.mark.asyncio
@@ -430,7 +448,6 @@ async def test_delete(kelvin_session_kwargs, new_school_user):
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     ldap_access,
     new_school_user,
