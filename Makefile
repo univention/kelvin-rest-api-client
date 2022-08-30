@@ -38,7 +38,7 @@ START_UCS_CONTAINER = docker run --detach --name "$(UCS_CONTAINER)" --hostname=m
 UCS_CONTAINER_IP_CMD = . docker/common.sh && docker_container_ip $(UCS_CONTAINER)
 GET_OPENAPI_SCHEMA_UDM = . docker/common.sh && get_openapi_schema "$(UCS_CONTAINER)"
 
-KELVIN_IMG = docker.software-univention.de/ucsschool-kelvin-rest-api:1.7.0
+KELVIN_IMG = docker.software-univention.de/ucsschool-kelvin-rest-api:1.7.1
 KELVIN_CONTAINER = $(shell . docker/common.sh && echo "$$KELVIN_CONTAINER")
 KELVIN_API_LOG_FILE = $(shell . docker/common.sh && echo "$$KELVIN_API_LOG_FILE")
 KELVIN_IMG_EXISTS = . docker/common.sh && docker_img_exists "$(KELVIN_IMG)"
