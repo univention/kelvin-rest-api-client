@@ -112,8 +112,8 @@ class User(KelvinObject):
 
     def __init__(
         self,
-        name: str,
-        school: str,
+        name: str = None,
+        school: str = None,
         *,
         firstname: str = None,
         lastname: str = None,
@@ -196,13 +196,14 @@ class User(KelvinObject):
             data["birthday"] = data["birthday"].strftime("%Y-%m-%d")
         if data["expiration_date"]:
             data["expiration_date"] = data["expiration_date"].strftime("%Y-%m-%d")
-        return data
+        return {key: value for key, value in data.items() if value is not None}
 
 
 class UserResource(KelvinResource):
     class Meta:
         kelvin_object: Type[KelvinObject] = User
         required_get_attrs: Iterable[str] = ("name",)
+        required_save_attrs: Iterable[str] = ("school", "roles")
         required_search_attrs: Iterable[str] = ()
 
     def __init__(self, session: Session):

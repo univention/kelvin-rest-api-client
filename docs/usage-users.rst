@@ -35,8 +35,8 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
     class User(KelvinObject):
         def __init__(
             self,
-            name: str,
-            school: str,
+            name: str = None,
+            school: str = None,
             *,
             firstname: str = None,
             lastname: str = None,
@@ -92,6 +92,8 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
 
 .. note::
     The field ``expiration_date`` was added to the Kelvin REST API in version ``1.5.1``. The client works with prior server versions, but the attribute will not be read or set.
+.. note::
+    Since the Kelvin REST API client version ``2.0.0``, the required argument `school` has the default argument `None`. The argument `name` is not required anymore.
 
 UserResource class
 ------------------
@@ -134,6 +136,9 @@ Create user
 
     user.dn
     'uid=test1,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=example,dc=com'
+
+.. note::
+    Since version ``2.0.0``, all attributes except ``school``, ``schools`` and ``roles`` can be automatically generated on the server by defining a schema. If a schema is defined for an attribute, it can be skipped. The attributes ``name`` and ``record_uid`` have to be passed in either the constructor or a schema must exist. You can find more about schemas in the [UCS@school - Handbuch zur CLI-Import Schnittstelle (german only)](https://docs.software-univention.de/ucsschool-import/5.0/de/configuration/scheme-formatting.html#formatierungsschema).
 
 
 Retrieve user

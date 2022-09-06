@@ -856,7 +856,9 @@ def new_school_user(
 
     async def _func(**kwargs) -> TestUser:  # Tuple[str, Dict[str, Any]]:
         user_obj: TestUser = new_user_test_obj(**kwargs)
+
         data = asdict(user_obj)
+
         del data["dn"]
         del data["ucsschool_roles"]
         del data["url"]
@@ -1027,6 +1029,7 @@ def compare_kelvin_obj_with_test_data(kelvin_session_kwargs):
             if isinstance(test_data_value, list):
                 assert set(kelvin_obj_value) == set(test_data_value)
             else:
+                print(test_data_attr)
                 assert kelvin_obj_value == test_data_value
 
     return _func

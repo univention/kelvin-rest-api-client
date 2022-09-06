@@ -45,8 +45,8 @@ class KelvinObject(ABC):
 
     def __init__(
         self,
-        name: str,
         *,
+        name: str = None,
         ucsschool_roles: List[str] = None,
         udm_properties: Dict[str, Any] = None,
         dn: str = None,
@@ -95,16 +95,16 @@ class KelvinObject(ABC):
     async def save(self) -> KelvinObjectType:
         if self._deleted:
             raise RuntimeError(f"{self} has been deleted.")
-        if not all(self._required_get_attrs.values()):
+        if not all(self._required_save_attrs.values()):
             raise AssertionError(
                 f"{self.__class__.__name__}.save() requires attribute(s) to be set: "
-                f"{', '.join(self._resource_class.Meta.required_get_attrs)}."
+                f"{', '.join(self._resource_class.Meta.required_save_attrs)}."
             )
         if not self._fresh:
             logger.debug("Saving possibly stale Kelvin object instance.")
         data = self._to_kelvin_request_data()
         # assumption: if self.url was set, the object exists in the Kelvin API
-        # so if its not set, we'll try to create the object
+        # so if it's not set, we'll try to create the object
         if not self.url:
             resp_json = await self.session.post(
                 url=self._resource_class(session=self.session).collection_url, json=data
@@ -114,7 +114,7 @@ class KelvinObject(ABC):
                 setattr(self, k, v)
             self._fresh = False
             return self
-        # self.url was is set -> modify object
+        # self.url was set -> modify object
         # TODO: or creation failed and this is the fall-back
         resp_json = await self.session.put(url=self.url, json=data)
         resp_obj = self._from_kelvin_response(resp_json)
@@ -163,6 +163,12 @@ class KelvinObject(ABC):
     @property
     def _required_get_attrs(self) -> Dict[str, Any]:
         return dict((attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_get_attrs)
+
+    @property
+    def _required_save_attrs(self) -> Dict[str, Any]:
+        return dict(
+            (attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_save_attrs
+        )
 
     def _update_old_attrs(self):
         self._old_attrs.update(self._required_get_attrs)

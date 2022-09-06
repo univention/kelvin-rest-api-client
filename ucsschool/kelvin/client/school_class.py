@@ -88,6 +88,7 @@ class SchoolClassResource(KelvinResource):
     class Meta:
         kelvin_object: Type[KelvinObject] = SchoolClass
         required_get_attrs: Iterable[str] = ("name", "school")
+        required_save_attrs: Iterable[str] = ("name", "school")
         required_search_attrs: Iterable[str] = ("school",)
 
     def __init__(self, session: Session):

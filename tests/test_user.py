@@ -272,6 +272,66 @@ async def test_create(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("attr_value", [None, "", "omit"], ids=lambda x: repr(x))
+@pytest.mark.parametrize(
+    "attr_key,expected_message",
+    [("name", "No username was created"), ("record_uid", "source_uid or record_uid are not set")],
+    ids=lambda x: repr(x),
+)
+async def test_create_user_raises_invalid_request_for_missing_username_and_record_uid(
+    kelvin_session_kwargs,
+    ldap_access,
+    new_user_test_obj,
+    attr_value,
+    attr_key,
+    expected_message,
+):
+    """
+    Passing None, "" or leaving out the attribute should lead to an InvalidRequest on the
+    server side. We have tests for the Kelvin server (test_create_without_username)
+    which uses custom kelvin.json files.
+    This test assumes that there is no schema defined on the Kelvin server.
+    """
+    user_data = new_user_test_obj()
+    user_data_dict = asdict(user_data)
+    user_data_dict[attr_key] = attr_value
+    if attr_value == "omit":
+        user_data_dict.pop(attr_key)
+    async with Session(**kelvin_session_kwargs) as session:
+        user_obj = User(session=session, **user_data_dict)
+        with pytest.raises(InvalidRequest) as exc:
+            await user_obj.save()
+            assert expected_message in exc.value
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("attr_value", [None, "", "omit"], ids=lambda x: repr(x))
+async def test_create_user_email_allows_empty_non_required_attrs(
+    kelvin_session_kwargs,
+    ldap_access,
+    new_user_test_obj,
+    attr_value,
+    schedule_delete_obj,
+):
+    """
+    passing None, "" or leaving out the email attribute should __not__ lead to an InvalidRequest on the
+    server side.
+    This test assumes that there is no schema defined on the Kelvin server.
+    """
+    attr_key = "email"
+    user_data = new_user_test_obj()
+    user_data_dict = asdict(user_data)
+    user_data_dict[attr_key] = attr_value
+    if attr_value == "omit":
+        user_data_dict.pop(attr_key)
+    async with Session(**kelvin_session_kwargs) as session:
+        user_obj = User(session=session, **user_data_dict)
+        schedule_delete_obj(object_type="user", name=user_data.name)
+        user = await user_obj.save()
+        assert user.email is None
+
+
+@pytest.mark.asyncio
 async def test_create_with_password_hashes(
     check_password,
     kelvin_session_kwargs,
