@@ -102,7 +102,9 @@ class KelvinObject(ABC):
                 f"{', '.join(self._resource_class.Meta.required_save_attrs)}."
             )
         if not self._fresh:
-            logger.debug("[%s] Saving possibly stale Kelvin object instance.", self.session.request_id[:10])
+            logger.debug(
+                "[%s] Saving possibly stale Kelvin object instance.", self.session.request_id[:10]
+            )
         data = self._to_kelvin_request_data()
         # assumption: if self.url was set, the object exists in the Kelvin API
         # so if it's not set, we'll try to create the object
