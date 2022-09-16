@@ -49,6 +49,7 @@ URL_TOKEN = f"{URL_BASE}/token"
 URL_RESOURCE_CLASS = f"{URL_BASE}/{API_VERSION}/classes/"
 URL_RESOURCE_ROLE = f"{URL_BASE}/{API_VERSION}/roles/"
 URL_RESOURCE_SCHOOL = f"{URL_BASE}/{API_VERSION}/schools/"
+URL_RESOURCE_STATUS = f"{URL_BASE}/{API_VERSION}/status"
 URL_RESOURCE_USER = f"{URL_BASE}/{API_VERSION}/users/"
 URL_RESOURCE_WORKGROUP = f"{URL_BASE}/{API_VERSION}/workgroups/"
 logger = logging.getLogger(__name__)
@@ -117,6 +118,7 @@ class Session:
             "class": URL_RESOURCE_CLASS.format(host=host),
             "role": URL_RESOURCE_ROLE.format(host=host),
             "school": URL_RESOURCE_SCHOOL.format(host=host),
+            "status": URL_RESOURCE_STATUS.format(host=host),
             "user": URL_RESOURCE_USER.format(host=host),
             "workgroup": URL_RESOURCE_WORKGROUP.format(host=host),
         }
