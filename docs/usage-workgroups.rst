@@ -24,7 +24,7 @@ To list the same UDM objects as above, run:
 WorkGroup class
 -----------------
 
-The :py:class:`ucsschool.kelvin.client.WorkGroup` class has the following attributes and methods:
+The :py:class:`ucsschool.kelvin.client.WorkGroup` class has the following public attributes and methods:
 
 .. code-block:: python
 

@@ -25,6 +25,7 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import contextlib
 import copy
 import sys
 import warnings
@@ -35,7 +36,8 @@ from async_property import async_property
 
 from ucsschool.kelvin.client.session import BadSettingsWarning, Session
 
-_PYTHON_VERSION = sys.version_info[:2]
+PY38 = sys.version_info >= (3, 8)
+
 kelvin_session_kwargs_mock = {
     "username": "username",
     "password": "password",
@@ -51,10 +53,7 @@ class SessionMock:
 
 
 def call_kwargs(call_args):
-    if _PYTHON_VERSION < (3, 8):
-        return call_args[1]
-    else:
-        return call_args.kwargs
+    return call_args.kwargs if PY38 else call_args[1]
 
 
 @pytest.mark.asyncio
@@ -81,11 +80,10 @@ async def test_session_warn_max_client_tasks(arg_client_tasks):
 async def test_session_default_timeout(mocker):
     mocker.patch("httpx.AsyncClient.get", side_effect=NotImplementedError)
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+
     async with Session(**kelvin_session_kwargs_mock) as session:
-        try:
+        with contextlib.suppress(NotImplementedError):
             await session.get("http://example.com")
-        except NotImplementedError:
-            pass
         assert call_kwargs(session.client.get.call_args)["timeout"] == 10.0
 
 
@@ -93,12 +91,11 @@ async def test_session_default_timeout(mocker):
 async def test_session_timeout(mocker):
     mocker.patch("httpx.AsyncClient.get", side_effect=NotImplementedError)
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+
     kelvin_session_kwargs = dict(kelvin_session_kwargs_mock, timeout=5)
     async with Session(**kelvin_session_kwargs) as session:
-        try:
+        with contextlib.suppress(NotImplementedError):
             await session.get("http://example.com")
-        except NotImplementedError:
-            pass
         assert call_kwargs(session.client.get.call_args)["timeout"] == 5
 
 
@@ -106,11 +103,10 @@ async def test_session_timeout(mocker):
 async def test_session_explicit_timeout(mocker):
     mocker.patch("httpx.AsyncClient.get", side_effect=NotImplementedError)
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+
     async with Session(**kelvin_session_kwargs_mock) as session:
-        try:
+        with contextlib.suppress(NotImplementedError):
             await session.get("http://example.com", timeout=7)
-        except NotImplementedError:
-            pass
         assert call_kwargs(session.client.get.call_args)["timeout"] == 7
 
 
@@ -120,10 +116,8 @@ async def test_session_override_timeout(mocker):
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
     kelvin_session_kwargs = dict(kelvin_session_kwargs_mock, timeout=4)
     async with Session(**kelvin_session_kwargs) as session:
-        try:
+        with contextlib.suppress(NotImplementedError):
             await session.get("http://example.com", timeout=6)
-        except NotImplementedError:
-            pass
         assert call_kwargs(session.client.get.call_args)["timeout"] == 6
 
 

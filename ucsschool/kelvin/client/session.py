@@ -84,12 +84,10 @@ class Token:
             raise InvalidToken(f"Error parsing date in token ({token_str!r}): {exc!s}")
         return cls(expiry=expiry, value=token_str)
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         if not self.expiry or not self.value:
             return False
-        if datetime.datetime.utcnow() > self.expiry:
-            return False
-        return True
+        return datetime.datetime.utcnow() <= self.expiry
 
 
 class Session:
@@ -182,19 +180,15 @@ class Session:
         response: httpx.Response = await async_request_method(url, **kwargs)
         try:
             resp_json = response.json()
-            if "detail" in resp_json:
-                detail = resp_json["detail"]
-            else:
-                detail = ""
+            detail = resp_json["detail"] if "detail" in resp_json else ""
         except ValueError:
             detail = ""
             resp_json = {}
 
         if "Authorization" in kwargs["headers"]:
             kwargs["headers"]["Authorization"] = 10 * "*"
-        if "data" in kwargs:
-            if "password" in kwargs["data"]:
-                kwargs["data"]["password"] = 10 * "*"
+        if "data" in kwargs and "password" in kwargs["data"]:
+            kwargs["data"]["password"] = 10 * "*"
 
         logger.debug(
             "[%s] %s %r (**%r) -> %r %r%s",
@@ -207,10 +201,7 @@ class Session:
             f" ({detail})" if detail else "",
         )
         if 200 <= response.status_code <= 299:
-            if return_json:
-                return resp_json
-            else:
-                return response.text
+            return resp_json if return_json else response.text
         elif response.status_code == 404:
             raise NoObject(
                 f"Object not found ({async_request_method.__name__.upper()} {url!r}).",

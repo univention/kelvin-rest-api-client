@@ -30,7 +30,7 @@ Please see the `Kelvin API documentation section Resource Schools`_ about allowe
 School class
 ------------
 
-The :py:class:`ucsschool.kelvin.client.School` class has the following attributes and methods:
+The :py:class:`ucsschool.kelvin.client.School` class has the following public attributes and methods:
 
 .. code-block:: python
 

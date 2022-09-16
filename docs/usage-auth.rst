@@ -1,7 +1,7 @@
 .. _auth:
 
 Authentication and authorization
---------------------------------
+================================
 
 All requests to the Kelvin API must be authenticated.
 Requests to resource endpoints must carry a valid token.

@@ -170,7 +170,7 @@ async def test_get_with_users(
     compare_kelvin_obj_with_test_data(obj, dn=wg_dn, **wg_attr)
 
 
-@pytest.mark.parametrize("create_share", [True, False])
+@pytest.mark.parametrize("create_share", [True, False], ids=lambda x: f"create_share={x}")
 @pytest.mark.asyncio
 async def test_create(
     kelvin_session_kwargs,

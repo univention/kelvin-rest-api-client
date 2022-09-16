@@ -13,7 +13,7 @@ Please see the `Kelvin API documentation section Resource Roles`_ about allowed 
 Role class
 ----------
 
-The :py:class:`ucsschool.kelvin.client.Role` class has the following attributes and methods:
+The :py:class:`ucsschool.kelvin.client.Role` class has the following public attributes and methods:
 
 .. code-block:: python
 
