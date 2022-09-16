@@ -30,6 +30,7 @@
 import asyncio
 import datetime
 import logging
+import uuid
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
@@ -98,6 +99,8 @@ class Session:
         password: str,
         host: str,
         max_client_tasks: int = 10,
+        request_id: str = None,
+        request_id_header: str = "X-Request-ID",
         **kwargs,
     ):
         if max_client_tasks < 4:
@@ -111,6 +114,8 @@ class Session:
         self.username = username
         self.password = password
         self.host = host
+        self.request_id = request_id or uuid.uuid4().hex
+        self.request_id_header = request_id_header
         self.kwargs = kwargs
         self.urls = {
             "token": URL_TOKEN.format(host=host),
@@ -131,6 +136,9 @@ class Session:
 
     def open(self) -> httpx.AsyncClient:
         if not self._client:
+            self.kwargs["headers"] = self.kwargs.get("headers", {})
+            self.kwargs["headers"]["Access-Control-Expose-Headers"] = self.request_id_header
+            self.kwargs["headers"][self.request_id_header] = self.request_id
             self._client = httpx.AsyncClient(**self.kwargs)
         return self._client
 
@@ -189,7 +197,8 @@ class Session:
                 kwargs["data"]["password"] = 10 * "*"
 
         logger.debug(
-            "%s %r (**%r) -> %r %r%s",
+            "[%s] %s %r (**%r) -> %r %r%s",
+            self.request_id[:10],
             async_request_method.__name__.upper(),
             url,
             kwargs,

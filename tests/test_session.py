@@ -25,9 +25,11 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import copy
 import sys
 import warnings
 
+import httpx
 import pytest
 from async_property import async_property
 
@@ -123,3 +125,28 @@ async def test_session_override_timeout(mocker):
         except NotImplementedError:
             pass
         assert call_kwargs(session.client.get.call_args)["timeout"] == 6
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "cid", [(None, None), (None, "X-Foo"), ("12345", None), ("12345", "X-Foo")], ids=lambda x: repr(x)
+)
+async def test_correlation_id(cid, mocker):
+    correlation_id, correlation_id_header = cid
+    mocker.patch("httpx.AsyncClient.send", side_effect=NotImplementedError)
+    mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+    kelvin_session_kwargs = copy.deepcopy(kelvin_session_kwargs_mock)
+    if correlation_id:
+        kelvin_session_kwargs["request_id"] = correlation_id
+    if correlation_id_header:
+        kelvin_session_kwargs["request_id_header"] = correlation_id_header
+    async with Session(**kelvin_session_kwargs) as session:
+        with contextlib.suppress(NotImplementedError):
+            await session.get("http://example.com")
+        async_client_send_call_args = httpx.AsyncClient.send.call_args
+        headers = async_client_send_call_args[0][0].headers
+        exp_header = correlation_id_header or "X-Request-ID"
+        assert exp_header in headers
+        assert headers[exp_header]
+        if correlation_id:
+            assert headers[exp_header] == correlation_id

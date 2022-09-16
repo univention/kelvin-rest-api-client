@@ -6,6 +6,7 @@ History
 --------------------
 
 * **API Change**: The required argument `school` in the `User` constructor has now the default argument `None`. The argument `name` is not required anymore. Optional values, which are set to `None`, are not passed to the Kelvin server anymore. This enables automatic value generation on the Kelvin REST API server. To make use of this, the attributes can be either set to `None`, the empty string ``""`` or left out completely. Additionally, you have to create a schema for the corresponding attribute on the Kelvin REST API server.
+* Send a correlation ID with each request.
 
 1.7.1 (2022-08-30)
 --------------------

@@ -16,6 +16,7 @@ Section :ref:`Authentication and authorization <auth>` describes its usage.
    :caption: Contents:
 
    usage-auth
+   usage-correlation
    usage-role
    usage-school
    usage-school-class

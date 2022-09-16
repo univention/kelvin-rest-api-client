@@ -81,7 +81,8 @@ class KelvinObject(ABC):
         """
         if self._deleted:
             logger.warning(
-                "%s %s has been deleted! Trying to load it anyway...",
+                "[%s] %s %s has been deleted! Trying to load it anyway...",
+                self.session.request_id[:10],
                 self._class_display_name,
                 self,
             )
@@ -101,7 +102,7 @@ class KelvinObject(ABC):
                 f"{', '.join(self._resource_class.Meta.required_save_attrs)}."
             )
         if not self._fresh:
-            logger.debug("Saving possibly stale Kelvin object instance.")
+            logger.debug("[%s] Saving possibly stale Kelvin object instance.", self.session.request_id[:10])
         data = self._to_kelvin_request_data()
         # assumption: if self.url was set, the object exists in the Kelvin API
         # so if it's not set, we'll try to create the object
@@ -125,7 +126,7 @@ class KelvinObject(ABC):
 
     async def delete(self) -> None:
         if self._deleted:
-            logger.warning("%s has already been deleted.", self)
+            logger.warning("[%s] %s has already been deleted.", self.session.request_id[:10], self)
             return
         if not self.url:
             raise RuntimeError("Attribute 'url' unset. Run 'reload()' before 'delete()'.")
