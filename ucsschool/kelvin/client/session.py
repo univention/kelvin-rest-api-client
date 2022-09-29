@@ -205,7 +205,7 @@ class Session:
         elif response.status_code == 404:
             raise NoObject(
                 f"Object not found ({async_request_method.__name__.upper()} {url!r}).",
-                reason=response.reason_phrase,
+                reason=detail if detail else response.reason_phrase,
                 status=response.status_code,
                 url=url,
             )
@@ -214,7 +214,7 @@ class Session:
                 f"Kelvin REST API returned status {response.status_code}, reason "
                 f"{response.reason_phrase!r}{f' ({detail})' if detail else ''} for "
                 f"{async_request_method.__name__.upper()} {url!r}.",
-                reason=response.reason_phrase,
+                reason=detail if detail else response.reason_phrase,
                 status=response.status_code,
                 url=url,
             )
