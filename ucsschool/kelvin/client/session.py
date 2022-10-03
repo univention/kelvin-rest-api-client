@@ -172,7 +172,7 @@ class Session:
 
     async def request(
         self, async_request_method: Any, url: str, return_json: bool = True, **kwargs
-    ) -> Union[str, Dict[str, Any], bool]:
+    ) -> Union[str, int, Dict[str, Any]]:
         if "headers" not in kwargs:
             kwargs["headers"] = await self.json_headers
         if "timeout" not in kwargs:
@@ -201,11 +201,7 @@ class Session:
             f" ({detail})" if detail else "",
         )
         if async_request_method == self.client.head:
-            if response.status_code == 200:
-                return True
-            if response.status_code == 404:
-                return False
-            raise ServerError(reason=response.reason_phrase, status=response.status_code, url=url)
+            return response.status_code
 
         if 200 <= response.status_code <= 299:
             return resp_json if return_json else response.text
@@ -237,21 +233,7 @@ class Session:
         return await self.request(self.client.get, url, **kwargs)
 
     async def head(self, url: str, **kwargs) -> bool:
-        """Returns a boolean depending on whether the response is successful."""
-        try:
-            result = await self.request(self.client.head, url, **kwargs)
-        except ServerError as exc:
-            logger.warning(
-                "There was a problem with HEAD for school %s. Trying with GET instead. Error: %s",
-                url,
-                exc,
-            )
-            try:
-                await self.request(self.client.get, url, **kwargs)
-            except NoObject:
-                return False
-            return True
-        return result
+        return await self.request(self.client.head, url, **kwargs)
 
     # async def patch(self, url: str, **kwargs,) -> Dict[str, Any]:
     #     return await self.request(self.client.patch, url, **kwargs)

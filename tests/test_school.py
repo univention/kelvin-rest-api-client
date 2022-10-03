@@ -202,12 +202,8 @@ async def test_exists(kelvin_session_kwargs, new_school, schedule_delete_ou_usin
     school = new_school(1)[0]
     # schedule_delete_ou_using_ssh(school.name)
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await SchoolResource(session=session).get(name=school.name)
-
-        assert await obj.exists()
-        assert not await School(
-            name="DOESNOTEXIST", url=obj.url.replace(school.name, "DOESNOTEXIST"), session=session
-        ).exists()
+        assert await SchoolResource(session=session).exists(name=school.name)
+        assert not await SchoolResource(session=session).exists(name="DOESNOTEXIST")
         with patch("ucsschool.kelvin.client.session.Session.head") as mock:
-            await obj.exists()
+            await SchoolResource(session=session).exists(name=school.name)
             mock.assert_called_once()

@@ -181,6 +181,7 @@ class KelvinResource(ABC):
     class Meta:
         kelvin_object: KelvinObjectType = KelvinObject
         required_get_attrs: Iterable[str] = ("name",)
+        required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ("school",)
 
     def __init__(self, session: Session):
@@ -205,6 +206,29 @@ class KelvinResource(ABC):
                 status=exc.status,
                 url=url,
             ) from exc
+
+    async def exists(self, **kwargs) -> bool:
+        if not all(attr in kwargs for attr in self.Meta.required_head_attrs):
+            raise AssertionError(
+                f"{self.__class__.__name__}.get() requires argument(s): "
+                f"{', '.join(self.Meta.required_get_attrs)}."
+            )
+        url = self.object_url.format(**kwargs)
+        status_code: int = await self.session.head(url)
+        if status_code == 200:
+            return True
+        if status_code == 404:
+            return False
+        logger.warning(
+            "There was a problem with HEAD for %s. Trying with GET instead. Status code: %s",
+            url,
+            status_code,
+        )
+        try:
+            await self.get(**kwargs)
+        except NoObject:
+            return False
+        return True
 
     async def get_from_url(self, url: str) -> KelvinObjectType:
         resp_json: Dict[str, Any] = await self.session.get(url)

@@ -89,9 +89,6 @@ class School(KelvinObject):
             "Deleting school objects has not yet been implemented in the Kelvin REST API."
         )
 
-    async def exists(self) -> bool:
-        return await self.session.head(url=self.url)
-
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
         data = super()._to_kelvin_request_data()
         # passing None will produce a validation error, OK is not passing it or passing an empty list
@@ -106,6 +103,7 @@ class SchoolResource(KelvinResource):
     class Meta:
         kelvin_object: Type[KelvinObject] = School
         required_get_attrs: Iterable[str] = ("name",)
+        required_head_attrs: Iterable[str] = ("name",)
         required_save_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()
 
