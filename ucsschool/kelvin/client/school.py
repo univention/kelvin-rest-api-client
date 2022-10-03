@@ -89,6 +89,9 @@ class School(KelvinObject):
             "Deleting school objects has not yet been implemented in the Kelvin REST API."
         )
 
+    async def exists(self) -> bool:
+        return await self.session.head(url=self.url)
+
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
         data = super()._to_kelvin_request_data()
         # passing None will produce a validation error, OK is not passing it or passing an empty list

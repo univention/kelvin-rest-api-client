@@ -26,6 +26,7 @@
 # <http://www.gnu.org/licenses/>.
 
 from dataclasses import asdict
+from unittest.mock import patch
 
 import ldap3
 import pytest
@@ -194,3 +195,19 @@ async def test_reload(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, 
         await obj.reload()
         assert obj.display_name == display_name_new
         await ldap_access.modify(obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_old])]})
+
+
+@pytest.mark.asyncio
+async def test_exists(kelvin_session_kwargs, new_school, schedule_delete_ou_using_ssh):
+    school = new_school(1)[0]
+    # schedule_delete_ou_using_ssh(school.name)
+    async with Session(**kelvin_session_kwargs) as session:
+        obj = await SchoolResource(session=session).get(name=school.name)
+
+        assert await obj.exists()
+        assert not await School(
+            name="DOESNOTEXIST", url=obj.url.replace(school.name, "DOESNOTEXIST"), session=session
+        ).exists()
+        with patch("ucsschool.kelvin.client.session.Session.head") as mock:
+            await obj.exists()
+            mock.assert_called_once()
