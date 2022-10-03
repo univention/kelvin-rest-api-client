@@ -95,6 +95,8 @@ The :py:class:`ucsschool.kelvin.client.SchoolResource` class has the following p
             ...
         async def search(self, **kwargs) -> AsyncIterator[School]:
             ...
+        async def exists(self, **kwargs) -> bool:
+            ...
 
 
 
@@ -181,6 +183,18 @@ Retrieve school
      'home_share_file_server': 'DEMOSCHOOL',
      'dn': 'ou=DEMOSCHOOL,dc=example,dc=com',
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/schools/DEMOSCHOOL'}
+
+
+Check if school exists
+----------------------
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, SchoolResource
+
+    async with Session(**credentials) as session:
+        if await SchoolResource(session=session).exists(name="DEMOSCHOOL"):
+            print("The school exists!")
 
 
 Search schools
