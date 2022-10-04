@@ -47,10 +47,17 @@ class Role(KelvinObject):
         display_name: str = None,
         url: str = None,
         session: Session = None,
+        language: str = None,
         **kwargs,
     ):
         super().__init__(
-            name=name, ucsschool_roles=None, udm_properties=None, dn=None, url=url, session=session
+            name=name,
+            ucsschool_roles=None,
+            udm_properties=None,
+            dn=None,
+            url=url,
+            session=session,
+            language=language,
         )
         self.display_name = display_name
         del self.dn
@@ -80,7 +87,7 @@ class RoleResource(KelvinResource):
         required_get_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()
 
-    def __init__(self, session: Session):
-        super().__init__(session=session)
+    def __init__(self, session: Session, language: str = None):
+        super().__init__(session=session, language=language)
         self.collection_url = self.session.urls["role"]
         self.object_url = f"{self.session.urls['role']}{{name}}"

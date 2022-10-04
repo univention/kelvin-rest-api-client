@@ -134,6 +134,7 @@ class User(KelvinObject):
         dn: str = None,
         url: str = None,
         session: Session = None,
+        language: str = None,
         **kwargs,
     ):
         super().__init__(
@@ -143,6 +144,7 @@ class User(KelvinObject):
             dn=dn,
             url=url,
             session=session,
+            language=language,
         )
         self.school = school
         self.firstname = firstname
@@ -206,8 +208,8 @@ class UserResource(KelvinResource):
         required_save_attrs: Iterable[str] = ("school", "roles")
         required_search_attrs: Iterable[str] = ()
 
-    def __init__(self, session: Session):
-        super().__init__(session=session)
+    def __init__(self, session: Session, language: str = None):
+        super().__init__(session=session, language=language)
         self.collection_url = self.session.urls["user"]
         self.object_url = f"{self.session.urls['user']}{{name}}"
 

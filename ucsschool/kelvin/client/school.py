@@ -60,6 +60,7 @@ class School(KelvinObject):
         dn: str = None,
         url: str = None,
         session: Session = None,
+        language: str = None,
         **kwargs,
     ):
         super().__init__(
@@ -69,6 +70,7 @@ class School(KelvinObject):
             dn=dn,
             url=url,
             session=session,
+            language=language,
         )
         self.display_name = display_name
         self.educational_servers = educational_servers
@@ -107,7 +109,7 @@ class SchoolResource(KelvinResource):
         required_save_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()
 
-    def __init__(self, session: Session):
-        super().__init__(session=session)
+    def __init__(self, session: Session, language: str = None):
+        super().__init__(session=session, language=language)
         self.collection_url = self.session.urls["school"]
         self.object_url = f"{self.session.urls['school']}{{name}}"

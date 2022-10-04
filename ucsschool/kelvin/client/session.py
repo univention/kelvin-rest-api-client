@@ -99,6 +99,7 @@ class Session:
         max_client_tasks: int = 10,
         request_id: str = None,
         request_id_header: str = "X-Request-ID",
+        language: str = None,
         **kwargs,
     ):
         if max_client_tasks < 4:
@@ -114,6 +115,7 @@ class Session:
         self.host = host
         self.request_id = request_id or uuid.uuid4().hex
         self.request_id_header = request_id_header
+        self.language = language
         self.kwargs = kwargs
         self.urls = {
             "token": URL_TOKEN.format(host=host),
@@ -164,11 +166,14 @@ class Session:
 
     @async_property
     async def json_headers(self) -> Dict[str, str]:
-        return {
+        headers = {
             "accept": "application/json",
             "Authorization": f"Bearer {await self.token}",
             "Content-Type": "application/json",
         }
+        if self.language:
+            headers["Accept-Language"] = self.language
+        return headers
 
     async def request(
         self, async_request_method: Any, url: str, return_json: bool = True, **kwargs
