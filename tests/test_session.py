@@ -34,6 +34,18 @@ import httpx
 import pytest
 from async_property import async_property
 
+from ucsschool.kelvin.client import (
+    Role,
+    RoleResource,
+    School,
+    SchoolClass,
+    SchoolClassResource,
+    SchoolResource,
+    User,
+    UserResource,
+    WorkGroup,
+    WorkGroupResource,
+)
 from ucsschool.kelvin.client.session import BadSettingsWarning, Session
 
 PY38 = sys.version_info >= (3, 8)
@@ -144,3 +156,53 @@ async def test_correlation_id(cid, mocker):
         assert headers[exp_header]
         if correlation_id:
             assert headers[exp_header] == correlation_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("language", [None, "de", "en"])
+async def test_language_header(mocker, language):
+    mocker.patch("httpx.AsyncClient.send", side_effect=NotImplementedError)
+    mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+    kelvin_session_kwargs = copy.deepcopy(kelvin_session_kwargs_mock)
+    async with Session(**kelvin_session_kwargs, language=language) as session:
+        with contextlib.suppress(NotImplementedError):
+            await session.get("http://example.com")
+        async_client_send_call_args = httpx.AsyncClient.send.call_args
+        headers = async_client_send_call_args[0][0].headers
+        if language:
+            assert headers.get("accept-language")
+            assert headers["accept-language"] == language
+        else:
+            assert headers.get("accept-language") is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("language", [None, "de", "en"])
+@pytest.mark.parametrize(
+    "ObjectClass,ResourceClass",
+    [
+        (School, SchoolResource),
+        (User, UserResource),
+        (SchoolClass, SchoolClassResource),
+        (WorkGroup, WorkGroupResource),
+        (Role, RoleResource),
+    ],
+)
+async def test_language_header_change_during_session(mocker, language, ObjectClass, ResourceClass):
+    mocker.patch("httpx.AsyncClient.send", side_effect=NotImplementedError)
+    mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
+    kelvin_session_kwargs = copy.deepcopy(kelvin_session_kwargs_mock)
+    async with Session(**kelvin_session_kwargs, language="dummy_lang") as session:
+        kelvin_obj: ObjectClass = ResourceClass(session=session, language=language)
+        with contextlib.suppress(NotImplementedError):
+            await session.get("http://example.com")
+        async_client_send_call_args = httpx.AsyncClient.send.call_args
+        headers = async_client_send_call_args[0][0].headers
+        if language:
+            assert headers.get("accept-language")
+            assert headers["accept-language"] == language
+            kelvin_obj.session.language == language
+        else:
+            assert headers.get("accept-language")
+            assert headers["accept-language"] == "dummy_lang"
+            assert kelvin_obj.session.language == "dummy_lang"
