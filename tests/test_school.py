@@ -25,6 +25,7 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import asyncio
 from dataclasses import asdict
 from unittest.mock import patch
 
@@ -205,5 +206,8 @@ async def test_exists(kelvin_session_kwargs, new_school, schedule_delete_ou_usin
         assert await SchoolResource(session=session).exists(name=school.name)
         assert not await SchoolResource(session=session).exists(name="DOESNOTEXIST")
         with patch("ucsschool.kelvin.client.session.Session.head") as mock:
+            f = asyncio.Future()
+            f.set_result(True)
+            mock.return_value = f
             await SchoolResource(session=session).exists(name=school.name)
             mock.assert_called_once()
