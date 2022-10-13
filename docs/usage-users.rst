@@ -57,6 +57,7 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             dn: str = None,
             url: str = None,
             session: Session = None,
+            language: str = None,
             **kwargs,
         ):
         self.name = name
@@ -80,6 +81,8 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
         self.dn = dn
         self.url = url
         self.session = session
+        if language:
+            self.session.language = language
 
         async def reload(self) -> User:
             ...
@@ -103,7 +106,7 @@ UserResource class
 .. code-block:: python
 
     class UserResource(KelvinResource):
-        def __init__(self, session: Session):
+        def __init__(self, session: Session, language: str = None):
             ...
         async def get(self, **kwargs) -> User:
             ...

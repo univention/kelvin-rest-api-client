@@ -45,6 +45,7 @@ The :py:class:`ucsschool.kelvin.client.WorkGroup` class has the following public
             dn: str = None,
             url: str = None,
             session: Session = None,
+            language: str = None
         ):
             self.name = name
             self.school = school
@@ -59,6 +60,8 @@ The :py:class:`ucsschool.kelvin.client.WorkGroup` class has the following public
             self.dn = dn
             self.url = url
             self.session = session
+            if language:
+                self.session.language = language
 
 
         async def reload(self) -> WorkGroup:
@@ -78,7 +81,7 @@ The :py:class:`ucsschool.kelvin.client.WorkGroupResource` class has the followin
 .. code-block:: python
 
     class WorkGroupResource(KelvinResource):
-        def __init__(self, session: Session):
+        def __init__(self, session: Session, language: str = None):
             ...
         async def get(self, **kwargs) -> WorkGroup:
             ...
