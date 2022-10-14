@@ -14,7 +14,7 @@ It is also possible to change the ``Accept-Language`` header within a ``Session`
 .. note::
     The Kelvin REST API server version must be greater than ``1.7.0`` to handle the ``Accept-Language`` header.
 
-Set ``Accept-Language`` header within a ``Session`` context:
+Set ``Accept-Language`` header within a ``Session`` context
 -----------------------------------------------------------
 
 Create user example:
