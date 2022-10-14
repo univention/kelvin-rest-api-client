@@ -42,6 +42,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following publ
             dn: str = None,
             url: str = None,
             session: Session = None,
+            language: str = None,
             **kwargs,
         ):
             self.name = name
@@ -54,6 +55,8 @@ The :py:class:`ucsschool.kelvin.client.SchoolClass` class has the following publ
             self.dn = dn
             self.url = url
             self.session = session
+            if language:
+                self.session.language = language
 
 
         async def reload(self) -> SchoolClass:
@@ -73,7 +76,7 @@ The :py:class:`ucsschool.kelvin.client.SchoolClassResource` class has the follow
 .. code-block:: python
 
     class SchoolClassResource(KelvinResource):
-        def __init__(self, session: Session):
+        def __init__(self, session: Session, language: str = None):
             ...
         async def get(self, **kwargs) -> SchoolClass:
             ...

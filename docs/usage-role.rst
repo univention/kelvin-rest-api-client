@@ -25,14 +25,18 @@ The :py:class:`ucsschool.kelvin.client.Role` class has the following public attr
             display_name: str = None,
             url: str = None,
             session: Session = None,
+            language: str = None,
             **kwargs,
         ):
             self.name = name
             self.display_name = display_name
             self.url = url
             self.session = session
+            if language:
+                self.session.language = language
             del self.dn
             del self.ucsschool_roles
+            del self.udm_properties
 
         async def reload(self) -> School:
             ...
@@ -58,7 +62,7 @@ The :py:class:`ucsschool.kelvin.client.RoleResource` class has the following pub
 .. code-block:: python
 
     class RoleResource(KelvinResource):
-        def __init__(self, session: Session):
+        def __init__(self, session: Session, language: str = None):
             ...
         async def get(self, **kwargs) -> School:
             ...

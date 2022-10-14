@@ -52,6 +52,7 @@ class KelvinObject(ABC):
         dn: str = None,
         url: str = None,
         session: Session = None,
+        language: str = None,
         **kwargs,
     ):
         self.name = name
@@ -60,6 +61,8 @@ class KelvinObject(ABC):
         self.dn = dn
         self.url = url
         self.session = session
+        if language:
+            self.session.language = language
         self._resource_class = KelvinResource
         self._fresh = True
         self._deleted = False
@@ -184,8 +187,10 @@ class KelvinResource(ABC):
         required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ("school",)
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, language: str = None):
         self.session = session
+        if language:
+            self.session.language = language
         self.collection_url = ""
         self.object_url = ""
 
