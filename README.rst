@@ -19,6 +19,11 @@ Features
 * ~95% test coverage (unittests + integration tests)
 * Python 3.7, 3.8, 3.9, 3.10
 
+Compatibility
+-------------
+
+A list of UCS\@school Kelvin REST API server versions which introduce breaking changes can be found in the [UCS\@school Kelvin REST API Documentation](https://docs.software-univention.de/ucsschool-kelvin-rest-api/kelvin-client-compatibility.html).
+
 
 Usage
 -----
