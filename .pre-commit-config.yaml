@@ -52,12 +52,10 @@ repos:
     hooks:
     -   id: black
         entry: black --check --diff --config .black
-        language_version: python3.8
     -   id: black
         alias: black-edit
         stages: [manual]
         entry: black --config .black
-        language_version: python3.8
 #-   repo: https://github.com/pryorda/dockerfilelint-precommit-hooks
 #    rev: v0.1.0
 #    hooks:
@@ -77,4 +75,4 @@ repos:
 #    hooks:
 #    -   id: pydocstyle
 default_language_version:
-    python: python3.8
+    python: python3.7
