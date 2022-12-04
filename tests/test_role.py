@@ -82,6 +82,6 @@ async def test_role_attrs(compare_kelvin_obj_with_test_data, kelvin_session_kwar
     assert set(obj._kelvin_attrs) == {"name", "display_name"}
     assert set(obj.as_dict().keys()) == {"name", "display_name", "url"}
 
+
 def test_fail():
     assert False
-

@@ -27,7 +27,7 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+BROWSER := python3 -c "$$BROWSER_PYSCRIPT"
 SHELL := /bin/bash
 
 UCS_IMG = docker.software-univention.de/ucs-master-amd64-joined-ucsschool-udm-rest-api-only:stable-4.4-8
@@ -48,7 +48,7 @@ KELVIN_CONTAINER_IP_CMD = . docker/common.sh && docker_container_ip $(KELVIN_CON
 GET_OPENAPI_SCHEMA_KELVIN = . docker/common.sh && get_openapi_schema "$(KELVIN_CONTAINER)"
 
 help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@python3 -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -76,7 +76,7 @@ setup_devel_env: ## setup development environment (virtualenv)
 	@if [ -d venv ]; then \
 		echo "Directory 'venv' exists."; \
 	else \
-		python3.8 -m venv venv; \
+		python3 -m venv venv; \
 	fi; \
 	. venv/bin/activate && python3 -m pip install -r requirements.txt -r requirements_dev.txt -r requirements_test.txt; \
 	echo "==> Run '. venv/bin/activate' to activate virtual env."
@@ -137,8 +137,8 @@ release-test: dist ## package and upload a release to the pypi test site
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
