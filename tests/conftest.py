@@ -506,9 +506,7 @@ class SchoolFactory(factory.Factory):
     class_share_file_server = factory.LazyAttribute(
         lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
     )
-    home_share_file_server = factory.LazyAttribute(
-        lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
-    )
+    home_share_file_server = factory.LazyAttribute(lambda o: o.class_share_file_server)
     ucsschool_roles = factory.List([])
     udm_properties = factory.Dict({"description": None})
     dn = ""
