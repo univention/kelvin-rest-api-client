@@ -42,6 +42,7 @@ setup(
     keywords="Univention UCS UCS@school REST",
     name="kelvin-rest-api-client",
     packages=["ucsschool.kelvin.client"],
+    package_data={"ucsschool.kelvin.client": ["py.typed"]},
     install_requires=requirements,
     # setup_requires=["pytest-runner"],
     test_suite="tests",
