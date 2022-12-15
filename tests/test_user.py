@@ -525,8 +525,9 @@ async def test_reload(
         await obj.reload()
         assert obj.firstname == first_name_new
 
+
 @pytest.mark.asyncio
-async def test_as_json(kelvin_session_kwargs,  new_school_user):
+async def test_as_json(kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
         old_obj: User = await UserResource(session=session).get(school=user.school, name=user.name)
