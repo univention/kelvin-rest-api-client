@@ -26,7 +26,7 @@
 # License with the Debian GNU/Linux or Univention distribution in file
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
-
+import copy
 import logging
 from abc import ABC
 from typing import Any, AsyncIterator, Dict, Iterable, List, TypeVar
@@ -140,7 +140,8 @@ class KelvinObject(ABC):
 
     def as_dict(self) -> Dict[str, Any]:
         attrs = self._kelvin_attrs + ["dn", "url"]
-        return dict((attr, getattr(self, attr)) for attr in attrs)
+        _dict_repr = copy.deepcopy(dict((attr, getattr(self, attr)) for attr in attrs))
+        return _dict_repr
 
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> KelvinObjectType:
