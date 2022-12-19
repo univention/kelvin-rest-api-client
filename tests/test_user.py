@@ -524,3 +524,15 @@ async def test_reload(
         await ldap_access.modify(obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]})
         await obj.reload()
         assert obj.firstname == first_name_new
+
+
+@pytest.mark.asyncio
+async def test_as_json(kelvin_session_kwargs, new_school_user):
+    user = await new_school_user()
+    async with Session(**kelvin_session_kwargs) as session:
+        old_obj: User = await UserResource(session=session).get(school=user.school, name=user.name)
+        old_obj.udm_properties["title"] = "before"
+
+        new_user = User(**old_obj.as_dict(), session=session)
+        new_user.udm_properties["title"] = "after"
+        assert old_obj.udm_properties["title"] != new_user.udm_properties["title"]

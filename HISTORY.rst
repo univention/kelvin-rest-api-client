@@ -2,6 +2,11 @@
 History
 =======
 
+2.2.1 (2022-12-15)
+------------------
+
+* Use deepcopy in ``to_dict`` method to prevent values of ``udm_properties`` from being updated in objects which are copied.
+
 2.2.0 (2022-10-13)
 --------------------
 
