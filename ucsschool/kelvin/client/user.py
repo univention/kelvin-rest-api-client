@@ -206,6 +206,7 @@ class UserResource(KelvinResource):
         kelvin_object: Type[KelvinObject] = User
         required_get_attrs: Iterable[str] = ("name",)
         required_save_attrs: Iterable[str] = ("school", "roles")
+        required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()
 
     def __init__(self, session: Session, language: str = None):

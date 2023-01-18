@@ -91,6 +91,7 @@ class SchoolClassResource(KelvinResource):
         kelvin_object: Type[KelvinObject] = SchoolClass
         required_get_attrs: Iterable[str] = ("name", "school")
         required_save_attrs: Iterable[str] = ("name", "school")
+        required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ("school",)
 
     def __init__(self, session: Session, language: str = None):
