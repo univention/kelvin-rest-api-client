@@ -199,9 +199,8 @@ async def test_reload(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, 
 
 
 @pytest.mark.asyncio
-async def test_exists(kelvin_session_kwargs, new_school, schedule_delete_ou_using_ssh):
+async def test_exists(kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
-    # schedule_delete_ou_using_ssh(school.name)
     async with Session(**kelvin_session_kwargs) as session:
         assert await SchoolResource(session=session).exists(name=school.name)
         assert not await SchoolResource(session=session).exists(name="DOESNOTEXIST")

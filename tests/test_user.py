@@ -25,8 +25,10 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import asyncio
 import time
 from dataclasses import asdict
+from unittest.mock import patch
 
 import ldap3
 import pytest
@@ -536,3 +538,17 @@ async def test_as_json(kelvin_session_kwargs, new_school_user):
         new_user = User(**old_obj.as_dict(), session=session)
         new_user.udm_properties["title"] = "after"
         assert old_obj.udm_properties["title"] != new_user.udm_properties["title"]
+
+
+@pytest.mark.asyncio
+async def test_exists(kelvin_session_kwargs, new_school_user):
+    user = await new_school_user()
+    async with Session(**kelvin_session_kwargs) as session:
+        assert await UserResource(session=session).exists(name=user.name)
+        assert not await UserResource(session=session).exists(name="DOESNOTEXIST")
+        with patch("ucsschool.kelvin.client.session.Session.head") as mock:
+            f = asyncio.Future()
+            f.set_result(True)
+            mock.return_value = f
+            await UserResource(session=session).exists(name=user.name)
+            mock.assert_called_once()

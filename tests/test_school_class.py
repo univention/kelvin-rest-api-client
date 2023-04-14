@@ -25,7 +25,9 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import asyncio
 from dataclasses import asdict
+from unittest.mock import patch
 
 import ldap3
 import pytest
@@ -347,3 +349,23 @@ async def test_reload(
         await ldap_access.modify(obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]})
         await obj.reload()
         assert obj.description == description_new
+
+
+@pytest.mark.asyncio
+async def test_exists(kelvin_session_kwargs, new_school_class):
+    sc1_dn, sc1_attr = await new_school_class()
+    async with Session(**kelvin_session_kwargs) as session:
+        assert await SchoolClassResource(session=session).exists(
+            name=sc1_attr["name"], school=sc1_attr["school"]
+        )
+        assert not await SchoolClassResource(session=session).exists(
+            name="DOESNOTEXIST", school=sc1_attr["school"]
+        )
+        with patch("ucsschool.kelvin.client.session.Session.head") as mock:
+            f = asyncio.Future()
+            f.set_result(True)
+            mock.return_value = f
+            await SchoolClassResource(session=session).exists(
+                name=sc1_attr["name"], school=sc1_attr["school"]
+            )
+            mock.assert_called_once()
