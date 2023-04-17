@@ -205,6 +205,18 @@ It is necessary to pass both ``name`` and ``school`` arguments to the :py:meth:`
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/workgroups/DEMOSCHOOL/testworkgroup'}
 
 
+Check if workgroup exists
+-------------------------
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, WorkGroupResource
+
+    async with Session(**credentials) as session:
+        if await WorkGroupResource(session=session).exists(school="DEMOSCHOOL", name="testworkgroup"):
+            print("The workgroup exists!")
+
+
 Search workgroups
 ---------------------
 

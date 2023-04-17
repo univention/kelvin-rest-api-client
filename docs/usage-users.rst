@@ -178,6 +178,18 @@ Retrieve user
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/users/test1'}
 
 
+Check if user exists
+--------------------
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, UserResource
+
+    async with Session(**credentials) as session:
+        if await UserResource(session=session).exists(name="test1"):
+            print("The user exists!")
+
+
 Search users
 ------------
 

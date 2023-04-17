@@ -200,6 +200,18 @@ It is necessary to pass both ``name`` and ``school`` arguments to the :py:meth:`
      'url': 'https://10.200.3.70/ucsschool/kelvin/v1/classes/DEMOSCHOOL/testclass'}
 
 
+Check if school class exists
+----------------------------
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, SchoolClassResource
+
+    async with Session(**credentials) as session:
+        if await SchoolClassResource(session=session).exists(name="testclass", school="DEMOSCHOOL"):
+            print("The school class exists!")
+
+
 Search school classes
 ---------------------
 

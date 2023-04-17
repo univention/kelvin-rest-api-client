@@ -5,7 +5,7 @@ History
 2.2.2 (2023-04-14)
 ------------------
 
-* Support HEAD for ``SchoolClass``, ``User``, ``WorkGroup``, and ``Role``.
+* Support HEAD for ``SchoolClass``, ``User`` and ``WorkGroup``
 
 2.2.1 (2022-12-15)
 ------------------
