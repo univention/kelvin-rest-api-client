@@ -85,6 +85,7 @@ class RoleResource(KelvinResource):
     class Meta:
         kelvin_object: Type[KelvinObject] = Role
         required_get_attrs: Iterable[str] = ("name",)
+        required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()
 
     def __init__(self, session: Session, language: str = None):

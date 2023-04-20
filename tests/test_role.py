@@ -25,7 +25,9 @@
 # /usr/share/common-licenses/AGPL-3; if not, see
 # <http://www.gnu.org/licenses/>.
 
+import asyncio
 import random
+from unittest.mock import patch
 
 import pytest
 from faker import Faker
@@ -81,3 +83,25 @@ async def test_role_attrs(compare_kelvin_obj_with_test_data, kelvin_session_kwar
     assert obj.name == role
     assert set(obj._kelvin_attrs) == {"name", "display_name"}
     assert set(obj.as_dict().keys()) == {"name", "display_name", "url"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["staff", "student", "teacher"])
+async def test_exists(kelvin_session_kwargs, role):
+    async with Session(**kelvin_session_kwargs) as session:
+        await RoleResource(session=session).exists(name=role)
+        with patch("ucsschool.kelvin.client.session.Session.head") as mock:
+            f = asyncio.Future()
+            f.set_result(True)
+            mock.return_value = f
+            await RoleResource(session=session).exists(name=role)
+
+            mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_exists_non_existing(kelvin_session_kwargs):
+    async with Session(**kelvin_session_kwargs) as session:
+        assert not await RoleResource(session=session).exists(
+            name=fake.user_name(),
+        )
