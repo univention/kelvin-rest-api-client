@@ -95,6 +95,20 @@ Retrieve role
      'url': 'https://master.ucs.local/ucsschool/kelvin/v1/roles/student'}
 
 
+Check if role exists
+--------------------
+
+.. code-block:: python
+
+    from ucsschool.kelvin.client import Session, RoleResource
+
+    async with Session(**credentials) as session:
+        if await RoleResource(session=session).exists(name="student"):
+            print("The role 'student' exists!")
+
+Note: This method only works with Kelvin server version 1.8.8 or newer.
+
+
 Search roles
 ------------
 
