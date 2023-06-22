@@ -29,6 +29,7 @@ import asyncio
 import time
 from dataclasses import asdict
 from unittest.mock import patch
+from urllib.parse import quote
 
 import ldap3
 import pytest
@@ -552,3 +553,27 @@ async def test_exists(kelvin_session_kwargs, new_school_user):
             mock.return_value = f
             await UserResource(session=session).exists(name=user.name)
             mock.assert_called_once()
+
+
+@pytest.mark.parametrize("quoted", (True, False))
+def test__from_kelvin_response_unquote(quoted: bool):
+    expected_schools = ["☁", "☃"]
+    url_schools = [quote(school) if quoted else school for school in expected_schools]
+    test_response = {
+        "name": "demo_student",
+        "school": f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{url_schools[0]}",
+        "firstname": "Demo",
+        "lastname": "Student",
+        "roles": ["https://dummy.fqdn/ucsschool/kelvin/v1/roles/student"],
+        "schools": [
+            f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{school}" for school in url_schools
+        ],
+        "birthday": "",
+        "school_classes": {
+            "DEMOSCHOOL": ["Democlass"],
+        },
+        "workgroups": {},
+    }
+    sc = User._from_kelvin_response(response=test_response)
+    assert sc.schools == expected_schools
+    assert sc.school == expected_schools[0]

@@ -32,6 +32,7 @@ import datetime
 import logging
 import warnings
 from typing import Any, Dict, Iterable, List, Type, get_type_hints
+from urllib.parse import unquote
 
 from .base import KelvinObject, KelvinResource
 from .exceptions import InvalidRequest
@@ -167,7 +168,7 @@ class User(KelvinObject):
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "User":
         for attr in ("roles", "schools"):
             # turn urls to names ('school' will be done in super class)
-            response[attr] = [url.rsplit("/", 1)[-1] for url in response[attr]]
+            response[attr] = [unquote(url.rsplit("/", 1)[-1]) for url in response[attr]]
         if response["birthday"]:
             response["birthday"] = datetime.datetime.strptime(response["birthday"], "%Y-%m-%d").date()
         if "expiration_date" not in response:

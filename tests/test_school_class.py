@@ -28,6 +28,7 @@
 import asyncio
 from dataclasses import asdict
 from unittest.mock import patch
+from urllib.parse import quote
 
 import ldap3
 import pytest
@@ -369,3 +370,19 @@ async def test_exists(kelvin_session_kwargs, new_school_class):
                 name=sc1_attr["name"], school=sc1_attr["school"]
             )
             mock.assert_called_once()
+
+
+@pytest.mark.parametrize("quoted", (True, False))
+def test__from_kelvin_response_unquote(quoted: bool):
+    expected_school = "☁"
+    url_school = quote(expected_school) if quoted else expected_school
+    expected_users = ["☃", "☼", "AÇIKGÜN", "ÇAĞACAN"]
+    url_users = [quote(user) if quoted else user for user in expected_users]
+    test_response = {
+        "name": "Democlass",
+        "school": f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{url_school}",
+        "users": [f"https://dummy.fqdn/ucsschool/kelvin/v1/users/{user}" for user in url_users],
+    }
+    sc = SchoolClass._from_kelvin_response(response=test_response)
+    assert sc.users == expected_users
+    assert sc.school == expected_school

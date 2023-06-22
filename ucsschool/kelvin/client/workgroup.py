@@ -29,6 +29,7 @@
 
 import logging
 from typing import Any, Dict, Iterable, List, Type
+from urllib.parse import unquote
 
 from .base import KelvinObject, KelvinResource
 from .exceptions import InvalidRequest
@@ -85,7 +86,7 @@ class WorkGroup(KelvinObject):
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "WorkGroup":
         # user urls to user names
-        response["users"] = [url.rsplit("/", 1)[-1] for url in response["users"]]
+        response["users"] = [unquote(url.rsplit("/", 1)[-1]) for url in response["users"]]
         # 'school' will be done in super class
         return super()._from_kelvin_response(response)
 

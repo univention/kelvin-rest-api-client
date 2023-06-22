@@ -30,6 +30,7 @@ import copy
 import logging
 from abc import ABC
 from typing import Any, AsyncIterator, Dict, Iterable, List, TypeVar
+from urllib.parse import unquote
 
 from .exceptions import InvalidRequest, NoObject
 from .session import Session
@@ -148,7 +149,7 @@ class KelvinObject(ABC):
         try:
             # school url to school name
             school_url = response["school"]
-            tmp = school_url.rsplit("/", 1)[-1]
+            tmp = unquote(school_url.rsplit("/", 1)[-1])
             response["school"] = tmp.split("?")[0]
         except (IndexError, KeyError):
             pass
