@@ -4,7 +4,7 @@ History
 
 2.2.3 (2023-06-22)
 
-* ``%xx` escaped names of school classes, users and workgroups are now unescaped.
+* ``%xx`` escaped names of school classes, users and workgroups are now unescaped.
 
 2.2.2 (2023-04-14)
 ------------------
