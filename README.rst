@@ -71,10 +71,17 @@ Install *UCS\@school Kelvin REST API Client* via pip from `PyPI`_:
 Tests
 -----
 
+
 There are some isolated unittests, but most tests run against a real *UCS\@school Kelvin REST API*.
 A UCS Docker container has been prepared for this (additionally to the Kelvin API Docker container).
 The ``Makefile`` automates downloading and starting the Docker containers (3.2 GB GB) and running the tests.
 It is also possible to use an existing UCS DC Master with UCS\@school and the Kelvin API installed.
+
+Install the dependencies for testing in your python virtual environment:
+
+.. code-block:: console
+
+    $ pip install -r requirements_test.txt
 
 The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
 The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
