@@ -71,6 +71,15 @@ Install *UCS\@school Kelvin REST API Client* via pip from `PyPI`_:
 Tests
 -----
 
+Development internal tests
+==========================
+
+The [Kelvin-client-daily](https://jenkins2022.knut.univention.de/job/UCSschool-5.0/job/Kelvin-client-daily/ )-job, an integration test for the Kelvin client, is run and daily with the newest UCS.
+The job takes around 10 minutes to run and can be configured to run with a feature branch and a Kelvin Rest Api version of your choice.
+This is the recommended way to run the full integration test suite.
+
+Local Tests
+===========
 
 There are some isolated unittests, but most tests run against a real *UCS\@school Kelvin REST API*.
 A UCS Docker container has been prepared for this (additionally to the Kelvin API Docker container).
