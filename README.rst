@@ -22,7 +22,7 @@ Features
 Compatibility
 -------------
 
-A list of UCS\@school Kelvin REST API server versions which introduce breaking changes can be found in the [UCS\@school Kelvin REST API Documentation](https://docs.software-univention.de/ucsschool-kelvin-rest-api/kelvin-client-compatibility.html).
+A list of UCS\@school Kelvin REST API server versions which introduce breaking changes can be found in the `UCS\@school Kelvin REST API Documentation <https://docs.software-univention.de/ucsschool-kelvin-rest-api/kelvin-client-compatibility.html>`_.
 
 
 Usage
@@ -74,7 +74,7 @@ Tests
 Development internal tests
 ==========================
 
-The [Kelvin-client-daily](https://jenkins2022.knut.univention.de/job/UCSschool-5.0/job/Kelvin-client-daily/ )-job, an integration test for the Kelvin client, is run and daily with the newest UCS.
+The `Kelvin-client-daily <https://jenkins2022.knut.univention.de/job/UCSschool-5.0/job/Kelvin-client-daily/>`_-job, an integration test for the Kelvin client, is run and daily with the newest UCS.
 The job takes around 10 minutes to run and can be configured to run with a feature branch and a Kelvin Rest Api version of your choice.
 This is the recommended way to run the full integration test suite.
 
