@@ -195,6 +195,22 @@ To capture the log messages for this project, subscribe to a logger named ``ucss
 The *UCS\@school Kelvin REST API* on the UCS server logs into the file ``/var/log/univention/ucsschool-kelvin-rest-api/http.log``.
 The *UDM REST API* on the UCS server logs into the file ``/var/log/univention/directory-manager-rest.log``.
 
+Release
+-------
+
+
+.. code-block:: markdown
+
+        - [ ] Check and update contents of [HISTORY.rst](./HISTORY.rst>)
+        - [ ] Check and update contents of [VERSION.txt](./VERSION.txt>)
+        - [ ] Kelvin client [Jenkins test](https://univention-dist-jenkins.k8s.knut.univention.de/job/UCSschool-5.0/view/Daily%20Tests/job/Kelvin-client-daily>) OK
+        - [ ] Tag commit in gitlab
+        - [ ] Run `make dist`
+        - [ ] Run `make docs`
+        - [ ] Run `make release`
+        - [ ] Verify packages on https://pypi.org/
+        - [ ] Release mail & chat announcement
+
 Repo permissions
 ----------------
 * Github: @dansan and @JuergenBS
