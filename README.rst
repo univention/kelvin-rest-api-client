@@ -22,7 +22,7 @@ Features
 Compatibility
 -------------
 
-A list of UCS\@school Kelvin REST API server versions which introduce breaking changes can be found in the [UCS\@school Kelvin REST API Documentation](https://docs.software-univention.de/ucsschool-kelvin-rest-api/kelvin-client-compatibility.html).
+A list of UCS\@school Kelvin REST API server versions which introduce breaking changes can be found in the `UCS\@school Kelvin REST API Documentation <https://docs.software-univention.de/ucsschool-kelvin-rest-api/kelvin-client-compatibility.html>`_.
 
 
 Usage
@@ -71,10 +71,26 @@ Install *UCS\@school Kelvin REST API Client* via pip from `PyPI`_:
 Tests
 -----
 
+Development internal tests
+==========================
+
+The `Kelvin-client-daily <https://jenkins2022.knut.univention.de/job/UCSschool-5.0/job/Kelvin-client-daily/>`_-job, an integration test for the Kelvin client, is run and daily with the newest UCS.
+The job takes around 10 minutes to run and can be configured to run with a feature branch and a Kelvin Rest Api version of your choice.
+This is the recommended way to run the full integration test suite.
+
+Local Tests
+===========
+
 There are some isolated unittests, but most tests run against a real *UCS\@school Kelvin REST API*.
-A UCS Docker container has been prepared for this (additionally to the Kelvin API Docker container).
+A UCS 4.4 Docker container has been prepared for this (additionally to the Kelvin API Docker container).
 The ``Makefile`` automates downloading and starting the Docker containers (3.2 GB GB) and running the tests.
 It is also possible to use an existing UCS DC Master with UCS\@school and the Kelvin API installed.
+
+Install the dependencies for testing in your python virtual environment:
+
+.. code-block:: console
+
+    $ pip install -r requirements_test.txt
 
 The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
 The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
@@ -178,6 +194,23 @@ To capture the log messages for this project, subscribe to a logger named ``ucss
 
 The *UCS\@school Kelvin REST API* on the UCS server logs into the file ``/var/log/univention/ucsschool-kelvin-rest-api/http.log``.
 The *UDM REST API* on the UCS server logs into the file ``/var/log/univention/directory-manager-rest.log``.
+
+Release
+-------
+
+
+.. code-block:: markdown
+
+        - [ ] Check and update contents of [HISTORY.rst](./HISTORY.rst>)
+        - [ ] Check and update contents of [VERSION.txt](./VERSION.txt>)
+        - [ ] Kelvin client [Jenkins test](https://univention-dist-jenkins.k8s.knut.univention.de/job/UCSschool-5.0/view/Daily%20Tests/job/Kelvin-client-daily>) OK
+        - [ ] Tag commit in gitlab
+        - [ ] Run `make dist`
+        - [ ] Run `make docs`
+        - [ ] Run `make release-test` and verify the installation
+        - [ ] Run `make release` and verify the installation
+        - [ ] Verify packages on https://pypi.org/
+        - [ ] Release mail & chat announcement
 
 Repo permissions
 ----------------
