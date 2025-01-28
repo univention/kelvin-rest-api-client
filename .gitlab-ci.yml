@@ -1,6 +1,14 @@
+include:
+  - project: univention/dist/docker-services
+    file:
+      - pre-commit.yml
+  - project: univention/internal/ucsschool-ci-utils
+    file: fragments/openstack.yaml
+
 stages:
   - prepare
   - lint
+  - test
 
 workflow:
   rules:
@@ -9,12 +17,23 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
 
-include:
-  - project: univention/dist/docker-services
-    file:
-    - kaniko.yml
-    - pre-commit.yml
-
 run_pre_commit:
   stage: lint
   extends: .pre-commit
+
+integration_tests:
+  extends: .run_openstack_cfg
+  stage: test
+  needs: []
+  when: manual
+  allow_failure: False
+  variables:
+    TARGET_VERSION: "5.0-9"
+    OPENSTACK_CFG_FILE: "branch_tests.cfg"
+    LABEL_SUFFIX: "$CI_COMMIT_REF_SLUG"
+  script:
+    - mkdir results
+    - !reference [.run_openstack_cfg, script]
+  artifacts:
+    reports:
+      junit: results/**/test-reports/**/*.xml
