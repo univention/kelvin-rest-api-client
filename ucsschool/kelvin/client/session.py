@@ -45,6 +45,7 @@ DN = str
 
 API_VERSION = "v1"
 TOKEN_HASH_ALGORITHM = "HS256"  # nosec
+TOKEN_LEEWAY = 30
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
 URL_RESOURCE_CLASS = f"{URL_BASE}/{API_VERSION}/classes/"
@@ -87,7 +88,7 @@ class Token:
     def is_valid(self) -> bool:
         if not self.expiry or not self.value:
             return False
-        return datetime.datetime.utcnow() <= self.expiry
+        return datetime.datetime.utcnow() + datetime.timedelta(seconds=TOKEN_LEEWAY) <= self.expiry
 
 
 class Session:
