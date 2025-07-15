@@ -51,15 +51,15 @@ async def test_search_no_name_arg(compare_kelvin_obj_with_test_data, kelvin_sess
         objs = [obj async for obj in RoleResource(session=session).search()]
 
     assert objs, "No roles found."
-    assert len(objs) == 3
+    assert len(objs) == 4
     for obj in objs:
         assert not hasattr(obj, "dn")
         assert not hasattr(obj, "ucsschool_roles")
-    assert {"staff", "student", "teacher"} == {obj.name for obj in objs}
+    assert {"staff", "student", "teacher", "school_admin"} == {obj.name for obj in objs}
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("role", ["staff", "student", "teacher"])
+@pytest.mark.parametrize("role", ["staff", "student", "teacher", "school_admin"])
 async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role):
     url = URL_ROLE_OBJECT.format(host=kelvin_session_kwargs["host"], name=role)
     async with Session(**kelvin_session_kwargs) as session:
@@ -68,7 +68,7 @@ async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kw
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("role", ["staff", "student", "teacher"])
+@pytest.mark.parametrize("role", ["staff", "student", "teacher", "school_admin"])
 async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role):
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get(name=role)
@@ -77,7 +77,7 @@ async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, rol
 
 @pytest.mark.asyncio
 async def test_role_attrs(compare_kelvin_obj_with_test_data, kelvin_session_kwargs):
-    role = random.choice(("staff", "student", "teacher"))
+    role = random.choice(("staff", "student", "teacher", "school_admin"))
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get(name=role)
     assert obj.name == role
@@ -86,7 +86,7 @@ async def test_role_attrs(compare_kelvin_obj_with_test_data, kelvin_session_kwar
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("role", ["staff", "student", "teacher"])
+@pytest.mark.parametrize("role", ["staff", "student", "teacher", "school_admin"])
 async def test_exists(kelvin_session_kwargs, role):
     async with Session(**kelvin_session_kwargs) as session:
         await RoleResource(session=session).exists(name=role)
