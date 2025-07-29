@@ -10,10 +10,10 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
 
 include:
-  - project: univention/dist/docker-services
+  - project: univention/infrastructure/docker-services
     file:
-    - kaniko.yml
-    - pre-commit.yml
+      - kaniko.yml
+      - pre-commit.yml
 
 run_pre_commit:
   stage: lint
