@@ -109,6 +109,8 @@ class User(KelvinObject):
         "school_classes",
         "workgroups",
         "source_uid",
+        "legal_guardians",
+        "legal_wards",
     ]
 
     def __init__(
@@ -136,6 +138,8 @@ class User(KelvinObject):
         url: str = None,
         session: Session = None,
         language: str = None,
+        legal_guardians: List[str] = None,
+        legal_wards: List[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -163,12 +167,15 @@ class User(KelvinObject):
         self.source_uid = source_uid
         self.kelvin_password_hashes = kelvin_password_hashes
         self._resource_class = UserResource
+        self.legal_guardians = legal_guardians or []
+        self.legal_wards = legal_wards or []
 
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "User":
-        for attr in ("roles", "schools"):
+        for attr in ("roles", "schools", "legal_guardians", "legal_wards"):
             # turn urls to names ('school' will be done in super class)
-            response[attr] = [unquote(url.rsplit("/", 1)[-1]) for url in response[attr]]
+            if attr in response:
+                response[attr] = [unquote(url.rsplit("/", 1)[-1]) for url in response[attr]]
         if response["birthday"]:
             response["birthday"] = datetime.datetime.strptime(response["birthday"], "%Y-%m-%d").date()
         if "expiration_date" not in response:
@@ -186,8 +193,13 @@ class User(KelvinObject):
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
         data = super()._to_kelvin_request_data()
-        url_keys = {"roles": "role", "schools": "school"}
-        for attr in ("roles", "schools"):
+        url_keys = {
+            "roles": "role",
+            "schools": "school",
+            "legal_guardians": "user",
+            "legal_wards": "user",
+        }
+        for attr in url_keys.keys():
             url_key = url_keys[attr]
             # role/school names to urls
             data[attr] = [f"{self.session.urls[url_key]}{value}" for value in data[attr]]
