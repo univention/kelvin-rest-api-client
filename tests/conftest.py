@@ -800,7 +800,7 @@ class UserFactory(factory.Factory):
 
 @pytest.fixture  # noqa: C901
 def new_user_test_obj(new_school):  # noqa: C901
-    role_choices = ("staff", "student", "teacher", "teacher_and_staff", "school_admin")
+    role_choices = ("staff", "student", "teacher", "teacher_and_staff", "school_admin", "legal_guardian")
 
     def _func(**kwargs) -> TestUser:
         if "roles" not in kwargs:
@@ -808,7 +808,7 @@ def new_user_test_obj(new_school):  # noqa: C901
                 role = kwargs.pop("role")
             except KeyError:
                 role = random.choice(role_choices)
-            if role in ("staff", "student", "teacher", "school_admin"):
+            if role in ("staff", "student", "teacher", "school_admin", "legal_guardian"):
                 kwargs["roles"] = [role]
             elif role == "teacher_and_staff":
                 kwargs["roles"] = ["staff", "teacher"]
