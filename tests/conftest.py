@@ -6,7 +6,7 @@ import os
 import random
 import string
 import subprocess
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
@@ -771,6 +771,12 @@ class TestUser:
     url: str = None
     kelvin_password_hashes: TestUserPasswordsHashes = None
 
+    @classmethod
+    def create(cls, **args):
+        valid_fields = {f.name for f in fields(cls)}
+        valid_args = {k: v for k, v in args.items() if k in valid_fields}
+        return cls(**valid_args)
+
 
 class UserFactory(factory.Factory):
     class Meta:
@@ -902,7 +908,7 @@ def new_school_user(
         obj["password"] = user_obj.password
         obj["birthday"] = datetime.datetime.strptime(obj["birthday"], "%Y-%m-%d").date()
         obj["expiration_date"] = datetime.datetime.strptime(obj["expiration_date"], "%Y-%m-%d").date()
-        return TestUser(**obj)
+        return TestUser.create(**obj)
 
     yield _func
 
@@ -948,7 +954,7 @@ def http_request(json_headers, kelvin_session_kwargs):  # noqa: C901
         if "verify" not in kwargs:
             kwargs["verify"] = kelvin_session_kwargs["verify"]
         if "timeout" not in kwargs:
-            kwargs["timeout"] = 10.0
+            kwargs["timeout"] = 30.0
         req_method = getattr(httpx, http_method)
         response: httpx.Response = req_method(url, **kwargs)
         logger.debug(

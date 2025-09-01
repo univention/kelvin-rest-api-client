@@ -304,7 +304,7 @@ async def test_create_user_raises_invalid_request_for_missing_username_and_recor
         user_obj = User(session=session, **user_data_dict)
         with pytest.raises(InvalidRequest) as exc:
             await user_obj.save()
-            assert expected_message in exc.value
+        assert expected_message in str(exc.value)
 
 
 @pytest.mark.asyncio

@@ -114,7 +114,7 @@ class KelvinObject(ABC):
         # so if it's not set, we'll try to create the object
         if not self.url:
             resp_json = await self.session.post(
-                url=self._resource_class(session=self.session).collection_url, json=data
+                url=self._resource_class(session=self.session).collection_url, json=data, timeout=30.0
             )
             resp_obj = self._from_kelvin_response(resp_json)
             for k, v in resp_obj.as_dict().items():
