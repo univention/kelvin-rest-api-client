@@ -503,12 +503,8 @@ class SchoolFactory(factory.Factory):
     display_name = factory.Faker("text", max_nb_chars=50)
     educational_servers = factory.LazyAttribute(lambda o: [f"edu{o.name[:10]}"])
     administrative_servers = factory.LazyAttribute(lambda o: [f"adm{o.name[:10]}"])
-    class_share_file_server = factory.LazyAttribute(
-        lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
-    )
-    home_share_file_server = factory.LazyAttribute(
-        lambda o: f"{random.choice(('adm', 'edu'))}{o.name[:10]}"
-    )
+    class_share_file_server = factory.LazyAttribute(lambda o: f"edu{o.name[:10]}")
+    home_share_file_server = factory.LazyAttribute(lambda o: f"edu{o.name[:10]}")
     ucsschool_roles = factory.List([])
     udm_properties = factory.Dict({"description": None})
     dn = ""
