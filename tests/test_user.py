@@ -357,6 +357,44 @@ async def test_create_with_password_hashes(
 
 
 @pytest.mark.asyncio
+async def test_modify_legal_wards(
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    new_school_user,
+):
+    user = await new_school_user(roles=["legal_guardian"])
+    student = await new_school_user(roles=["student"])
+    async with Session(**kelvin_session_kwargs) as session:
+        user_resource = UserResource(session=session)
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        compare_kelvin_obj_with_test_data(obj, **asdict(user))
+        obj.legal_wards = [student.name]
+        new_obj: User = await obj.save()
+        assert new_obj.legal_wards == [student.name]
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        assert obj.legal_wards == [student.name]
+
+
+@pytest.mark.asyncio
+async def test_modify_legal_guardians(
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    new_school_user,
+):
+    user = await new_school_user(roles=["student"])
+    legal_guardian = await new_school_user(roles=["legal_guardian"])
+    async with Session(**kelvin_session_kwargs) as session:
+        user_resource = UserResource(session=session)
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        compare_kelvin_obj_with_test_data(obj, **asdict(user))
+        obj.legal_guardians = [legal_guardian.name]
+        new_obj: User = await obj.save()
+        assert new_obj.legal_guardians == [legal_guardian.name]
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        assert obj.legal_guardians == [legal_guardian.name]
+
+
+@pytest.mark.asyncio
 async def test_modify(
     check_password,
     compare_kelvin_obj_with_test_data,
