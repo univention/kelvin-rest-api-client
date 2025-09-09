@@ -2,7 +2,13 @@
 History
 =======
 
+2.3.0 (2025-09-10)
+------------------
+
+* Add support for ``legal_guardians`` and ``legal_wards`` attributes. A Kelvin API server version of 3.0.0 or higher is necessary to use these attributes.
+
 2.2.3 (2023-06-22)
+------------------
 
 * ``%xx`` escaped names of school classes, users and workgroups are now unescaped.
 
