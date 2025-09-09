@@ -395,6 +395,44 @@ async def test_modify_legal_guardians(
 
 
 @pytest.mark.asyncio
+async def test_modify_legal_wards_wrong_role(
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    new_school_user,
+):
+    user = await new_school_user(roles=["teacher"])
+    student = await new_school_user(roles=["student"])
+    async with Session(**kelvin_session_kwargs) as session:
+        user_resource = UserResource(session=session)
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        compare_kelvin_obj_with_test_data(obj, **asdict(user))
+        obj.legal_wards = [student.name]
+        with pytest.raises(InvalidRequest) as exc_info:
+            await obj.save()
+        assert (
+            "Parameter 'legal_wards' only valid for user-role 'legal_guardian'" in exc_info.value.args[0]
+        )
+
+
+@pytest.mark.asyncio
+async def test_modify_legal_guardians_wrong_role(
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    new_school_user,
+):
+    user = await new_school_user(roles=["teacher"])
+    legal_guardian = await new_school_user(roles=["legal_guardian"])
+    async with Session(**kelvin_session_kwargs) as session:
+        user_resource = UserResource(session=session)
+        obj: User = await user_resource.get(school=user.school, name=user.name)
+        compare_kelvin_obj_with_test_data(obj, **asdict(user))
+        obj.legal_guardians = [legal_guardian.name]
+        with pytest.raises(InvalidRequest) as exc_info:
+            await obj.save()
+        assert "Parameter 'legal_guardians' only valid for user-role 'student'" in exc_info.value.args[0]
+
+
+@pytest.mark.asyncio
 async def test_modify(
     check_password,
     compare_kelvin_obj_with_test_data,
