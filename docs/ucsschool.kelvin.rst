@@ -1,6 +1,8 @@
 ucsschool.kelvin namespace
 ==========================
 
+.. py:module:: ucsschool.kelvin
+
 Subpackages
 -----------
 

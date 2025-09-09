@@ -56,6 +56,8 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
             ucsschool_roles: List[str] = None,
             dn: str = None,
             url: str = None,
+            legal_guardians: List[str] = None,
+            legal_wards: List[str] = None,
             session: Session = None,
             language: str = None,
             **kwargs,
@@ -81,6 +83,8 @@ The :py:class:`ucsschool.kelvin.client.User` class has the following public attr
         self.dn = dn
         self.url = url
         self.session = session
+        self.legal_guardians = legal_guardians or []
+        self.legal_wards = legal_wards or []
         if language:
             self.session.language = language
 
@@ -175,7 +179,9 @@ Retrieve user
      'source_uid': 'TESTID',
      'udm_properties': {},
      'dn': 'uid=test1,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=example,dc=com',
-     'url': 'https://master.ucs.local/ucsschool/kelvin/v1/users/test1'}
+     'url': 'https://master.ucs.local/ucsschool/kelvin/v1/users/test1',
+     'legal_guardians': ["https://master.ucs.local/ucsschool/kelvin/v1/users/demo_parent"],
+     }
 
 
 Check if user exists
