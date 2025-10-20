@@ -56,12 +56,10 @@ URL_RESOURCE_WORKGROUP = f"{URL_BASE}/{API_VERSION}/workgroups/"
 logger = logging.getLogger(__name__)
 
 
-class KelvinClientWarning(Warning):
-    ...
+class KelvinClientWarning(Warning): ...
 
 
-class BadSettingsWarning(KelvinClientWarning):
-    ...
+class BadSettingsWarning(KelvinClientWarning): ...
 
 
 @dataclass

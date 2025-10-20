@@ -71,16 +71,13 @@ TestServerConfiguration = NamedTuple(
 )
 
 
-class BadTestServerConfig(Exception):
-    ...
+class BadTestServerConfig(Exception): ...
 
 
-class ContainerIpUnknown(Exception):
-    ...
+class ContainerIpUnknown(Exception): ...
 
 
-class NoTestServerConfig(Exception):
-    ...
+class NoTestServerConfig(Exception): ...
 
 
 class TestServerConnectionError(Exception):
@@ -998,7 +995,7 @@ def http_request(json_headers, kelvin_session_kwargs):  # noqa: C901
 
 @pytest.fixture(scope="session")
 def ucs_ca_file_path():  # pragma: no cover
-    global CA_CERT_PATH
+    global CA_CERT_PATH  # noqa: F824
     ucs_ca_ori_filename = "ucs-root-ca.crt"
     ip_chars = string.digits + "."
 
