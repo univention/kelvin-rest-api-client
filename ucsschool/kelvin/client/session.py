@@ -38,6 +38,15 @@ from typing import Any, Dict, List, Optional, Union
 import httpx
 import jwt
 from async_property import async_property
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    before_sleep_log,
+    retry_if_exception_type,
+    retry_if_result,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from .exceptions import InvalidRequest, InvalidToken, NoObject, ServerError
 
@@ -46,6 +55,9 @@ DN = str
 API_VERSION = "v1"
 TOKEN_HASH_ALGORITHM = "HS256"  # nosec
 TOKEN_LEEWAY = 30
+SESSION_DEFAULT_RETRIES = 0
+SESSION_DEFAULT_MIN_RETRY_PAUSE = 2  # seconds
+SESSION_DEFAULT_MAX_RETRY_PAUSE = 20  # seconds
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
 URL_RESOURCE_CLASS = f"{URL_BASE}/{API_VERSION}/classes/"
@@ -106,6 +118,7 @@ class Session:
         request_id: str = None,
         request_id_header: str = "X-Request-ID",
         language: str = None,
+        retries: int = SESSION_DEFAULT_RETRIES,
         **kwargs,
     ):
         if max_client_tasks < 4:
@@ -122,6 +135,9 @@ class Session:
         self.request_id = request_id or uuid.uuid4().hex
         self.request_id_header = request_id_header
         self.language = language
+        self._retries = retries
+        self._min_retry_pause = SESSION_DEFAULT_MIN_RETRY_PAUSE
+        self._max_retry_pause = SESSION_DEFAULT_MAX_RETRY_PAUSE
         self.kwargs = kwargs
         self.urls = {
             "token": URL_TOKEN.format(host=host),
@@ -190,7 +206,39 @@ class Session:
             kwargs["headers"] = await self.json_headers
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.kwargs.get("timeout", 10.0)
-        response: httpx.Response = await async_request_method(url, **kwargs)
+
+        retrying = AsyncRetrying(
+            stop=stop_after_attempt(self._retries + 1),
+            wait=wait_exponential(
+                multiplier=1, min=self._min_retry_pause, max=self._max_retry_pause
+            ),
+            retry=(
+                retry_if_result(
+                    lambda r: (
+                        r.status_code
+                        in (
+                            httpx.codes.TOO_MANY_REQUESTS,
+                            httpx.codes.BAD_GATEWAY,
+                            httpx.codes.SERVICE_UNAVAILABLE,
+                            httpx.codes.GATEWAY_TIMEOUT,
+                        )
+                    )
+                )
+                | retry_if_exception_type(
+                    (httpx.RemoteProtocolError, httpx.NetworkError)
+                )
+            ),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )
+
+        try:
+            response: httpx.Response = await retrying(
+                async_request_method, url, **kwargs
+            )
+        except RetryError as exc:
+            response = exc.last_attempt.result()
+
         try:
             resp_json = response.json()
             detail = resp_json["detail"] if "detail" in resp_json else ""
