@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2020 Univention GmbH
 #
@@ -55,8 +54,8 @@ class WorkGroup(KelvinObject):
         description: str = None,
         users: List[str] = None,
         email: str = None,
-        allowed_email_senders_users: List[str] = [],
-        allowed_email_senders_groups: List[str] = [],
+        allowed_email_senders_users: List[str] = None,
+        allowed_email_senders_groups: List[str] = None,
         create_share: bool = True,
         ucsschool_roles: List[str] = None,
         udm_properties: Dict[str, Any] = None,
@@ -78,17 +77,19 @@ class WorkGroup(KelvinObject):
         self.description = description
         self.users = users
         self.email = email
-        self.allowed_email_senders_users = allowed_email_senders_users
-        self.allowed_email_senders_groups = allowed_email_senders_groups
+        self.allowed_email_senders_users = (
+            [] if allowed_email_senders_users is None else allowed_email_senders_users
+        )
+        self.allowed_email_senders_groups = (
+            [] if allowed_email_senders_groups is None else allowed_email_senders_groups
+        )
         self.create_share = create_share
         self._resource_class = WorkGroupResource
 
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "WorkGroup":
         # user urls to user names
-        response["users"] = [
-            unquote(url.rsplit("/", 1)[-1]) for url in response["users"]
-        ]
+        response["users"] = [unquote(url.rsplit("/", 1)[-1]) for url in response["users"]]
         # 'school' will be done in super class
         return super()._from_kelvin_response(response)
 
@@ -115,6 +116,4 @@ class WorkGroupResource(KelvinResource):
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
-            raise InvalidRequest(
-                "Argument 'school' for searching workgroups must be exact."
-            )
+            raise InvalidRequest("Argument 'school' for searching workgroups must be exact.")

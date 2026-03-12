@@ -55,9 +55,7 @@ async def search_school(new_school, kelvin_session_kwargs):
     ],
 )
 @pytest.mark.asyncio
-async def test_log_mask_credentials(
-    caplog, new_school, kelvin_session_kwargs, log_level
-):
+async def test_log_mask_credentials(caplog, new_school, kelvin_session_kwargs, log_level):
     filters = {
         "Authorization": "'Authorization': '**********'",
         "username": f"'username': '{kelvin_session_kwargs['username']}'",

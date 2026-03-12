@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2020 Univention GmbH
 #
@@ -28,7 +27,6 @@
 # <http://www.gnu.org/licenses/>.
 import copy
 import logging
-from abc import ABC
 from typing import Any, AsyncIterator, Dict, Iterable, List, TypeVar
 from urllib.parse import unquote
 
@@ -40,7 +38,7 @@ KelvinObjectType = TypeVar("KelvinObjectType", bound="KelvinObject")
 logger = logging.getLogger(__name__)
 
 
-class KelvinObject(ABC):
+class KelvinObject:
     _class_display_name = "Kelvin Object"
     _kelvin_attrs = ["name", "ucsschool_roles", "udm_properties"]
 
@@ -71,9 +69,7 @@ class KelvinObject(ABC):
         self._update_old_attrs()
 
     def __repr__(self):
-        req_attrs_vals = [
-            f"{attr!r}={value!r}" for attr, value in self._required_get_attrs.items()
-        ]
+        req_attrs_vals = [f"{attr!r}={value!r}" for attr, value in self._required_get_attrs.items()]
         if hasattr(self, "dn") and self.dn:
             req_attrs_vals.append(f"dn={self.dn!r}")
         return f"{self.__class__.__name__}({', '.join(req_attrs_vals)})"
@@ -92,9 +88,7 @@ class KelvinObject(ABC):
                 self._class_display_name,
                 self,
             )
-        obj = await self._resource_class(session=self.session).get(
-            **self._required_get_attrs
-        )
+        obj = await self._resource_class(session=self.session).get(**self._required_get_attrs)
         for k, v in obj.as_dict().items():
             setattr(self, k, v)
         self._update_old_attrs()
@@ -139,14 +133,10 @@ class KelvinObject(ABC):
 
     async def delete(self) -> None:
         if self._deleted:
-            logger.warning(
-                "[%s] %s has already been deleted.", self.session.request_id[:10], self
-            )
+            logger.warning("[%s] %s has already been deleted.", self.session.request_id[:10], self)
             return
         if not self.url:
-            raise RuntimeError(
-                "Attribute 'url' unset. Run 'reload()' before 'delete()'."
-            )
+            raise RuntimeError("Attribute 'url' unset. Run 'reload()' before 'delete()'.")
         await self.session.delete(self.url)
         self._deleted = True
 
@@ -182,22 +172,20 @@ class KelvinObject(ABC):
     @property
     def _required_get_attrs(self) -> Dict[str, Any]:
         return dict(
-            (attr, getattr(self, attr))
-            for attr in self._resource_class.Meta.required_get_attrs
+            (attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_get_attrs
         )
 
     @property
     def _required_save_attrs(self) -> Dict[str, Any]:
         return dict(
-            (attr, getattr(self, attr))
-            for attr in self._resource_class.Meta.required_save_attrs
+            (attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_save_attrs
         )
 
     def _update_old_attrs(self):
         self._old_attrs.update(self._required_get_attrs)
 
 
-class KelvinResource(ABC):
+class KelvinResource:
     class Meta:
         kelvin_object: KelvinObjectType = KelvinObject
         required_get_attrs: Iterable[str] = ("name",)
@@ -263,9 +251,7 @@ class KelvinResource(ABC):
         # not necessary, but will simplify the query string
         for k in [k for k, v in kwargs.items() if v in ("", "*")]:
             del kwargs[k]
-        resp_json: List[Dict[str, Any]] = await self.session.get(
-            self.collection_url, params=kwargs
-        )
+        resp_json: List[Dict[str, Any]] = await self.session.get(self.collection_url, params=kwargs)
         for resp in resp_json:
             obj = self.Meta.kelvin_object._from_kelvin_response(resp)
             obj.session = self.session

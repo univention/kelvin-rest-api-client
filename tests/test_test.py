@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Test connection and utility functions in `conftest` module."""
 
 import datetime
@@ -11,7 +9,7 @@ from conftest import TestServerConnectionError, retrieve_kelvin_access_token
 from faker import Faker
 from ruamel.yaml import YAML
 
-TOKEN_HASH_ALGORITHM = "HS256"  # nosec
+TOKEN_HASH_ALGORITHM = "HS256"  # noqa: S105
 fake = Faker()
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2020 Univention GmbH
 #
@@ -82,7 +81,8 @@ class School(KelvinObject):
     async def save(self) -> "SchoolResource":
         if self.url:
             raise NotImplementedError(
-                "Modification of school objects has not yet been implemented in the Kelvin REST API."
+                "Modification of school objects has not yet been implemented "
+                "in the Kelvin REST API."
             )
         return await super().save()
 
@@ -93,7 +93,8 @@ class School(KelvinObject):
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
         data = super()._to_kelvin_request_data()
-        # passing None will produce a validation error, OK is not passing it or passing an empty list
+        # passing None will produce a validation error,
+        # OK is not passing it or passing an empty list
         if data["educational_servers"] is None:
             del data["educational_servers"]
         if data["administrative_servers"] is None:

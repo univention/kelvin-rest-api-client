@@ -78,16 +78,8 @@ async def test_search_partial_name_arg(
     name_end = school.name[len(name_begin) :]
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs1 = [
-            obj
-            async for obj in SchoolResource(session=session).search(
-                name=f"{name_begin}*"
-            )
-        ]
-        objs2 = [
-            obj
-            async for obj in SchoolResource(session=session).search(name=f"*{name_end}")
-        ]
+        objs1 = [obj async for obj in SchoolResource(session=session).search(name=f"{name_begin}*")]
+        objs2 = [obj async for obj in SchoolResource(session=session).search(name=f"*{name_end}")]
     assert objs1, f"No School for name='{name_begin}*' found."
     assert len(objs1) >= 1
     assert school.dn in [o.dn for o in objs1]
@@ -97,9 +89,7 @@ async def test_search_partial_name_arg(
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school
-):
+async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
     url = URL_SCHOOL_OBJECT.format(host=kelvin_session_kwargs["host"], name=school.name)
     async with Session(**kelvin_session_kwargs) as session:
@@ -108,9 +98,7 @@ async def test_get_from_url(
 
 
 @pytest.mark.asyncio
-async def test_get(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school
-):
+async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolResource(session=session).get(name=school.name)
@@ -133,7 +121,7 @@ async def test_create_minimal(
         print(f"Creating school with kwargs: {school_kwargs!r}")
         school_obj = School(session=session, **school_kwargs)
         await school_obj.save()
-        print("Created new School: {!r}".format(school_obj.as_dict()))
+        print(f"Created new School: {school_obj.as_dict()!r}")
 
     ldap_filter = f"(&(ou={school_obj.name})(objectClass=ucsschoolOrganizationalUnit))"
     ldap_objs = await ldap_access.search(filter_s=ldap_filter)
@@ -155,9 +143,7 @@ async def test_create_minimal(
         single_server_dn = f"cn={single_server_cn},cn=dc,cn=computers,{base_dn}"
         class_share_file_server_dns.append(single_server_dn)
         home_share_file_server_dns.append(single_server_dn)
-    assert (
-        ldap_obj["ucsschoolClassShareFileServer"].value in class_share_file_server_dns
-    )
+    assert ldap_obj["ucsschoolClassShareFileServer"].value in class_share_file_server_dns
     assert ldap_obj["ucsschoolHomeShareFileServer"].value in home_share_file_server_dns
     # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
 
@@ -179,7 +165,7 @@ async def test_create_all_attrs(
         print(f"Creating school with kwargs: {school_kwargs!r}")
         school_obj = School(session=session, **school_kwargs)
         await school_obj.save()
-        print("Created new School: {!r}".format(school_obj.as_dict()))
+        print(f"Created new School: {school_obj.as_dict()!r}")
 
     ldap_filter = f"(&(ou={school_obj.name})(objectClass=ucsschoolOrganizationalUnit))"
     ldap_objs = await ldap_access.search(filter_s=ldap_filter)
@@ -190,17 +176,11 @@ async def test_create_all_attrs(
     assert ldap_obj["ucsschoolRole"].value == f"school:school:{school_obj.name}"
     assert ldap_obj["displayName"].value == school_obj.display_name
     dc_base_dn = f"cn=dc,cn=server,cn=computers,ou={school_obj.name},{base_dn}"
-    class_share_file_server_dn_dn = (
-        f"cn={school_obj.class_share_file_server},{dc_base_dn}"
-    )
+    class_share_file_server_dn_dn = f"cn={school_obj.class_share_file_server},{dc_base_dn}"
     home_share_file_server_dn = f"cn={school_obj.home_share_file_server},{dc_base_dn}"
-    assert (
-        ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
-    )
+    assert ldap_obj["ucsschoolClassShareFileServer"].value == class_share_file_server_dn_dn
     assert ldap_obj["ucsschoolHomeShareFileServer"].value == home_share_file_server_dn
-    assert (
-        ldap_obj["description"].value == school_kwargs["udm_properties"]["description"]
-    )
+    assert ldap_obj["description"].value == school_kwargs["udm_properties"]["description"]
     # no need to check the groups, we're testing the client, not the Kelvin API or ucsschool.lib
 
 

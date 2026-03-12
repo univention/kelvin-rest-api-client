@@ -77,16 +77,12 @@ logger.setLevel(logging.DEBUG)
 urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
-TestServerConfiguration = NamedTuple(
-    "TestServerConfiguration",
-    [
-        ("host", str),
-        ("username", str),
-        ("user_dn", str),
-        ("password", str),
-        ("verify", Union[bool, str]),
-    ],
-)
+class TestServerConfiguration(NamedTuple):
+    host: str
+    username: str
+    user_dn: str
+    password: str
+    verify: Union[bool, str]
 
 
 class BadTestServerConfig(Exception): ...
@@ -133,9 +129,7 @@ class LDAPAccess:
     def base_dn(self) -> str:
         if not self._base_dn:
             with Connection(**self._connection_kwargs) as conn:
-                res = [
-                    c for c in conn.server.info.naming_contexts if c != "cn=translog"
-                ]
+                res = [c for c in conn.server.info.naming_contexts if c != "cn=translog"]
                 self.__class__._base_dn = res[0]
         return self._base_dn
 
@@ -277,7 +271,7 @@ class LDAPAccess:
 def _get_ip_of_container(container_name: str) -> str:
     docker_client = docker.from_env()
     container = docker_client.containers.get(container_name)
-    for k, v in container.attrs["NetworkSettings"]["Networks"].items():
+    for _, v in container.attrs["NetworkSettings"]["Networks"].items():
         try:
             return v["IPAddress"]
         except KeyError:  # pragma: no cover
@@ -292,8 +286,7 @@ def _start_stopped_container(container_name: str):
     container = docker_client.containers.get(container_name)
     if container.status != "running":  # pragma: no cover
         logger.info(
-            f"Found stopped Docker container {container_name!r}. "
-            f"Trying to start and continue."
+            f"Found stopped Docker container {container_name!r}. Trying to start and continue."
         )  # pragma: no cover
         container.start()
 
@@ -313,7 +306,7 @@ def running_test_container():
             host=ip,
             username="Administrator",
             user_dn="uid=Administrator,cn=users,dc=ucs-test,dc=intranet",
-            password="univention",
+            password="univention",  # noqa: S106
             verify=False,
         )
         logger.info(
@@ -395,9 +388,7 @@ def save_test_server_yaml():
     return _func
 
 
-def retrieve_kelvin_access_token(
-    host: str, username: str, password: str, verify: bool
-) -> str:
+def retrieve_kelvin_access_token(host: str, username: str, password: str, verify: bool) -> str:
     logger.info("Retrieving Kelvin access token...")
     try:
         resp = httpx.post(
@@ -409,10 +400,11 @@ def retrieve_kelvin_access_token(
     except httpx.NetworkError as exc:
         raise TestServerConnectionError(
             f"Error retrieving token from Kelvin REST API: {exc}"
-        )
+        ) from exc
     if resp.status_code != 200:
         raise TestServerConnectionError(  # pragma: no cover
-            f"Error retrieving token from Kelvin REST API: [{resp.status_code}] {resp.reason_phrase}",
+            f"Error retrieving token from Kelvin REST API: "
+            f"[{resp.status_code}] {resp.reason_phrase}",
             reason=resp.reason_phrase,
             status=resp.status_code,
         )
@@ -460,18 +452,14 @@ def test_server_configuration(
     :raises: BadTestServerConfig
     :raises: NoTestServerConfig
     """
-    logger.info(
-        "Trying to load test server config from %r...", str(TEST_SERVER_YAML_FILENAME)
-    )
+    logger.info("Trying to load test server config from %r...", str(TEST_SERVER_YAML_FILENAME))
     try:
         server_configuration = load_test_server_yaml()
         _test_a_server_configuration(server_configuration)
     except FileNotFoundError:  # pragma: no cover
         logger.error("File not found: %r.", str(TEST_SERVER_YAML_FILENAME))
     except TypeError as exc:  # pragma: no cover
-        raise BadTestServerConfig(
-            f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}"
-        ) from exc
+        raise BadTestServerConfig(f"Error in '{TEST_SERVER_YAML_FILENAME!s}': {exc!s}") from exc
     except TestServerConnectionError as exc:  # pragma: no cover
         pytest.exit(
             f"Error connecting to test server using credentials "
@@ -482,9 +470,7 @@ def test_server_configuration(
     else:
         return server_configuration
 
-    logger.info(
-        "Trying to use running Docker container %r...", KELVIN_DOCKER_CONTAINER_NAME
-    )
+    logger.info("Trying to use running Docker container %r...", KELVIN_DOCKER_CONTAINER_NAME)
     try:
         res = running_test_container()
         _test_a_server_configuration(res)
@@ -652,8 +638,7 @@ async def new_school_class(
         json_data = copy.deepcopy(data)
         json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
         json_data["users"] = [
-            URL_USER_OBJECT.format(host=host, name=user_name)
-            for user_name in json_data["users"]
+            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
         ]
         schedule_delete_obj(object_type="class", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -662,9 +647,7 @@ async def new_school_class(
 
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"cn={school}-{name}"
-        ldap_objs = await ldap_access.search(
-            filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))"
-        )
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))")
         assert len(ldap_objs) == 1
         ldap_obj = ldap_objs[0]
         assert ldap_obj.entry_dn == dn
@@ -748,8 +731,7 @@ async def new_workgroup(
         json_data = copy.deepcopy(data)
         json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
         json_data["users"] = [
-            URL_USER_OBJECT.format(host=host, name=user_name)
-            for user_name in json_data["users"]
+            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
         ]
         schedule_delete_obj(object_type="workgroup", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -758,9 +740,7 @@ async def new_workgroup(
 
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"cn={school}-{name}"
-        ldap_objs = await ldap_access.search(
-            filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))"
-        )
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolGroup))")
         assert len(ldap_objs) == 1
         ldap_obj = ldap_objs[0]
         assert ldap_obj.entry_dn == dn
@@ -854,7 +834,7 @@ def new_user_test_obj(new_school):  # noqa: C901
             try:
                 role = kwargs.pop("role")
             except KeyError:
-                role = random.choice(role_choices)
+                role = random.choice(role_choices)  # noqa: S311
             if role in (
                 "staff",
                 "student",
@@ -921,18 +901,13 @@ def new_school_user(
         if json_data["birthday"]:
             json_data["birthday"] = json_data["birthday"].strftime("%Y-%m-%d")
         if json_data["expiration_date"]:
-            json_data["expiration_date"] = json_data["expiration_date"].strftime(
-                "%Y-%m-%d"
-            )
+            json_data["expiration_date"] = json_data["expiration_date"].strftime("%Y-%m-%d")
         json_data["roles"] = [
             URL_ROLE_OBJECT.format(host=host, name=role) for role in json_data["roles"]
         ]
-        json_data["school"] = URL_SCHOOL_OBJECT.format(
-            host=host, name=json_data["school"]
-        )
+        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=json_data["school"])
         json_data["schools"] = [
-            URL_SCHOOL_OBJECT.format(host=host, name=school)
-            for school in json_data["schools"]
+            URL_SCHOOL_OBJECT.format(host=host, name=school) for school in json_data["schools"]
         ]
         schedule_delete_obj(object_type="user", name=user_obj.name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -940,9 +915,7 @@ def new_school_user(
         logger.info("Created new User, API response: %r", obj)
         dn0, _ = dn.split(",", 1)
         assert dn0 == f"uid={user_obj.name}"
-        ldap_objs = await ldap_access.search(
-            filter_s=f"(&({dn0})(objectClass=ucsschoolType))"
-        )
+        ldap_objs = await ldap_access.search(filter_s=f"(&({dn0})(objectClass=ucsschoolType))")
         assert len(ldap_objs) == 1
         ldap_obj = ldap_objs[0]
         assert ldap_obj.entry_dn == dn
@@ -992,9 +965,7 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
         logger.info("Deleting %r object with %r...", kelvin_type, obj_search_args)
 
         url_template = url_templates[kelvin_type]
-        obj_url = url_template.format(
-            host=test_server_configuration.host, **obj_search_args
-        )
+        obj_url = url_template.format(host=test_server_configuration.host, **obj_search_args)
         try:
             http_request("delete", url=obj_url, return_json=False)
         except NoObject:
@@ -1073,10 +1044,10 @@ def ucs_ca_file_path():  # pragma: no cover
         if all(s in ip_chars for s in host):
             # need a hostname (not IP address) to verify SSL certificate
             return False
-        resp = httpx.get(f"https://{host}/{ucs_ca_ori_filename}", verify=False)
+        resp = httpx.get(f"https://{host}/{ucs_ca_ori_filename}", verify=False)  # noqa: S501
         if resp.status_code != 200:
             return False
-        CA_CERT_PATH = Path("/tmp/", f"{os.getpid()}_{host}_{ucs_ca_ori_filename}")
+        CA_CERT_PATH = Path("/tmp/", f"{os.getpid()}_{host}_{ucs_ca_ori_filename}")  # noqa: S108
         with CA_CERT_PATH.open("w") as fp:
             fp.write(resp.text)
         return str(CA_CERT_PATH)
@@ -1143,22 +1114,19 @@ def password_hash(check_password, ldap_access, new_school_user):
             "krb5KeyVersionNumber",
             "sambaPwdLastSet",
         ]
-        ldap_results = await ldap_access.search(
-            filter_s=filter_s, attributes=attributes
-        )
+        ldap_results = await ldap_access.search(filter_s=filter_s, attributes=attributes)
         if len(ldap_results) == 1:
             ldap_result = ldap_results[0]
         else:
             raise RuntimeError(
-                f"More than 1 result when searching LDAP with filter {filter_s!r}: {ldap_results!r}."
+                f"More than 1 result when searching LDAP with filter "
+                f"{filter_s!r}: {ldap_results!r}."
             )
         user_password = ldap_result["userPassword"].value
         if not isinstance(user_password, list):
             user_password = [user_password]
         user_password = [pw.decode("ascii") for pw in user_password]
-        krb_5_key = [
-            base64.b64encode(v).decode("ascii") for v in ldap_result["krb5Key"].value
-        ]
+        krb_5_key = [base64.b64encode(v).decode("ascii") for v in ldap_result["krb5Key"].value]
         return (
             password,
             TestUserPasswordsHashes(
@@ -1178,7 +1146,8 @@ def exec_with_ssh():
     def _func(cmd: List[str], host: str = None) -> int:
         if not Path("/usr/bin/ssh").exists() or not Path("/usr/bin/sshpass").exists():
             print(
-                "'ssh' and/or 'sshpass' are not installed. Please install them to enable OU deletion."
+                "'ssh' and/or 'sshpass' are not installed. "
+                "Please install them to enable OU deletion."
             )
             return -1
         ssh_cmd = [
@@ -1193,7 +1162,7 @@ def exec_with_ssh():
             f"root@{host}",
         ] + cmd
         print(f"ssh to {host!r} and execute: {cmd!r}...")
-        return subprocess.call(ssh_cmd)
+        return subprocess.call(ssh_cmd)  # noqa: S603
 
     return _func
 
@@ -1215,7 +1184,7 @@ def delete_ou_using_ssh(base_dn, exec_with_ssh, kelvin_session_kwargs):
             f"cn=OU{ou_name.lower()}-Member-Edukativnetz,cn=ucsschool,cn=groups,{base_dn}",
             f"cn=OU{ou_name.lower()}-Member-Verwaltungsnetz,cn=ucsschool,cn=groups,{base_dn}",
         ]
-        group_dns_s = " ".join("'{}'".format(dn) for dn in group_dns)
+        group_dns_s = " ".join(f"'{dn}'" for dn in group_dns)
         cmd = f"'for DN in {group_dns_s}; do /usr/sbin/udm groups/group remove --dn \"$DN\"; done'"
         print(f"Deleting groups on host {host!r}: {group_dns!r}...")
         exec_with_ssh(["/bin/bash", "-c", cmd], host)

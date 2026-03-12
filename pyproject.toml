@@ -79,6 +79,11 @@ select = [
 ]
 ignore = []
 
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+    "S101", # allow asserts in tests
+]
+
 [tool.ruff.lint.isort]
 known-first-party = ["ucsschool"]
 

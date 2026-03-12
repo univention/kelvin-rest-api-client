@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # kelvin-rest-api-client documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -20,7 +19,6 @@
 #
 import os
 import sys
-
 
 sys.path.insert(0, os.path.abspath(".."))
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2020 Univention GmbH
 #
@@ -53,7 +52,7 @@ from .exceptions import InvalidRequest, InvalidToken, NoObject, ServerError
 DN = str
 
 API_VERSION = "v1"
-TOKEN_HASH_ALGORITHM = "HS256"  # nosec
+TOKEN_HASH_ALGORITHM = "HS256"  # noqa: S105
 TOKEN_LEEWAY = 30
 SESSION_DEFAULT_RETRIES = 0
 SESSION_DEFAULT_MIN_RETRY_PAUSE = 2  # seconds
@@ -88,7 +87,7 @@ class Token:
                 options={"verify_signature": False},
             )
         except jwt.PyJWTError as exc:
-            raise InvalidToken(f"Error decoding token ({token_str!r}): {exc!s}")
+            raise InvalidToken(f"Error decoding token ({token_str!r}): {exc!s}") from exc
         if not isinstance(payload, dict) or "exp" not in payload:
             raise InvalidToken(
                 f"Payload in token not a dict or missing 'exp' entry ({token_str!r})."
@@ -96,16 +95,13 @@ class Token:
         try:
             expiry = datetime.datetime.utcfromtimestamp(payload["exp"])
         except ValueError as exc:
-            raise InvalidToken(f"Error parsing date in token ({token_str!r}): {exc!s}")
+            raise InvalidToken(f"Error parsing date in token ({token_str!r}): {exc!s}") from exc
         return cls(expiry=expiry, value=token_str)
 
     def is_valid(self) -> bool:
         if not self.expiry or not self.value:
             return False
-        return (
-            datetime.datetime.utcnow() + datetime.timedelta(seconds=TOKEN_LEEWAY)
-            <= self.expiry
-        )
+        return datetime.datetime.utcnow() + datetime.timedelta(seconds=TOKEN_LEEWAY) <= self.expiry
 
 
 class Session:
@@ -123,7 +119,7 @@ class Session:
     ):
         if max_client_tasks < 4:
             txt = "Raising value of 'max_client_tasks' to its minimum of 4."
-            warnings.warn(txt, BadSettingsWarning)
+            warnings.warn(txt, BadSettingsWarning, stacklevel=2)
             logger.warning(txt)
             max_client_tasks = 4
         self.max_client_tasks = max_client_tasks
@@ -159,9 +155,7 @@ class Session:
     def open(self) -> httpx.AsyncClient:
         if not self._client:
             self.kwargs["headers"] = self.kwargs.get("headers", {})
-            self.kwargs["headers"]["Access-Control-Expose-Headers"] = (
-                self.request_id_header
-            )
+            self.kwargs["headers"]["Access-Control-Expose-Headers"] = self.request_id_header
             self.kwargs["headers"][self.request_id_header] = self.request_id
             self._client = httpx.AsyncClient(**self.kwargs)
         return self._client
@@ -224,18 +218,14 @@ class Session:
                         )
                     )
                 )
-                | retry_if_exception_type(
-                    (httpx.RemoteProtocolError, httpx.NetworkError)
-                )
+                | retry_if_exception_type((httpx.RemoteProtocolError, httpx.NetworkError))
             ),
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )
 
         try:
-            response: httpx.Response = await retrying(
-                async_request_method, url, **kwargs
-            )
+            response: httpx.Response = await retrying(async_request_method, url, **kwargs)
         except RetryError as exc:
             response = exc.last_attempt.result()
 
@@ -290,9 +280,7 @@ class Session:
     async def delete(self, url: str, **kwargs) -> None:
         await self.request(self.client.delete, url, return_json=False, **kwargs)
 
-    async def get(
-        self, url: str, **kwargs
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    async def get(self, url: str, **kwargs) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         return await self.request(self.client.get, url, **kwargs)
 
     async def head(self, url: str, **kwargs) -> bool:

@@ -192,9 +192,7 @@ async def test_language_header(mocker, language):
         (Role, RoleResource),
     ],
 )
-async def test_language_header_change_during_session(
-    mocker, language, ObjectClass, ResourceClass
-):
+async def test_language_header_change_during_session(mocker, language, ObjectClass, ResourceClass):
     mocker.patch("httpx.AsyncClient.send", side_effect=NotImplementedError)
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
     kelvin_session_kwargs = copy.deepcopy(kelvin_session_kwargs_mock)
@@ -207,7 +205,7 @@ async def test_language_header_change_during_session(
         if language:
             assert headers.get("accept-language")
             assert headers["accept-language"] == language
-            kelvin_obj.session.language == language
+            assert kelvin_obj.session.language == language
         else:
             assert headers.get("accept-language")
             assert headers["accept-language"] == "dummy_lang"

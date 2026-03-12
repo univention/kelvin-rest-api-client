@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 from packaging import version
 
 from ucsschool.kelvin.client import __version__

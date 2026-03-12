@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from pathlib import Path
 
 import lazy_object_proxy
@@ -53,9 +51,7 @@ def _app_version() -> str:
         return metadata.version("kelvin-rest-api-client")
     except (metadata.PackageNotFoundError, AttributeError):  # pragma: no cover
         # not yet installed (running tests prior to installation)
-        with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open(
-            "r"
-        ) as fp:
+        with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open("r") as fp:
             return fp.read().strip()
 
 

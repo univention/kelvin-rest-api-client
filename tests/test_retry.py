@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2026 Univention GmbH
 #
 # http://www.univention.de/
@@ -29,9 +27,10 @@
 
 import httpx
 import pytest
-from ucsschool.kelvin.client.session import Session
-from ucsschool.kelvin.client.exceptions import NoObject, ServerError
 from async_property import async_property
+
+from ucsschool.kelvin.client.exceptions import NoObject, ServerError
+from ucsschool.kelvin.client.session import Session
 
 kelvin_session_kwargs_mock = {
     "username": "username",

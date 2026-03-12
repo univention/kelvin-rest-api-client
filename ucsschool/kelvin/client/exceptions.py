@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2020 Univention GmbH
 #
@@ -29,9 +28,7 @@
 
 
 class KelvinClientError(Exception):
-    def __init__(
-        self, msg: str = None, status: int = None, reason: str = None, url: str = None
-    ):
+    def __init__(self, msg: str = None, status: int = None, reason: str = None, url: str = None):
         self.reason = reason
         self.status = status
         self.url = url
