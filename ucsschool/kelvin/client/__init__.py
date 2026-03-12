@@ -3,7 +3,12 @@
 from pathlib import Path
 
 import lazy_object_proxy
-import pkg_resources
+
+try:
+    from importlib import metadata
+except ImportError:  # pragma: no cover
+    # for python < 3.8
+    import importlib_metadata as metadata
 
 from .base import KelvinObject, KelvinResource
 from .exceptions import (
@@ -45,8 +50,8 @@ __all__ = [
 
 def _app_version() -> str:
     try:
-        return pkg_resources.get_distribution("kelvin-rest-api-client").version
-    except pkg_resources.DistributionNotFound:  # pragma: no cover
+        return metadata.version("kelvin-rest-api-client")
+    except (metadata.PackageNotFoundError, AttributeError):  # pragma: no cover
         # not yet installed (running tests prior to installation)
         with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open(
             "r"
