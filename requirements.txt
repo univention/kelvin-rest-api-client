@@ -1,7 +1,0 @@
-async-property>=0.2.1,<0.3.0
-httpx>=0.23.1
-importlib-metadata; python_version < "3.8"
-lazy-object-proxy>=1.6.0
-pyjwt>=2.0.0,<3.0.0
-tenacity>=8.0.0
-wheel>=0.36.2

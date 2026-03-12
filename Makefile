@@ -72,77 +72,70 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-setup_devel_env: ## setup development environment (virtualenv)
-	@if [ -d venv ]; then \
-		echo "Directory 'venv' exists."; \
-	else \
-		python3.8 -m venv venv; \
-	fi; \
-	. venv/bin/activate && python3 -m pip install -r requirements.txt -r requirements_dev.txt -r requirements_test.txt; \
+setup_devel_env: ## setup development environment (virtualenv) using uv
+	uv venv venv
+	. venv/bin/activate && uv pip install -e ".[dev,test]"
 	echo "==> Run '. venv/bin/activate' to activate virtual env."
 
-format: ## format source code (using the current Python interpreter)
-	pre-commit run -a --hook-stage manual isort-edit
-	pre-commit run -a --hook-stage manual black-edit
+format: ## format source code (using uv and ruff)
+	uv run --extra dev ruff format .
+	uv run --extra dev ruff check --fix .
 
-lint-isort:
-	pre-commit run -a isort
+prek: ## run all hooks on all files using prek (isolated using Python 3.11)
+	uv run --python 3.11 --with prek prek run --all-files
 
-lint-black:
-	pre-commit run -a black
-
-lint-flake8:
-	pre-commit run -a flake8
-
-lint-bandit:
-	pre-commit run -a bandit
+lint-ruff:
+	uv run --extra dev ruff check .
+	uv run --extra dev ruff format --check .
 
 lint-coverage: .coverage
-	coverage report --show-missing --fail-under=90
+	uv run --extra test coverage report --show-missing --fail-under=90
 
-lint: lint-isort lint-black lint-flake8 lint-bandit lint-coverage ## check style with the current Python interpreter
+lint: prek lint-coverage ## check style with uv, prek and ruff
 
-test: ## run tests with the current Python interpreter
-	python3 -m pytest -l -v
+test: ## run tests with uv
+	uv run --extra test pytest -l -v
 
-test-all: ## run tests with every supported Python version using tox
-	tox
+test-all: ## run tests with every supported Python version (3.7, 3.8, 3.9, 3.10) using uv
+	@for version in 3.7 3.8 3.9 3.10; do \
+		echo "Running tests with Python $$version..."; \
+		uv run --python $$version --extra test pytest -l -v || exit 1; \
+	done
 
 .coverage: *.py docs/*.py ucsschool/kelvin/client/*.py tests/*.py
-	coverage run --source tests,ucsschool -m pytest
+	uv run --extra test coverage run --source tests,ucsschool -m pytest
 
-coverage: .coverage ## check code coverage with the current Python interpreter
-	coverage report --show-missing
+coverage: .coverage ## check code coverage with uv
+	uv run --extra test coverage report --show-missing
 
 coverage-html: coverage ## generate HTML coverage report
-	coverage html
+	uv run --extra test coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/modules.rst docs/ucsschool.rst docs/ucsschool.kelvin*.rst
-	sphinx-apidoc -o docs/ -d 6 --doc-project modules --implicit-namespaces --separate ucsschool
+	uv run --extra dev sphinx-apidoc -o docs/ -d 6 --doc-project modules --implicit-namespaces --separate ucsschool
 	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+	uv run --extra dev $(MAKE) -C docs html
 
 docs-open: docs ## open generated Sphinx HTML doc in browser
 	$(BROWSER) docs/_build/html/index.html
 
 servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+	uv run --extra dev watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release to pypi
-	twine upload dist/*
+	uv run --extra dev twine upload dist/*
 
 release-test: dist ## package and upload a release to the pypi test site
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	uv run --extra dev twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	uv build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python3 -m pip install --editable .
+	uv pip install --editable .
 
 download-docker-containers: ## download docker containers from Univention Docker registry (~3 GB)
 	@if $(UCS_IMG_EXISTS); then \
