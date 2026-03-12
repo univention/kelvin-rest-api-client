@@ -70,7 +70,10 @@ async def test_search_no_name_arg(
     user2 = await new_school_user(school=school.name)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [obj async for obj in UserResource(session=session).search(school=school.name)]
+        objs = [
+            obj
+            async for obj in UserResource(session=session).search(school=school.name)
+        ]
 
     assert objs, f"No Users in school {school.name!r} found."
     assert len(objs) >= 2
@@ -128,7 +131,10 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
     async with Session(**kelvin_session_kwargs) as session:
         with pytest.raises(InvalidRequest):
             assert [
-                obj async for obj in UserResource(session=session).search(school=f"{school_name_begin}*")
+                obj
+                async for obj in UserResource(session=session).search(
+                    school=f"{school_name_begin}*"
+                )
             ]
 
 
@@ -147,7 +153,9 @@ async def test_search_exact(
     async with Session(**kelvin_session_kwargs) as session:
         objs = [
             obj
-            async for obj in UserResource(session=session).search(school=user.school, **{attr: value})
+            async for obj in UserResource(session=session).search(
+                school=user.school, **{attr: value}
+            )
         ]
     assert objs, f"No User for school={user.school!r} and {attr!r}={value!r} found."
     if attr in ("roles", "disabled"):
@@ -186,8 +194,12 @@ async def test_search_inexact(
                 school=user.school, **{attr: f"*{value_end}"}
             )
         ]
-    assert objs1, f"No User for school={user.school!r} and {attr!r}='{value_begin}*' found."
-    assert objs2, f"No User for school={user.school!r} and {attr!r}='*{value_end}' found."
+    assert objs1, (
+        f"No User for school={user.school!r} and {attr!r}='{value_begin}*' found."
+    )
+    assert objs2, (
+        f"No User for school={user.school!r} and {attr!r}='*{value_end}' found."
+    )
     if attr == "source_uid":
         assert len(objs1) >= 1
         assert user.dn in [o.dn for o in objs1]
@@ -201,16 +213,22 @@ async def test_search_inexact(
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user):
+async def test_get_from_url(
+    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user
+):
     user = await new_school_user()
-    url = URL_USER_OBJECT.format(host=kelvin_session_kwargs["host"], school=user.school, name=user.name)
+    url = URL_USER_OBJECT.format(
+        host=kelvin_session_kwargs["host"], school=user.school, name=user.name
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj: User = await UserResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, **asdict(user))
 
 
 @pytest.mark.asyncio
-async def test_get(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user):
+async def test_get(
+    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_user
+):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
         obj = await UserResource(session=session).get(name=user.name)
@@ -250,11 +268,15 @@ async def test_create(
     if isinstance(ldap_val_schools, str):
         ldap_val_schools = [ldap_val_schools]
     assert set(ldap_val_schools) == set(user_obj.schools)
-    assert ldap_obj["univentionBirthday"].value == user_obj.birthday.strftime("%Y-%m-%d")
+    assert ldap_obj["univentionBirthday"].value == user_obj.birthday.strftime(
+        "%Y-%m-%d"
+    )
     if user_obj.disabled is True:
         exp_shadow_expire = "1"
     elif user_obj.expiration_date:
-        exp_shadow_expire = int(time.mktime(user_obj.expiration_date.timetuple()) / 3600 / 24 + 1)
+        exp_shadow_expire = int(
+            time.mktime(user_obj.expiration_date.timetuple()) / 3600 / 24 + 1
+        )
     else:
         exp_shadow_expire = "0"
     assert ldap_obj["shadowExpire"].value == exp_shadow_expire
@@ -267,7 +289,9 @@ async def test_create(
     await check_password(ldap_obj.entry_dn, user_data.password)
     assert ldap_obj["title"] == user_obj.udm_properties["title"]
     # check that user was added to workgroup
-    wg_ldap_filter = f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+    wg_ldap_filter = (
+        f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+    )
     wg_ldap_objs = await ldap_access.search(filter_s=wg_ldap_filter)
     assert len(wg_ldap_objs) == 1
     wg_ldap_obj = wg_ldap_objs[0]
@@ -278,7 +302,10 @@ async def test_create(
 @pytest.mark.parametrize("attr_value", [None, "", "omit"], ids=lambda x: repr(x))
 @pytest.mark.parametrize(
     "attr_key,expected_message",
-    [("name", "No username was created"), ("record_uid", "source_uid or record_uid are not set")],
+    [
+        ("name", "No username was created"),
+        ("record_uid", "source_uid or record_uid are not set"),
+    ],
     ids=lambda x: repr(x),
 )
 async def test_create_user_raises_invalid_request_for_missing_username_and_record_uid(
@@ -410,7 +437,8 @@ async def test_modify_legal_wards_wrong_role(
         with pytest.raises(InvalidRequest) as exc_info:
             await obj.save()
         assert (
-            "Parameter 'legal_wards' only valid for user-role 'legal_guardian'" in exc_info.value.args[0]
+            "Parameter 'legal_wards' only valid for user-role 'legal_guardian'"
+            in exc_info.value.args[0]
         )
 
 
@@ -429,7 +457,10 @@ async def test_modify_legal_guardians_wrong_role(
         obj.legal_guardians = [legal_guardian.name]
         with pytest.raises(InvalidRequest) as exc_info:
             await obj.save()
-        assert "Parameter 'legal_guardians' only valid for user-role 'student'" in exc_info.value.args[0]
+        assert (
+            "Parameter 'legal_guardians' only valid for user-role 'student'"
+            in exc_info.value.args[0]
+        )
 
 
 @pytest.mark.asyncio
@@ -472,7 +503,9 @@ async def test_modify(
         compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
         await check_password(fresh_obj.dn, new_data["password"])
         # check that user was added to workgroup
-        wg_ldap_filter = f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+        wg_ldap_filter = (
+            f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
+        )
         wg_ldap_objs = await ldap_access.search(filter_s=wg_ldap_filter)
         assert len(wg_ldap_objs) == 1
         wg_ldap_obj = wg_ldap_objs[0]
@@ -575,7 +608,9 @@ async def test_move_change_school(
 async def test_delete(kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await UserResource(session=session).get(school=user.school, name=user.name)
+        obj = await UserResource(session=session).get(
+            school=user.school, name=user.name
+        )
         assert obj
         res = await obj.delete()
         assert res is None
@@ -596,11 +631,15 @@ async def test_reload(
     first_name_new = fake.first_name()
 
     async with Session(**kelvin_session_kwargs) as session:
-        obj: User = await UserResource(session=session).get(school=user.school, name=user.name)
+        obj: User = await UserResource(session=session).get(
+            school=user.school, name=user.name
+        )
         assert obj.firstname == first_name_old
         await obj.reload()
         assert obj.firstname == first_name_old
-        await ldap_access.modify(obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]})
+        await ldap_access.modify(
+            obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]}
+        )
         await obj.reload()
         assert obj.firstname == first_name_new
 
@@ -609,7 +648,9 @@ async def test_reload(
 async def test_as_json(kelvin_session_kwargs, new_school_user):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
-        old_obj: User = await UserResource(session=session).get(school=user.school, name=user.name)
+        old_obj: User = await UserResource(session=session).get(
+            school=user.school, name=user.name
+        )
         old_obj.udm_properties["title"] = "before"
 
         new_user = User(**old_obj.as_dict(), session=session)
@@ -642,7 +683,8 @@ def test__from_kelvin_response_unquote(quoted: bool):
         "lastname": "Student",
         "roles": ["https://dummy.fqdn/ucsschool/kelvin/v1/roles/student"],
         "schools": [
-            f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{school}" for school in url_schools
+            f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{school}"
+            for school in url_schools
         ],
         "birthday": "",
         "school_classes": {

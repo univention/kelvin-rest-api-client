@@ -71,7 +71,9 @@ class KelvinObject(ABC):
         self._update_old_attrs()
 
     def __repr__(self):
-        req_attrs_vals = [f"{attr!r}={value!r}" for attr, value in self._required_get_attrs.items()]
+        req_attrs_vals = [
+            f"{attr!r}={value!r}" for attr, value in self._required_get_attrs.items()
+        ]
         if hasattr(self, "dn") and self.dn:
             req_attrs_vals.append(f"dn={self.dn!r}")
         return f"{self.__class__.__name__}({', '.join(req_attrs_vals)})"
@@ -90,7 +92,9 @@ class KelvinObject(ABC):
                 self._class_display_name,
                 self,
             )
-        obj = await self._resource_class(session=self.session).get(**self._required_get_attrs)
+        obj = await self._resource_class(session=self.session).get(
+            **self._required_get_attrs
+        )
         for k, v in obj.as_dict().items():
             setattr(self, k, v)
         self._update_old_attrs()
@@ -107,14 +111,17 @@ class KelvinObject(ABC):
             )
         if not self._fresh:
             logger.debug(
-                "[%s] Saving possibly stale Kelvin object instance.", self.session.request_id[:10]
+                "[%s] Saving possibly stale Kelvin object instance.",
+                self.session.request_id[:10],
             )
         data = self._to_kelvin_request_data()
         # assumption: if self.url was set, the object exists in the Kelvin API
         # so if it's not set, we'll try to create the object
         if not self.url:
             resp_json = await self.session.post(
-                url=self._resource_class(session=self.session).collection_url, json=data, timeout=30.0
+                url=self._resource_class(session=self.session).collection_url,
+                json=data,
+                timeout=30.0,
             )
             resp_obj = self._from_kelvin_response(resp_json)
             for k, v in resp_obj.as_dict().items():
@@ -132,10 +139,14 @@ class KelvinObject(ABC):
 
     async def delete(self) -> None:
         if self._deleted:
-            logger.warning("[%s] %s has already been deleted.", self.session.request_id[:10], self)
+            logger.warning(
+                "[%s] %s has already been deleted.", self.session.request_id[:10], self
+            )
             return
         if not self.url:
-            raise RuntimeError("Attribute 'url' unset. Run 'reload()' before 'delete()'.")
+            raise RuntimeError(
+                "Attribute 'url' unset. Run 'reload()' before 'delete()'."
+            )
         await self.session.delete(self.url)
         self._deleted = True
 
@@ -170,12 +181,16 @@ class KelvinObject(ABC):
 
     @property
     def _required_get_attrs(self) -> Dict[str, Any]:
-        return dict((attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_get_attrs)
+        return dict(
+            (attr, getattr(self, attr))
+            for attr in self._resource_class.Meta.required_get_attrs
+        )
 
     @property
     def _required_save_attrs(self) -> Dict[str, Any]:
         return dict(
-            (attr, getattr(self, attr)) for attr in self._resource_class.Meta.required_save_attrs
+            (attr, getattr(self, attr))
+            for attr in self._resource_class.Meta.required_save_attrs
         )
 
     def _update_old_attrs(self):
@@ -248,7 +263,9 @@ class KelvinResource(ABC):
         # not necessary, but will simplify the query string
         for k in [k for k, v in kwargs.items() if v in ("", "*")]:
             del kwargs[k]
-        resp_json: List[Dict[str, Any]] = await self.session.get(self.collection_url, params=kwargs)
+        resp_json: List[Dict[str, Any]] = await self.session.get(
+            self.collection_url, params=kwargs
+        )
         for resp in resp_json:
             obj = self.Meta.kelvin_object._from_kelvin_response(resp)
             obj.session = self.session

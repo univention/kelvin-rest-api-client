@@ -36,5 +36,9 @@ from ucsschool.kelvin.client.user import User
 @pytest.mark.parametrize("kelvin_object", [Role, School, SchoolClass, User])
 def test_init_with_unknown_keyword_argument(kelvin_object):
     kelvin_object(
-        name="test", school="test_school", schools=["test_school"], roles=[], notanargument=None
+        name="test",
+        school="test_school",
+        schools=["test_school"],
+        roles=[],
+        notanargument=None,
     )

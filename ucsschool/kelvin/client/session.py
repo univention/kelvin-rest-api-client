@@ -56,12 +56,10 @@ URL_RESOURCE_WORKGROUP = f"{URL_BASE}/{API_VERSION}/workgroups/"
 logger = logging.getLogger(__name__)
 
 
-class KelvinClientWarning(Warning):
-    ...
+class KelvinClientWarning(Warning): ...
 
 
-class BadSettingsWarning(KelvinClientWarning):
-    ...
+class BadSettingsWarning(KelvinClientWarning): ...
 
 
 @dataclass
@@ -73,12 +71,16 @@ class Token:
     def from_str(cls, token_str: str) -> "Token":
         try:
             payload = jwt.decode(
-                token_str, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False}
+                token_str,
+                algorithms=[TOKEN_HASH_ALGORITHM],
+                options={"verify_signature": False},
             )
         except jwt.PyJWTError as exc:
             raise InvalidToken(f"Error decoding token ({token_str!r}): {exc!s}")
         if not isinstance(payload, dict) or "exp" not in payload:
-            raise InvalidToken(f"Payload in token not a dict or missing 'exp' entry ({token_str!r}).")
+            raise InvalidToken(
+                f"Payload in token not a dict or missing 'exp' entry ({token_str!r})."
+            )
         try:
             expiry = datetime.datetime.utcfromtimestamp(payload["exp"])
         except ValueError as exc:
@@ -88,7 +90,10 @@ class Token:
     def is_valid(self) -> bool:
         if not self.expiry or not self.value:
             return False
-        return datetime.datetime.utcnow() + datetime.timedelta(seconds=TOKEN_LEEWAY) <= self.expiry
+        return (
+            datetime.datetime.utcnow() + datetime.timedelta(seconds=TOKEN_LEEWAY)
+            <= self.expiry
+        )
 
 
 class Session:
@@ -138,7 +143,9 @@ class Session:
     def open(self) -> httpx.AsyncClient:
         if not self._client:
             self.kwargs["headers"] = self.kwargs.get("headers", {})
-            self.kwargs["headers"]["Access-Control-Expose-Headers"] = self.request_id_header
+            self.kwargs["headers"]["Access-Control-Expose-Headers"] = (
+                self.request_id_header
+            )
             self.kwargs["headers"][self.request_id_header] = self.request_id
             self._client = httpx.AsyncClient(**self.kwargs)
         return self._client
@@ -235,7 +242,9 @@ class Session:
     async def delete(self, url: str, **kwargs) -> None:
         await self.request(self.client.delete, url, return_json=False, **kwargs)
 
-    async def get(self, url: str, **kwargs) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    async def get(
+        self, url: str, **kwargs
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         return await self.request(self.client.get, url, **kwargs)
 
     async def head(self, url: str, **kwargs) -> bool:

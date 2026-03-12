@@ -34,7 +34,13 @@ import ldap3
 import pytest
 from faker import Faker
 
-from ucsschool.kelvin.client import InvalidRequest, NoObject, SchoolClass, SchoolClassResource, Session
+from ucsschool.kelvin.client import (
+    InvalidRequest,
+    NoObject,
+    SchoolClass,
+    SchoolClassResource,
+    Session,
+)
 
 fake = Faker()
 
@@ -63,7 +69,12 @@ async def test_search_no_name_arg(
     sc2_dn, sc2_attr = await new_school_class(school=school_name)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [obj async for obj in SchoolClassResource(session=session).search(school=school_name)]
+        objs = [
+            obj
+            async for obj in SchoolClassResource(session=session).search(
+                school=school_name
+            )
+        ]
 
     assert objs, f"No SchoolClass in school {school!r} found."
     assert len(objs) >= 2
@@ -106,10 +117,14 @@ async def test_search_partial_name_arg(
                 school=school_name, name=f"*{name_end}"
             )
         ]
-    assert objs1, f"No SchoolClass for school={school_name!r} and name='{name_begin}*' found."
+    assert objs1, (
+        f"No SchoolClass for school={school_name!r} and name='{name_begin}*' found."
+    )
     assert len(objs1) == 1
     assert sc1_dn == objs1[0].dn
-    assert objs2, f"No SchoolClass for school={school_name!r} and name='*{name_end}' found."
+    assert objs2, (
+        f"No SchoolClass for school={school_name!r} and name='*{name_end}' found."
+    )
     assert len(objs2) == 1
     assert sc1_dn == objs2[0].dn
 
@@ -132,11 +147,15 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_class):
+async def test_get_from_url(
+    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school_class
+):
     sc1_dn, sc1_attr = await new_school_class()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
-    url = URL_CLASS_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
+    url = URL_CLASS_OBJECT.format(
+        host=kelvin_session_kwargs["host"], school=school, name=name
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolClassResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)
@@ -167,7 +186,9 @@ async def test_get_with_users(
 ):
     user1 = await new_school_user()
     user2 = await new_school_user(school=user1.school)
-    sc_dn, sc_attr = await new_school_class(school=user1.school, users=[user1.name, user2.name])
+    sc_dn, sc_attr = await new_school_class(
+        school=user1.school, users=[user1.name, user2.name]
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolClassResource(session=session).get(
             school=sc_attr["school"], name=sc_attr["name"]
@@ -176,7 +197,9 @@ async def test_get_with_users(
     compare_kelvin_obj_with_test_data(obj, dn=sc_dn, **sc_attr)
 
 
-@pytest.mark.parametrize("create_share", [True, False], ids=lambda x: f"create_share={x}")
+@pytest.mark.parametrize(
+    "create_share", [True, False], ids=lambda x: f"create_share={x}"
+)
 @pytest.mark.asyncio
 async def test_create(
     compare_kelvin_obj_with_test_data,
@@ -198,7 +221,9 @@ async def test_create(
         sc_kwargs = asdict(sc_data)
         sc_obj = SchoolClass(session=session, **sc_kwargs)
         sc_obj.udm_properties = {"mailAddress": f"{fake.first_name()}@{mail_domain}"}
-        schedule_delete_obj(object_type="class", school=sc_data.school, name=sc_data.name)
+        schedule_delete_obj(
+            object_type="class", school=sc_data.school, name=sc_data.name
+        )
         await sc_obj.save()
         print("Created new SchoolClass: {!r}".format(sc_obj.as_dict()))
 
@@ -212,7 +237,9 @@ async def test_create(
     assert ldap_obj["description"].value == sc_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
     assert ldap_obj["mailPrimaryAddress"] == sc_obj.udm_properties["mailAddress"]
-    share_ldap_filter = f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolShare))"
+    share_ldap_filter = (
+        f"(&(cn={sc_data.school}-{sc_data.name})(objectClass=ucsschoolShare))"
+    )
     share_ldap_objs = await ldap_access.search(filter_s=share_ldap_filter)
     if create_share:
         assert len(share_ldap_objs) == 1
@@ -310,7 +337,9 @@ async def test_move_change_school(
 
         with pytest.raises(InvalidRequest) as exc_info:
             await obj.save()
-        assert "Moving of class to other school is not allowed" in exc_info.value.args[0]
+        assert (
+            "Moving of class to other school is not allowed" in exc_info.value.args[0]
+        )
 
 
 @pytest.mark.asyncio
@@ -343,11 +372,15 @@ async def test_reload(
     description_new = fake.text(max_nb_chars=50)
 
     async with Session(**kelvin_session_kwargs) as session:
-        obj: SchoolClass = await SchoolClassResource(session=session).get(school=school, name=name)
+        obj: SchoolClass = await SchoolClassResource(session=session).get(
+            school=school, name=name
+        )
         assert obj.description == description_old
         await obj.reload()
         assert obj.description == description_old
-        await ldap_access.modify(obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]})
+        await ldap_access.modify(
+            obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]}
+        )
         await obj.reload()
         assert obj.description == description_new
 
@@ -381,7 +414,9 @@ def test__from_kelvin_response_unquote(quoted: bool):
     test_response = {
         "name": "Democlass",
         "school": f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{url_school}",
-        "users": [f"https://dummy.fqdn/ucsschool/kelvin/v1/users/{user}" for user in url_users],
+        "users": [
+            f"https://dummy.fqdn/ucsschool/kelvin/v1/users/{user}" for user in url_users
+        ],
     }
     sc = SchoolClass._from_kelvin_response(response=test_response)
     assert sc.users == expected_users

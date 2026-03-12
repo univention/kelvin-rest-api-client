@@ -47,7 +47,9 @@ setup(
     # setup_requires=["pytest-runner"],
     test_suite="tests",
     tests_require=requirements_dev + requirements_test,
-    extras_require={"development": set(requirements + requirements_dev + requirements_test)},
+    extras_require={
+        "development": set(requirements + requirements_dev + requirements_test)
+    },
     python_requires=">=3.7",
     url="https://github.com/univention/kelvin-rest-api-client",
     version=version,

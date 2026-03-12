@@ -70,7 +70,9 @@ def test_retrieve_kelvin_access_token_fail(kelvin_session_kwargs):
 
 def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
     token = retrieve_kelvin_access_token(**kelvin_session_kwargs)
-    payload = jwt.decode(token, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False})
+    payload = jwt.decode(
+        token, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False}
+    )
     exp_payload_sub = {
         "username": kelvin_session_kwargs["username"],
         "kelvin_admin": True,

@@ -80,7 +80,9 @@ async def test_session_closes_on_context_exit():
 @pytest.mark.parametrize("arg_client_tasks", range(-10, 11))
 async def test_session_warn_max_client_tasks(arg_client_tasks):
     with warnings.catch_warnings(record=True) as w:
-        async with Session(max_client_tasks=arg_client_tasks, **kelvin_session_kwargs_mock) as session:
+        async with Session(
+            max_client_tasks=arg_client_tasks, **kelvin_session_kwargs_mock
+        ) as session:
             assert session.max_client_tasks >= 4
         if arg_client_tasks < 4:
             assert len(w) == 1
@@ -135,7 +137,9 @@ async def test_session_override_timeout(mocker):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "cid", [(None, None), (None, "X-Foo"), ("12345", None), ("12345", "X-Foo")], ids=lambda x: repr(x)
+    "cid",
+    [(None, None), (None, "X-Foo"), ("12345", None), ("12345", "X-Foo")],
+    ids=lambda x: repr(x),
 )
 async def test_correlation_id(cid, mocker):
     correlation_id, correlation_id_header = cid
@@ -188,7 +192,9 @@ async def test_language_header(mocker, language):
         (Role, RoleResource),
     ],
 )
-async def test_language_header_change_during_session(mocker, language, ObjectClass, ResourceClass):
+async def test_language_header_change_during_session(
+    mocker, language, ObjectClass, ResourceClass
+):
     mocker.patch("httpx.AsyncClient.send", side_effect=NotImplementedError)
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
     kelvin_session_kwargs = copy.deepcopy(kelvin_session_kwargs_mock)

@@ -73,7 +73,7 @@ class Role(KelvinObject):
 
     async def delete(self) -> None:
         raise NotImplementedError(
-            "Deleting school roles has not yet been implemented in the " "Kelvin REST API."
+            "Deleting school roles has not yet been implemented in the Kelvin REST API."
         )
 
     def as_dict(self) -> Dict[str, Any]:

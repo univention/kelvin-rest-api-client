@@ -29,7 +29,9 @@
 
 
 class KelvinClientError(Exception):
-    def __init__(self, msg: str = None, status: int = None, reason: str = None, url: str = None):
+    def __init__(
+        self, msg: str = None, status: int = None, reason: str = None, url: str = None
+    ):
         self.reason = reason
         self.status = status
         self.url = url
@@ -37,17 +39,13 @@ class KelvinClientError(Exception):
         super().__init__(msg)
 
 
-class InvalidRequest(KelvinClientError):
-    ...
+class InvalidRequest(KelvinClientError): ...
 
 
-class InvalidToken(KelvinClientError):
-    ...
+class InvalidToken(KelvinClientError): ...
 
 
-class ServerError(KelvinClientError):
-    ...
+class ServerError(KelvinClientError): ...
 
 
-class NoObject(KelvinClientError):
-    ...
+class NoObject(KelvinClientError): ...

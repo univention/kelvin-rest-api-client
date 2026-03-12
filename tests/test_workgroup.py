@@ -34,7 +34,13 @@ import ldap3
 import pytest
 from faker import Faker
 
-from ucsschool.kelvin.client import InvalidRequest, NoObject, Session, WorkGroup, WorkGroupResource
+from ucsschool.kelvin.client import (
+    InvalidRequest,
+    NoObject,
+    Session,
+    WorkGroup,
+    WorkGroupResource,
+)
 
 fake = Faker()
 
@@ -63,7 +69,12 @@ async def test_search_no_name_arg(
     wg2_dn, wg2_attr = await new_workgroup(school=school_name)
 
     async with Session(**kelvin_session_kwargs) as session:
-        objs = [obj async for obj in WorkGroupResource(session=session).search(school=school_name)]
+        objs = [
+            obj
+            async for obj in WorkGroupResource(session=session).search(
+                school=school_name
+            )
+        ]
 
     assert objs, f"No WorkGroup in school {school!r} found."
     assert len(objs) >= 2
@@ -105,10 +116,14 @@ async def test_search_partial_name_arg(
                 school=school_name, name=f"*{name_end}"
             )
         ]
-    assert objs1, f"No WorkGroup for school={school_name!r} and name='{name_begin}*' found."
+    assert objs1, (
+        f"No WorkGroup for school={school_name!r} and name='{name_begin}*' found."
+    )
     assert len(objs1) == 1
     assert wg1_dn == objs1[0].dn
-    assert objs2, f"No WorkGroup for school={school_name!r} and name='*{name_end}' found."
+    assert objs2, (
+        f"No WorkGroup for school={school_name!r} and name='*{name_end}' found."
+    )
     assert len(objs2) == 1
     assert wg1_dn == objs2[0].dn
 
@@ -131,11 +146,15 @@ async def test_search_inexact_school(new_school, kelvin_session_kwargs):
 
 
 @pytest.mark.asyncio
-async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_workgroup):
+async def test_get_from_url(
+    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_workgroup
+):
     wg1_dn, wg1_attr = await new_workgroup()
     school = wg1_attr["school"]
     name = wg1_attr["name"]
-    url = URL_WORKGROUP_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
+    url = URL_WORKGROUP_OBJECT.format(
+        host=kelvin_session_kwargs["host"], school=school, name=name
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, dn=wg1_dn, **wg1_attr)
@@ -164,7 +183,9 @@ async def test_get_with_users(
 ):
     user1 = await new_school_user()
     user2 = await new_school_user(school=user1.school)
-    wg_dn, wg_attr = await new_workgroup(school=user1.school, users=[user1.name, user2.name])
+    wg_dn, wg_attr = await new_workgroup(
+        school=user1.school, users=[user1.name, user2.name]
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get(
             school=wg_attr["school"], name=wg_attr["name"]
@@ -173,7 +194,9 @@ async def test_get_with_users(
     compare_kelvin_obj_with_test_data(obj, dn=wg_dn, **wg_attr)
 
 
-@pytest.mark.parametrize("create_share", [True, False], ids=lambda x: f"create_share={x}")
+@pytest.mark.parametrize(
+    "create_share", [True, False], ids=lambda x: f"create_share={x}"
+)
 @pytest.mark.asyncio
 async def test_create(
     kelvin_session_kwargs,
@@ -192,7 +215,9 @@ async def test_create(
     async with Session(**kelvin_session_kwargs) as session:
         wg_kwargs = asdict(wg_data)
         wg_obj = WorkGroup(session=session, **wg_kwargs)
-        schedule_delete_obj(object_type="workgroup", school=wg_data.school, name=wg_data.name)
+        schedule_delete_obj(
+            object_type="workgroup", school=wg_data.school, name=wg_data.name
+        )
         await wg_obj.save()
         print("Created new WorkGroup: {!r}".format(wg_obj.as_dict()))
 
@@ -205,7 +230,9 @@ async def test_create(
     assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{wg_data.school}"
     assert ldap_obj["description"].value == wg_obj.description
     assert set(ldap_obj["uniqueMember"].value) == {user1.dn, user2.dn}
-    share_ldap_filter = f"(&(cn={wg_data.school}-{wg_data.name})(objectClass=ucsschoolShare))"
+    share_ldap_filter = (
+        f"(&(cn={wg_data.school}-{wg_data.name})(objectClass=ucsschoolShare))"
+    )
     share_ldap_objs = await ldap_access.search(filter_s=share_ldap_filter)
     if create_share:
         assert len(share_ldap_objs) == 1
@@ -268,7 +295,10 @@ async def test_move_change_school(
 
         with pytest.raises(InvalidRequest) as exc_info:
             await obj.save()
-        assert "Moving a workgroup to another school is not allowed" in exc_info.value.args[0]
+        assert (
+            "Moving a workgroup to another school is not allowed"
+            in exc_info.value.args[0]
+        )
 
 
 @pytest.mark.asyncio
@@ -300,11 +330,15 @@ async def test_reload(
     description_new = fake.text(max_nb_chars=50)
 
     async with Session(**kelvin_session_kwargs) as session:
-        obj: WorkGroup = await WorkGroupResource(session=session).get(school=school, name=name)
+        obj: WorkGroup = await WorkGroupResource(session=session).get(
+            school=school, name=name
+        )
         assert obj.description == description_old
         await obj.reload()
         assert obj.description == description_old
-        await ldap_access.modify(obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]})
+        await ldap_access.modify(
+            obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]}
+        )
         await obj.reload()
         assert obj.description == description_new
 
@@ -313,7 +347,9 @@ async def test_reload(
 async def test_exists(kelvin_session_kwargs, new_workgroup):
     wg1_dn, wg1_attr = await new_workgroup()
     async with Session(**kelvin_session_kwargs) as session:
-        await WorkGroupResource(session=session).exists(name=wg1_attr["name"], school=wg1_attr["school"])
+        await WorkGroupResource(session=session).exists(
+            name=wg1_attr["name"], school=wg1_attr["school"]
+        )
         assert not await WorkGroupResource(session=session).exists(
             name="DOESNOTEXIST", school=wg1_attr["school"]
         )
@@ -336,7 +372,9 @@ def test__from_kelvin_response_unquote(quoted: bool):
     test_response = {
         "name": "Demo-workgroup",
         "school": f"https://dummy.fqdn/ucsschool/kelvin/v1/schools/{url_school}",
-        "users": [f"https://dummy.fqdn/ucsschool/kelvin/v1/users/{user}" for user in url_users],
+        "users": [
+            f"https://dummy.fqdn/ucsschool/kelvin/v1/users/{user}" for user in url_users
+        ],
     }
     sc = WorkGroup._from_kelvin_response(response=test_response)
     assert sc.users == expected_users

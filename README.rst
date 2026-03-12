@@ -2,7 +2,7 @@
 Python UCS\@school Kelvin REST API Client
 =========================================
 
-|python| |license| |code style| |bandit| |codecov| |docspassing| |gh Code Linting| |gh Integration tests|
+|python| |license| |ruff| |docspassing|
 
 Python library to interact with the `UCS\@school Kelvin REST API`_.
 
@@ -232,21 +232,10 @@ Credits
 .. |python| image:: https://img.shields.io/badge/python-3.7+-blue.svg
     :alt: Python 3.7+
     :target: https://www.python.org/
-.. |code style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :alt: Code style: black
-    :target: https://github.com/psf/black
-.. |codecov| image:: https://codecov.io/gh/univention/kelvin-rest-api-client/branch/master/graph/badge.svg
-    :alt: Code coverage
-    :target: https://codecov.io/gh/univention/kelvin-rest-api-client
 .. |docspassing| image:: https://readthedocs.org/projects/kelvin-rest-api-client/badge/?version=latest
     :alt: Documentation Status
     :target: https://kelvin-rest-api-client.readthedocs.io/en/latest/?badge=latest
 .. |travisci| image:: https://travis-ci.com/univention/kelvin-rest-api-client.svg?branch=master
     :target: https://app.travis-ci.com/github/univention/kelvin-rest-api-client
-.. |bandit| image:: https://img.shields.io/badge/security-bandit-yellow.svg
-    :alt: Security: bandit
-    :target: https://github.com/PyCQA/bandit
-.. |gh Code Linting| image:: https://github.com/univention/kelvin-rest-api-client/workflows/Code%20Linting/badge.svg
-    :target: https://github.com/univention/kelvin-rest-api-client/actions?query=workflow%3A%22Code+Linting%22
-.. |gh Integration tests| image:: https://github.com/univention/kelvin-rest-api-client/workflows/Integration%20tests/badge.svg
-    :target: https://github.com/univention/kelvin-rest-api-client/actions?query=workflow%3A%22Integration+tests%22
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json
+   :target: https://github.com/charliermarsh/ruff

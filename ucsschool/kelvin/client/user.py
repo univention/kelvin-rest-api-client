@@ -175,9 +175,13 @@ class User(KelvinObject):
         for attr in ("roles", "schools", "legal_guardians", "legal_wards"):
             # turn urls to names ('school' will be done in super class)
             if attr in response:
-                response[attr] = [unquote(url.rsplit("/", 1)[-1]) for url in response[attr]]
+                response[attr] = [
+                    unquote(url.rsplit("/", 1)[-1]) for url in response[attr]
+                ]
         if response["birthday"]:
-            response["birthday"] = datetime.datetime.strptime(response["birthday"], "%Y-%m-%d").date()
+            response["birthday"] = datetime.datetime.strptime(
+                response["birthday"], "%Y-%m-%d"
+            ).date()
         if "expiration_date" not in response:
             warnings.warn(
                 "User attribute in Kelvin REST API response missing 'expiration_date' attribute. Server "
@@ -202,7 +206,9 @@ class User(KelvinObject):
         for attr in url_keys.keys():
             url_key = url_keys[attr]
             # role/school names to urls
-            data[attr] = [f"{self.session.urls[url_key]}{value}" for value in data[attr]]
+            data[attr] = [
+                f"{self.session.urls[url_key]}{value}" for value in data[attr]
+            ]
         if data["kelvin_password_hashes"]:
             data["kelvin_password_hashes"] = self.kelvin_password_hashes.as_dict()
         else:

@@ -6,7 +6,13 @@ import lazy_object_proxy
 import pkg_resources
 
 from .base import KelvinObject, KelvinResource
-from .exceptions import InvalidRequest, InvalidToken, KelvinClientError, NoObject, ServerError
+from .exceptions import (
+    InvalidRequest,
+    InvalidToken,
+    KelvinClientError,
+    NoObject,
+    ServerError,
+)
 from .role import Role, RoleResource
 from .school import School, SchoolResource
 from .school_class import SchoolClass, SchoolClassResource
@@ -42,7 +48,9 @@ def _app_version() -> str:
         return pkg_resources.get_distribution("kelvin-rest-api-client").version
     except pkg_resources.DistributionNotFound:  # pragma: no cover
         # not yet installed (running tests prior to installation)
-        with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open("r") as fp:
+        with (Path(__file__).parent.parent.parent.parent / "VERSION.txt").open(
+            "r"
+        ) as fp:
             return fp.read().strip()
 
 

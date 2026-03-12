@@ -86,7 +86,9 @@ class WorkGroup(KelvinObject):
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "WorkGroup":
         # user urls to user names
-        response["users"] = [unquote(url.rsplit("/", 1)[-1]) for url in response["users"]]
+        response["users"] = [
+            unquote(url.rsplit("/", 1)[-1]) for url in response["users"]
+        ]
         # 'school' will be done in super class
         return super()._from_kelvin_response(response)
 
@@ -113,4 +115,6 @@ class WorkGroupResource(KelvinResource):
     def _check_search_attrs(self, **kwargs) -> None:
         super()._check_search_attrs(**kwargs)
         if "*" in kwargs["school"]:
-            raise InvalidRequest("Argument 'school' for searching workgroups must be exact.")
+            raise InvalidRequest(
+                "Argument 'school' for searching workgroups must be exact."
+            )
