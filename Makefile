@@ -102,6 +102,15 @@ test-all: ## run tests with every supported Python version (3.7, 3.8, 3.9, 3.10)
 		uv run --python $$version --extra test pytest -l -v || exit 1; \
 	done
 
+test-ci: ## run tests with every supported Python version (3.7, 3.8, 3.9, 3.10) using uv
+	mkdir -p allure-results
+	@for version in 3.7 3.8 3.9 3.10; do \
+		echo "Running tests with Python $$version..."; \
+		uv run --python $$version --extra test pytest --junitxml=report_$$version.xml --cov=./ucsschool/kelvin/client/ --cov-report term-missing --color=yes --cov-fail-under="$$COVERAGE_LIMIT" --cov-report xml:coverage_$$version.xml --alluredir allure-results -l -v; \
+		status=$$?; \
+		if [ $$status -ne 0 ] && [ $$status -ne 1 ]; then exit $$status; fi; \
+	done
+
 .coverage: *.py docs/*.py ucsschool/kelvin/client/*.py tests/*.py
 	uv run --extra test coverage run --source tests,ucsschool -m pytest
 

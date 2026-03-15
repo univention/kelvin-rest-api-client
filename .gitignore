@@ -47,6 +47,11 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 tests/test_server.yaml
+allure-history.jsonl
+allure-report/
+allure-results/
+coverage*
+report*
 
 # Translations
 *.mo

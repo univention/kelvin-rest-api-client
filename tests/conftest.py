@@ -6,6 +6,7 @@ import os
 import random
 import string
 import subprocess
+import sys
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import (
@@ -20,6 +21,7 @@ from typing import (
     Union,
 )
 
+import allure
 import factory
 import faker
 import httpx
@@ -316,6 +318,19 @@ def running_test_container():
         return server
 
     return _func
+
+
+def tag_with_python_version(items):
+    # Determine the version string once
+    py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+
+    for item in items:
+        # Dynamically add the label to every test result
+        item.add_marker(allure.label("python_version", py_version))
+
+
+def pytest_collection_modifyitems(items):
+    tag_with_python_version(items)
 
 
 @pytest.fixture(scope="session")
