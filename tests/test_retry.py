@@ -46,6 +46,20 @@ class SessionMock:
         return "Token"
 
 
+def make_async_mock(results):
+    if not isinstance(results, list):
+        results = [results]
+    it = iter(results)
+
+    async def side_effect(*args, **kwargs):
+        res = next(it)
+        if isinstance(res, Exception):
+            raise res
+        return res
+
+    return side_effect
+
+
 @pytest.mark.asyncio
 async def test_session_retry_on_502(mocker):
     mocker.patch("ucsschool.kelvin.client.session.Session.token", SessionMock.token)
@@ -62,8 +76,9 @@ async def test_session_retry_on_502(mocker):
 
     mock_get = mocker.patch(
         "httpx.AsyncClient.get",
-        side_effect=[mock_response_502, mock_response_502, mock_response_200],
+        side_effect=make_async_mock([mock_response_502, mock_response_502, mock_response_200]),
     )
+    mock_get.__name__ = "get"
 
     # Passing retry_wait_fixed via kwargs to keep tests fast
     async with Session(retries=2, **kelvin_session_kwargs_mock) as session:
@@ -71,6 +86,7 @@ async def test_session_retry_on_502(mocker):
         session._min_retry_pause = 0.1
         resp = await session.get("http://example.com/api")
         assert resp == {"success": True}
+        # In pytest-mock, when using side_effect, the mock itself is called
         assert mock_get.call_count == 3
 
 
@@ -83,7 +99,8 @@ async def test_session_no_retry_on_404(mocker):
     mock_response_404.reason_phrase = "Not Found"
     mock_response_404.json.return_value = {"detail": "Not found"}
 
-    mock_get = mocker.patch("httpx.AsyncClient.get", return_value=mock_response_404)
+    mock_get = mocker.patch("httpx.AsyncClient.get", side_effect=make_async_mock(mock_response_404))
+    mock_get.__name__ = "get"
 
     async with Session(retries=2, **kelvin_session_kwargs_mock) as session:
         session._max_retry_pause = 0.1
@@ -102,7 +119,10 @@ async def test_session_exhaust_retries(mocker):
     mock_response_502.reason_phrase = "Bad Gateway"
     mock_response_502.json.return_value = {"detail": "Server error"}
 
-    mock_get = mocker.patch("httpx.AsyncClient.get", return_value=mock_response_502)
+    mock_get = mocker.patch(
+        "httpx.AsyncClient.get", side_effect=make_async_mock([mock_response_502, mock_response_502])
+    )
+    mock_get.__name__ = "get"
 
     async with Session(retries=1, **kelvin_session_kwargs_mock) as session:
         session._max_retry_pause = 0.1
@@ -121,7 +141,8 @@ async def test_session_retries_disabled_by_default(mocker):
     mock_response_502.reason_phrase = "Bad Gateway"
     mock_response_502.json.return_value = {"detail": "Server error"}
 
-    mock_get = mocker.patch("httpx.AsyncClient.get", return_value=mock_response_502)
+    mock_get = mocker.patch("httpx.AsyncClient.get", side_effect=make_async_mock(mock_response_502))
+    mock_get.__name__ = "get"
 
     async with Session(**kelvin_session_kwargs_mock) as session:
         with pytest.raises(ServerError):
@@ -148,8 +169,9 @@ async def test_session_retry_on_network_errors(mocker, exception):
 
     mock_get = mocker.patch(
         "httpx.AsyncClient.get",
-        side_effect=[exception, mock_response_200],
+        side_effect=make_async_mock([exception, mock_response_200]),
     )
+    mock_get.__name__ = "get"
 
     async with Session(retries=1, **kelvin_session_kwargs_mock) as session:
         session._max_retry_pause = 0.1

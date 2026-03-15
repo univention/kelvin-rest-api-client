@@ -869,7 +869,7 @@ def new_user_test_obj(new_school):  # noqa: C901
         if "firstname" not in kwargs and len(user.firstname) < 6:  # pragma: no cover
             user.firstname = f"{user.firstname}{fake.first_name()}"
         if "lastname" not in kwargs and len(user.lastname) < 6:  # pragma: no cover
-            user.firstname = f"{user.lastname}{fake.last_name()}"
+            user.lastname = f"{user.lastname}{fake.last_name()}"
         user.name = user.name[:15]
         return user
 

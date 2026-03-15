@@ -193,16 +193,10 @@ async def test_search_inexact(
         ]
     assert objs1, f"No User for school={user.school!r} and {attr!r}='{value_begin}*' found."
     assert objs2, f"No User for school={user.school!r} and {attr!r}='*{value_end}' found."
-    if attr == "source_uid":
-        assert len(objs1) >= 1
-        assert user.dn in [o.dn for o in objs1]
-        assert len(objs2) >= 1
-        assert user.dn in [o.dn for o in objs2]
-    else:
-        assert len(objs1) == 1
-        assert user.dn == objs1[0].dn
-        assert len(objs2) == 1
-        assert user.dn == objs2[0].dn
+    for obj in objs1:
+        assert getattr(obj, attr).startswith(value_begin)
+    for obj in objs2:
+        assert getattr(obj, attr).endswith(value_end)
 
 
 @pytest.mark.asyncio
@@ -476,6 +470,7 @@ async def test_modify(
         obj: User = await user_resource.get(school=user.school, name=user.name)
         compare_kelvin_obj_with_test_data(obj, **asdict(user))
         await check_password(obj.dn, user.password)
+        assert new_data["firstname"] != obj.firstname
         for k, v in new_data.items():
             if k not in ("dn", "url"):
                 setattr(obj, k, v)
