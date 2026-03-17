@@ -26,7 +26,7 @@
 # <http://www.gnu.org/licenses/>.
 
 import asyncio
-import time
+import calendar
 from dataclasses import asdict
 from unittest.mock import patch
 from urllib.parse import quote
@@ -255,11 +255,11 @@ async def test_create(
     assert set(ldap_val_schools) == set(user_obj.schools)
     assert ldap_obj["univentionBirthday"].value == user_obj.birthday.strftime("%Y-%m-%d")
     if user_obj.disabled is True:
-        exp_shadow_expire = "1"
+        exp_shadow_expire = 1
     elif user_obj.expiration_date:
-        exp_shadow_expire = int(time.mktime(user_obj.expiration_date.timetuple()) / 3600 / 24 + 1)
+        exp_shadow_expire = int(calendar.timegm(user_obj.expiration_date.timetuple()) / 3600 / 24)
     else:
-        exp_shadow_expire = "0"
+        exp_shadow_expire = 0
     assert ldap_obj["shadowExpire"].value == exp_shadow_expire
     ldap_val_ucsschool_role = ldap_obj["ucsschoolRole"].value
     if isinstance(ldap_val_ucsschool_role, str):
