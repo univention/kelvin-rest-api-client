@@ -53,7 +53,6 @@ dev = [
     "argh>=0.26.0,<1.0.0",
     "ruff>=0.1.0",
     "Sphinx>=5.0.0,<6.0.0",
-    "twine>=3.4.1",
     "watchdog>=2.0.3",
     "wheel>=0.36.2",
 ]
@@ -94,3 +93,9 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true

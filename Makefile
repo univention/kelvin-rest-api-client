@@ -134,10 +134,10 @@ servedocs: docs ## compile the docs watching for changes
 	uv run --extra dev watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release to pypi
-	uv run --extra dev twine upload dist/*
+	uv publish --username __token__
 
 release-test: dist ## package and upload a release to the pypi test site
-	uv run --extra dev twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	uv publish --username __token__ --index testpypi
 
 dist: clean ## builds source and wheel package
 	uv build
