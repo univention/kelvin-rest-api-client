@@ -46,8 +46,9 @@ python:
   needs:
     - run_tests
   stage: tests
+  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/python
   script:
-    - "true"
+    - .gitlab-ci/parse_junit.py
   parallel:
     matrix:
       - PYTHON_VERSION:
