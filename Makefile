@@ -141,6 +141,8 @@ release-test: dist ## package and upload a release to the pypi test site
 
 dist: clean ## builds source and wheel package
 	uv build
+	# PEP 625 compliance, use underscores instead of hyphens
+	for f in dist/kelvin-rest-api-client-*.tar.gz; do mv "$$f" "$${f//kelvin-rest-api-client-/kelvin_rest_api_client-}"; done
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
