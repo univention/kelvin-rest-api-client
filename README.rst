@@ -90,7 +90,7 @@ Install the dependencies for testing in your python virtual environment:
 
 .. code-block:: console
 
-    $ pip install -r requirements_test.txt
+    $ uv sync --extra test
 
 The tests expect the existence of two schools (``OUs``) on the target system (the Kelvin API does not support creation of schools yet).
 The schools are ``DEMOSCHOOL`` and ``DEMOSCHOOL2``.
@@ -123,43 +123,14 @@ Since version ``1.5.0`` the Kelvin REST API supports UDM properties in all resou
     }
     __EOF__
 
-The provided UCS Docker containers already contain both OUs.
-They can be started using the Makefile:
+To use an existing UCS server for the tests, copy the file ``tests/test_server_example.yaml`` to ``tests/test_server.yaml`` and adapt the settings before starting the tests:
 
 .. code-block:: console
 
-    $ make start-docker-containers
-
-    Downloading Docker image '..-ucsschool-udm-rest-api-only:stable-4.4-8'...
-    Downloading Docker image '../ucsschool-kelvin-rest-api:1.5.5'...
-    Starting UCS docker container...
-    Waiting for UCS docker container to start...
-    Waiting for IP address of UCS container...
-    Waiting for UDM REST API...........
-    Creating Kelvin REST API container...
-    Configuring Kelvin REST API container...
-    Rebuilding the OpenAPI client library in the Kelvin API Container...
-    Starting Kelvin REST API server...
-    Waiting for Kelvin docker container to start...
-    Waiting for IP address of Kelvin container...
-    Waiting for Kelvin API...
-    Fixing log file permissions...
-    Setting up reverse proxy...
-    ==> UDM REST API log file: /tmp/udm-rest-api-log/directory-manager-rest.log
-    ==> UDM REST API: http://172.17.0.2/univention/udm/
-    ==> Kelvin API configs: /tmp/kelvin-api/configs/
-    ==> Kelvin API hooks: /tmp/kelvin-api/kelvin-hooks/
-    ==> Kelvin API log file: /tmp/kelvin-api/log/http.log
-    ==> Kelvin API: http://172.17.0.3:8911/ucsschool/kelvin/v1/docs
-    ==> Kelvin API: https://172.17.0.2/ucsschool/kelvin/v1/docs
-
-The Docker containers can be stopped and removed by running:
-
-.. code-block:: console
-
-    $ make stop-and-remove-docker-containers
-
-The Docker images will not be removed, only the running containers.
+    $ cp tests/test_server_example.yaml tests/test_server.yaml
+    $ $EDITOR tests/test_server.yaml
+    # check settings with a single test:
+    $ uv run python -m pytest tests/test_user.py::test_get
 
 Run tests with current Python interpreter:
 
@@ -172,17 +143,6 @@ Using `tox`_ the tests can be executed with all supported Python versions:
 .. code-block:: console
 
     $ make test-all
-
-To use an existing UCS server for the tests, copy the file ``tests/test_server_example.yaml`` to ``tests/test_server.yaml`` and adapt the settings before starting the tests:
-
-.. code-block:: console
-
-    $ cp tests/test_server_example.yaml tests/test_server.yaml
-    $ $EDITOR tests/test_server.yaml
-    # check settings with a single test:
-    $ python -m pytest tests/test_user.py::test_get
-    # if OK, run all tests:
-    $ make test
 
 
 Logging
