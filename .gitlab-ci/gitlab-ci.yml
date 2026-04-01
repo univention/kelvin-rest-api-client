@@ -1,0 +1,66 @@
+stages:
+  - prepare
+  - lint
+  - build
+  - tests
+
+include:
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/pre-commit@2
+  - project: univention/infrastructure/docker-services
+    file:
+      - kaniko.yml
+  - project: univention/dev/tooling/ci-components
+    file:
+      - fragments/openstack.yaml
+
+run_tests:
+  extends: .run_openstack_cfg
+  stage: tests
+  timeout: 120 minutes
+  when: manual
+  allow_failure: False
+  variables:
+    TARGET_VERSION: "5.2-5"
+    OPENSTACK_CFG_FILE: ".gitlab-ci/branch_tests.cfg"
+    COVERAGE_LIMIT: 93
+  script:
+    - mkdir results
+    - !reference [.run_openstack_cfg, script]
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - results
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: results/coverage_3.10.xml
+
+python:
+  needs:
+    - run_tests
+  stage: tests
+  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/python
+  script:
+    - .gitlab-ci/parse_junit.py
+  parallel:
+    matrix:
+      - PYTHON_VERSION:
+        - "3.7"
+        - "3.8"
+        - "3.9"
+        - "3.10"
+  artifacts:
+    reports:
+      junit: results/report_$PYTHON_VERSION.xml
+
+allure_report:
+  stage: tests
+  needs:
+    - run_tests
+  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/allure
+  script:
+    - allure awesome --single-file results/allure-results
+  artifacts:
+    paths:
+      - allure-report/index.html
+    expose_as: "Test Report"
