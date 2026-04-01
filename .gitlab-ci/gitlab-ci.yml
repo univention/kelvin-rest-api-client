@@ -3,6 +3,7 @@ stages:
   - lint
   - build
   - tests
+  - deploy
 
 include:
   - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/pre-commit@2
@@ -64,3 +65,24 @@ allure_report:
     paths:
       - allure-report/index.html
     expose_as: "Test Report"
+
+docs:
+  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/uv
+  stage: build
+  script:
+    - make docs
+  artifacts:
+    paths:
+      - docs/_build/html
+    expose_as: "Docs"
+
+docs_pages:
+  stage: deploy
+  needs:
+    - docs
+  script:
+    - "true"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  pages:
+    publish: docs/_build/html
