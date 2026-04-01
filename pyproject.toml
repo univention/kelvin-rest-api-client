@@ -35,6 +35,11 @@ dependencies = [
     "tenacity>=8.0.0",
 ]
 
+[project.urls]
+Homepage = "https://www.univention.com"
+Documentation = "https://kelvin-rest-api-client.readthedocs.io/en/latest/"
+Source = "https://github.com/univention/kelvin-rest-api-client"
+
 [project.optional-dependencies]
 dev = [
     "argh>=0.26.0,<1.0.0",
