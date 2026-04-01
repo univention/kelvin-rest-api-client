@@ -21,5 +21,5 @@ Module contents
 
 .. automodule:: ucsschool.kelvin.client
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
