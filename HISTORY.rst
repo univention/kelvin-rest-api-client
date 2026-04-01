@@ -2,6 +2,13 @@
 History
 =======
 
+2.4.2 (2026-04-01)
+------------------
+
+* A ``Session`` object can now be instantiated with the optional keyword ``retries``.
+  If a positive integer is given, each request will be retried the given times,
+  in case the server could not be reached.
+
 2.3.0 (2025-09-10)
 ------------------
 
