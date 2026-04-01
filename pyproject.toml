@@ -36,6 +36,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "argh>=0.26.0,<1.0.0",
+    "ruff>=0.1.0",
+    "Sphinx>=8.0.0; python_version >= '3.10'",
+    "watchdog>=2.0.3",
+    "wheel>=0.36.2",
+]
 test = [
     "coverage>=5.5",
     "docker>=5.0.0",
@@ -48,13 +55,6 @@ test = [
     "ruamel.yaml>=0.17.4",
     "allure-pytest>=2.15.3",
     "pytest-cov>=4.1.0",
-]
-dev = [
-    "argh>=0.26.0,<1.0.0",
-    "ruff>=0.1.0",
-    "Sphinx>=5.0.0,<6.0.0",
-    "watchdog>=2.0.3",
-    "wheel>=0.36.2",
 ]
 
 [tool.setuptools]
