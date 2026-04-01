@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: clean clean-test clean-pyc clean-build docs help
 .DEFAULT_GOAL := help
 
@@ -142,7 +144,10 @@ release-test: dist ## package and upload a release to the pypi test site
 dist: clean ## builds source and wheel package
 	uv build
 	# PEP 625 compliance, use underscores instead of hyphens
-	for f in dist/kelvin-rest-api-client-*.tar.gz; do mv "$$f" "$${f//kelvin-rest-api-client-/kelvin_rest_api_client-}"; done
+	# (Required for builds with python < 3.14)
+	if compgen -G 'dist/kelvin-rest-api-client-*.tar.gz' > /dev/null; then \
+		for f in dist/kelvin-rest-api-client-*.tar.gz; do mv "$$f" "$${f//kelvin-rest-api-client-/kelvin_rest_api_client-}"; done; \
+	fi
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
