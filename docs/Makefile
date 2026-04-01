@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = python3 -msphinx
+SPHINXBUILD   = uv run --extra dev python -m sphinx
 SPHINXPROJ    = ucsschool.kelvin.client
 SOURCEDIR     = .
 BUILDDIR      = _build
