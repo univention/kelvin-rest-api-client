@@ -74,6 +74,7 @@ def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
     exp_payload_sub = {
         "username": kelvin_session_kwargs["username"],
         "kelvin_admin": True,
+        "kelvin_reader": False,
         "schools": [],
         "roles": [],
     }
