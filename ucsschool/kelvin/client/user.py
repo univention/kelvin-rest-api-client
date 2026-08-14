@@ -216,9 +216,9 @@ class User(KelvinObject):
         return {key: value for key, value in data.items() if value is not None}
 
 
-class UserResource(KelvinResource):
+class UserResource(KelvinResource[User]):
     class Meta:
-        kelvin_object: Type[KelvinObject] = User
+        kelvin_object: Type[User] = User
         required_get_attrs: Iterable[str] = ("name",)
         required_save_attrs: Iterable[str] = ("school", "roles")
         required_head_attrs: Iterable[str] = ("name",)

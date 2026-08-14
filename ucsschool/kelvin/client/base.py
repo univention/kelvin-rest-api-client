@@ -27,7 +27,7 @@
 # <http://www.gnu.org/licenses/>.
 import copy
 import logging
-from typing import Any, AsyncIterator, Dict, Iterable, List, TypeVar
+from typing import Any, AsyncIterator, Dict, Generic, Iterable, List, Type, TypeVar
 from urllib.parse import unquote
 
 from .exceptions import InvalidRequest, NoObject
@@ -185,9 +185,9 @@ class KelvinObject:
         self._old_attrs.update(self._required_get_attrs)
 
 
-class KelvinResource:
+class KelvinResource(Generic[KelvinObjectType]):
     class Meta:
-        kelvin_object: KelvinObjectType = KelvinObject
+        kelvin_object: Type[KelvinObjectType] = KelvinObject
         required_get_attrs: Iterable[str] = ("name",)
         required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ("school",)
