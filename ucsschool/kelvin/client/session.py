@@ -51,7 +51,7 @@ from .exceptions import InvalidRequest, InvalidToken, NoObject, ServerError
 
 DN = str
 
-API_VERSION = "v1"
+DEFAULT_API_VERSION = "v1"
 TOKEN_HASH_ALGORITHM = "HS256"  # noqa: S105
 TOKEN_LEEWAY = 30
 SESSION_DEFAULT_RETRIES = 0
@@ -59,11 +59,11 @@ SESSION_DEFAULT_MIN_RETRY_PAUSE = 2  # seconds
 SESSION_DEFAULT_MAX_RETRY_PAUSE = 20  # seconds
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
-URL_RESOURCE_CLASS = f"{URL_BASE}/{API_VERSION}/classes/"
-URL_RESOURCE_ROLE = f"{URL_BASE}/{API_VERSION}/roles/"
-URL_RESOURCE_SCHOOL = f"{URL_BASE}/{API_VERSION}/schools/"
-URL_RESOURCE_USER = f"{URL_BASE}/{API_VERSION}/users/"
-URL_RESOURCE_WORKGROUP = f"{URL_BASE}/{API_VERSION}/workgroups/"
+URL_RESOURCE_CLASS = URL_BASE + "/{api_version}/classes/"
+URL_RESOURCE_ROLE = URL_BASE + "/{api_version}/roles/"
+URL_RESOURCE_SCHOOL = URL_BASE + "/{api_version}/schools/"
+URL_RESOURCE_USER = URL_BASE + "/{api_version}/users/"
+URL_RESOURCE_WORKGROUP = URL_BASE + "/{api_version}/workgroups/"
 logger = logging.getLogger(__name__)
 
 
@@ -115,6 +115,7 @@ class Session:
         request_id_header: str = "X-Request-ID",
         language: str = None,
         retries: int = SESSION_DEFAULT_RETRIES,
+        api_version: str = DEFAULT_API_VERSION,
         **kwargs,
     ):
         if max_client_tasks < 4:
@@ -135,13 +136,14 @@ class Session:
         self._min_retry_pause = SESSION_DEFAULT_MIN_RETRY_PAUSE
         self._max_retry_pause = SESSION_DEFAULT_MAX_RETRY_PAUSE
         self.kwargs = kwargs
+        self.api_version = api_version
         self.urls = {
             "token": URL_TOKEN.format(host=host),
-            "class": URL_RESOURCE_CLASS.format(host=host),
-            "role": URL_RESOURCE_ROLE.format(host=host),
-            "school": URL_RESOURCE_SCHOOL.format(host=host),
-            "user": URL_RESOURCE_USER.format(host=host),
-            "workgroup": URL_RESOURCE_WORKGROUP.format(host=host),
+            "class": URL_RESOURCE_CLASS.format(host=host, api_version=api_version),
+            "role": URL_RESOURCE_ROLE.format(host=host, api_version=api_version),
+            "school": URL_RESOURCE_SCHOOL.format(host=host, api_version=api_version),
+            "user": URL_RESOURCE_USER.format(host=host, api_version=api_version),
+            "workgroup": URL_RESOURCE_WORKGROUP.format(host=host, api_version=api_version),
         }
         self._token: Optional[Token] = None
 
