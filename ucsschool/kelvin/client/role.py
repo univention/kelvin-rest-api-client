@@ -80,9 +80,9 @@ class Role(KelvinObject):
         return dict((attr, getattr(self, attr)) for attr in attrs)
 
 
-class RoleResource(KelvinResource):
+class RoleResource(KelvinResource[Role]):
     class Meta:
-        kelvin_object: Type[KelvinObject] = Role
+        kelvin_object: Type[Role] = Role
         required_get_attrs: Iterable[str] = ("name",)
         required_head_attrs: Iterable[str] = ("name",)
         required_search_attrs: Iterable[str] = ()

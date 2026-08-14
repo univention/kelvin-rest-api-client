@@ -100,9 +100,9 @@ class WorkGroup(KelvinObject):
         return data
 
 
-class WorkGroupResource(KelvinResource):
+class WorkGroupResource(KelvinResource[WorkGroup]):
     class Meta:
-        kelvin_object: Type[KelvinObject] = WorkGroup
+        kelvin_object: Type[WorkGroup] = WorkGroup
         required_get_attrs: Iterable[str] = ("name", "school")
         required_save_attrs: Iterable[str] = ("name", "school")
         required_head_attrs: Iterable[str] = ("name",)

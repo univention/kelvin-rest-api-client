@@ -91,9 +91,9 @@ class SchoolClass(KelvinObject):
         return data
 
 
-class SchoolClassResource(KelvinResource):
+class SchoolClassResource(KelvinResource[SchoolClass]):
     class Meta:
-        kelvin_object: Type[KelvinObject] = SchoolClass
+        kelvin_object: Type[SchoolClass] = SchoolClass
         required_get_attrs: Iterable[str] = ("name", "school")
         required_save_attrs: Iterable[str] = ("name", "school")
         required_head_attrs: Iterable[str] = ("name",)
