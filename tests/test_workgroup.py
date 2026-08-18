@@ -32,6 +32,7 @@ from urllib.parse import quote
 
 import ldap3
 import pytest
+from conftest import URL_WORKGROUP_OBJECT
 from faker import Faker
 
 from ucsschool.kelvin.client import (
@@ -43,17 +44,6 @@ from ucsschool.kelvin.client import (
 )
 
 fake = Faker()
-
-
-API_VERSION = "v1"
-URL_BASE = "https://{host}/ucsschool/kelvin"
-URL_TOKEN = f"{URL_BASE}/token"
-URL_WORKGROUP_RESOURCE = f"{URL_BASE}/{API_VERSION}/workgroups/"
-URL_WORKGROUP_COLLECTION = f"{URL_WORKGROUP_RESOURCE}?school={{school}}"
-URL_WORKGROUP_OBJECT = f"{URL_WORKGROUP_RESOURCE}{{school}}/{{name}}"
-URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
-URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
-URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
 
 
 @pytest.mark.asyncio
@@ -143,7 +133,12 @@ async def test_get_from_url(
     wg1_dn, wg1_attr = await new_workgroup()
     school = wg1_attr["school"]
     name = wg1_attr["name"]
-    url = URL_WORKGROUP_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
+    url = URL_WORKGROUP_OBJECT.format(
+        host=kelvin_session_kwargs["host"],
+        api_version=kelvin_session_kwargs["api_version"],
+        school=school,
+        name=name,
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await WorkGroupResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, dn=wg1_dn, **wg1_attr)

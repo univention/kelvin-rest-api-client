@@ -67,7 +67,12 @@ def test_retrieve_kelvin_access_token_fail(kelvin_session_kwargs):
 
 
 def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
-    token = retrieve_kelvin_access_token(**kelvin_session_kwargs)
+    token = retrieve_kelvin_access_token(
+        host=kelvin_session_kwargs["host"],
+        username=kelvin_session_kwargs["username"],
+        password=kelvin_session_kwargs["password"],
+        verify=kelvin_session_kwargs["verify"],
+    )
     payload = jwt.decode(
         token, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False}
     )

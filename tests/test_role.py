@@ -30,19 +30,12 @@ import random
 from unittest.mock import patch
 
 import pytest
+from conftest import URL_ROLE_OBJECT
 from faker import Faker
 
 from ucsschool.kelvin.client import RoleResource, Session
 
 fake = Faker()
-
-
-API_VERSION = "v1"
-URL_BASE = "https://{host}/ucsschool/kelvin"
-URL_TOKEN = f"{URL_BASE}/token"
-URL_ROLE_RESOURCE = f"{URL_BASE}/{API_VERSION}/roles/"
-URL_ROLE_COLLECTION = URL_ROLE_RESOURCE
-URL_ROLE_OBJECT = f"{URL_ROLE_RESOURCE}{{name}}"
 
 
 @pytest.mark.asyncio
@@ -63,7 +56,11 @@ async def test_search_no_name_arg(compare_kelvin_obj_with_test_data, kelvin_sess
 @pytest.mark.asyncio
 @pytest.mark.parametrize("role", ["staff", "student", "teacher", "school_admin", "legal_guardian"])
 async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, role):
-    url = URL_ROLE_OBJECT.format(host=kelvin_session_kwargs["host"], name=role)
+    url = URL_ROLE_OBJECT.format(
+        host=kelvin_session_kwargs["host"],
+        api_version=kelvin_session_kwargs["api_version"],
+        name=role,
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await RoleResource(session=session).get_from_url(url)
     assert obj.name == role
