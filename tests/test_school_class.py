@@ -32,6 +32,7 @@ from urllib.parse import quote
 
 import ldap3
 import pytest
+from conftest import URL_CLASS_OBJECT
 from faker import Faker
 
 from ucsschool.kelvin.client import (
@@ -43,17 +44,6 @@ from ucsschool.kelvin.client import (
 )
 
 fake = Faker()
-
-
-API_VERSION = "v1"
-URL_BASE = "https://{host}/ucsschool/kelvin"
-URL_TOKEN = f"{URL_BASE}/token"
-URL_CLASS_RESOURCE = f"{URL_BASE}/{API_VERSION}/classes/"
-URL_CLASS_COLLECTION = f"{URL_CLASS_RESOURCE}?school={{school}}"
-URL_CLASS_OBJECT = f"{URL_CLASS_RESOURCE}{{school}}/{{name}}"
-URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
-URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
-URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
 
 
 @pytest.mark.asyncio
@@ -146,7 +136,12 @@ async def test_get_from_url(
     sc1_dn, sc1_attr = await new_school_class()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
-    url = URL_CLASS_OBJECT.format(host=kelvin_session_kwargs["host"], school=school, name=name)
+    url = URL_CLASS_OBJECT.format(
+        host=kelvin_session_kwargs["host"],
+        api_version=kelvin_session_kwargs["api_version"],
+        school=school,
+        name=name,
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolClassResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, dn=sc1_dn, **sc1_attr)

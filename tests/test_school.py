@@ -31,19 +31,12 @@ from unittest.mock import patch
 
 import ldap3
 import pytest
+from conftest import URL_SCHOOL_OBJECT
 from faker import Faker
 
 from ucsschool.kelvin.client import School, SchoolResource, Session
 
 fake = Faker()
-
-
-API_VERSION = "v1"
-URL_BASE = "https://{host}/ucsschool/kelvin"
-URL_TOKEN = f"{URL_BASE}/token"
-URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
-URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
-URL_SCHOOL_OBJECT = f"{URL_SCHOOL_RESOURCE}{{name}}"
 
 
 @pytest.mark.asyncio
@@ -91,7 +84,11 @@ async def test_search_partial_name_arg(
 @pytest.mark.asyncio
 async def test_get_from_url(compare_kelvin_obj_with_test_data, kelvin_session_kwargs, new_school):
     school = new_school(1)[0]
-    url = URL_SCHOOL_OBJECT.format(host=kelvin_session_kwargs["host"], name=school.name)
+    url = URL_SCHOOL_OBJECT.format(
+        host=kelvin_session_kwargs["host"],
+        api_version=kelvin_session_kwargs["api_version"],
+        name=school.name,
+    )
     async with Session(**kelvin_session_kwargs) as session:
         obj = await SchoolResource(session=session).get_from_url(url)
     compare_kelvin_obj_with_test_data(obj, **asdict(school))

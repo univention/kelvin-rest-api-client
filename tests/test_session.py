@@ -69,16 +69,19 @@ def call_kwargs(call_args):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("api_version", [None, "v1", "v2"])
+async def test_session_default_api_version():
+    """Omitting api_version falls back to the oldest supported version."""
+    async with Session(**kelvin_session_kwargs_mock) as session:
+        assert session.api_version == "v1"
+
+
+@pytest.mark.asyncio
 async def test_session_api_version(api_version):
-    kwargs = dict(kelvin_session_kwargs_mock)
-    if api_version is not None:
-        kwargs["api_version"] = api_version
+    kwargs = dict(kelvin_session_kwargs_mock, api_version=api_version)
     async with Session(**kwargs) as session:
-        expected = api_version or "v1"
-        assert session.api_version == expected
+        assert session.api_version == api_version
         for resource in ("class", "role", "school", "user", "workgroup"):
-            assert f"/{expected}/" in session.urls[resource]
+            assert f"/{api_version}/" in session.urls[resource]
 
 
 @pytest.mark.asyncio

@@ -45,26 +45,26 @@ from urllib3.exceptions import InsecureRequestWarning
 import docker
 from ucsschool.kelvin.client import InvalidRequest, KelvinObject, NoObject, ServerError
 
-API_VERSION = "v1"
+API_VERSIONS = ("v1", "v2")
 
 CA_CERT_PATH: Optional[Path] = None
 TEST_SERVER_YAML_FILENAME = Path(__file__).parent / "test_server.yaml"
 UCS_LDAP_PORT = 7389
 URL_BASE = "https://{host}/ucsschool/kelvin"
 URL_TOKEN = f"{URL_BASE}/token"
-URL_CLASS_RESOURCE = f"{URL_BASE}/{API_VERSION}/classes/"
+URL_CLASS_RESOURCE = f"{URL_BASE}/{{api_version}}/classes/"
 URL_CLASS_COLLECTION = f"{URL_CLASS_RESOURCE}?school={{school}}"
 URL_CLASS_OBJECT = f"{URL_CLASS_RESOURCE}{{school}}/{{name}}"
-URL_ROLE_RESOURCE = f"{URL_BASE}/{API_VERSION}/roles/"
+URL_ROLE_RESOURCE = f"{URL_BASE}/{{api_version}}/roles/"
 URL_ROLE_COLLECTION = URL_ROLE_RESOURCE
 URL_ROLE_OBJECT = f"{URL_ROLE_RESOURCE}{{name}}"
-URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
+URL_SCHOOL_RESOURCE = f"{URL_BASE}/{{api_version}}/schools/"
 URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
 URL_SCHOOL_OBJECT = f"{URL_SCHOOL_COLLECTION}{{name}}"
-URL_USER_RESOURCE = f"{URL_BASE}/{API_VERSION}/users/"
+URL_USER_RESOURCE = f"{URL_BASE}/{{api_version}}/users/"
 URL_USER_COLLECTION = URL_USER_RESOURCE
 URL_USER_OBJECT = f"{URL_USER_COLLECTION}{{name}}"
-URL_WORKGROUP_RESOURCE = f"{URL_BASE}/{API_VERSION}/workgroups/"
+URL_WORKGROUP_RESOURCE = f"{URL_BASE}/{{api_version}}/workgroups/"
 URL_WORKGROUP_COLLECTION = f"{URL_WORKGROUP_RESOURCE}?school={{school}}"
 URL_WORKGROUP_OBJECT = f"{URL_WORKGROUP_RESOURCE}{{school}}/{{name}}"
 UDM_DOCKER_CONTAINER_NAME = "udm_rest_only"
@@ -504,13 +504,20 @@ def test_server_configuration(
     raise NoTestServerConfig("No test server configuration found.")  # pragma: no cover
 
 
+@pytest.fixture(scope="session", params=API_VERSIONS)
+def api_version(request) -> str:
+    """The Kelvin API version under test. Every test using it runs once per version."""
+    return request.param
+
+
 @pytest.fixture(scope="session")
-def kelvin_session_kwargs(test_server_configuration) -> Dict[str, str]:
+def kelvin_session_kwargs(test_server_configuration, api_version) -> Dict[str, str]:
     return {
         "username": test_server_configuration.username,
         "password": test_server_configuration.password,
         "host": test_server_configuration.host,
         "verify": test_server_configuration.verify,
+        "api_version": api_version,
     }
 
 
@@ -554,7 +561,10 @@ def demoschool_data(
     json_headers, kelvin_session_kwargs, test_server_configuration
 ) -> List[Dict[str, Any]]:
     response = httpx.get(
-        URL_SCHOOL_COLLECTION.format(host=test_server_configuration.host),
+        URL_SCHOOL_COLLECTION.format(
+            host=test_server_configuration.host,
+            api_version=kelvin_session_kwargs["api_version"],
+        ),
         headers=json_headers,
         verify=test_server_configuration.verify,
     )
@@ -633,7 +643,8 @@ async def new_school_class(
     """Create a new school class"""
 
     host = kelvin_session_kwargs["host"]
-    collection_url = URL_CLASS_RESOURCE.format(host=host)
+    api_version = kelvin_session_kwargs["api_version"]
+    collection_url = URL_CLASS_RESOURCE.format(host=host, api_version=api_version)
 
     async def _func(**kwargs) -> Tuple[str, Dict[str, Any]]:
         if "name" not in kwargs:
@@ -651,9 +662,12 @@ async def new_school_class(
         del data["ucsschool_roles"]
         del data["url"]
         json_data = copy.deepcopy(data)
-        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
+        json_data["school"] = URL_SCHOOL_OBJECT.format(
+            host=host, api_version=api_version, name=school
+        )
         json_data["users"] = [
-            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
+            URL_USER_OBJECT.format(host=host, api_version=api_version, name=user_name)
+            for user_name in json_data["users"]
         ]
         schedule_delete_obj(object_type="class", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -726,7 +740,8 @@ async def new_workgroup(
     """Create a new workgroup"""
 
     host = kelvin_session_kwargs["host"]
-    collection_url = URL_WORKGROUP_RESOURCE.format(host=host)
+    api_version = kelvin_session_kwargs["api_version"]
+    collection_url = URL_WORKGROUP_RESOURCE.format(host=host, api_version=api_version)
 
     async def _func(**kwargs) -> Tuple[str, Dict[str, Any]]:
         if "name" not in kwargs:
@@ -744,9 +759,12 @@ async def new_workgroup(
         del data["ucsschool_roles"]
         del data["url"]
         json_data = copy.deepcopy(data)
-        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=school)
+        json_data["school"] = URL_SCHOOL_OBJECT.format(
+            host=host, api_version=api_version, name=school
+        )
         json_data["users"] = [
-            URL_USER_OBJECT.format(host=host, name=user_name) for user_name in json_data["users"]
+            URL_USER_OBJECT.format(host=host, api_version=api_version, name=user_name)
+            for user_name in json_data["users"]
         ]
         schedule_delete_obj(object_type="workgroup", school=school, name=name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -902,7 +920,8 @@ def new_school_user(
     """Create a new school user"""
 
     host = kelvin_session_kwargs["host"]
-    collection_url = URL_USER_COLLECTION.format(host=host)
+    api_version = kelvin_session_kwargs["api_version"]
+    collection_url = URL_USER_COLLECTION.format(host=host, api_version=api_version)
 
     async def _func(**kwargs) -> TestUser:  # Tuple[str, Dict[str, Any]]:
         user_obj: TestUser = new_user_test_obj(**kwargs)
@@ -918,11 +937,15 @@ def new_school_user(
         if json_data["expiration_date"]:
             json_data["expiration_date"] = json_data["expiration_date"].strftime("%Y-%m-%d")
         json_data["roles"] = [
-            URL_ROLE_OBJECT.format(host=host, name=role) for role in json_data["roles"]
+            URL_ROLE_OBJECT.format(host=host, api_version=api_version, name=role)
+            for role in json_data["roles"]
         ]
-        json_data["school"] = URL_SCHOOL_OBJECT.format(host=host, name=json_data["school"])
+        json_data["school"] = URL_SCHOOL_OBJECT.format(
+            host=host, api_version=api_version, name=json_data["school"]
+        )
         json_data["schools"] = [
-            URL_SCHOOL_OBJECT.format(host=host, name=school) for school in json_data["schools"]
+            URL_SCHOOL_OBJECT.format(host=host, api_version=api_version, name=school)
+            for school in json_data["schools"]
         ]
         schedule_delete_obj(object_type="user", name=user_obj.name)
         obj = http_request("post", url=collection_url, json=json_data)
@@ -962,7 +985,7 @@ def new_school_user(
 
 
 @pytest.fixture
-def schedule_delete_obj(http_request, json_headers, test_server_configuration):
+def schedule_delete_obj(api_version, http_request, json_headers, test_server_configuration):
     kelvin_objs: List[Tuple[str, Dict[str, Any]]] = []
     url_templates = {
         "class": URL_CLASS_OBJECT,
@@ -980,7 +1003,9 @@ def schedule_delete_obj(http_request, json_headers, test_server_configuration):
         logger.info("Deleting %r object with %r...", kelvin_type, obj_search_args)
 
         url_template = url_templates[kelvin_type]
-        obj_url = url_template.format(host=test_server_configuration.host, **obj_search_args)
+        obj_url = url_template.format(
+            host=test_server_configuration.host, api_version=api_version, **obj_search_args
+        )
         try:
             http_request("delete", url=obj_url, return_json=False)
         except NoObject:

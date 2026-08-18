@@ -33,6 +33,7 @@ from urllib.parse import quote
 
 import ldap3
 import pytest
+from conftest import URL_USER_OBJECT
 from faker import Faker
 
 from ucsschool.kelvin.client import (
@@ -45,17 +46,6 @@ from ucsschool.kelvin.client import (
 )
 
 fake = Faker()
-
-
-API_VERSION = "v1"
-URL_BASE = "https://{host}/ucsschool/kelvin"
-URL_TOKEN = f"{URL_BASE}/token"
-URL_SCHOOL_RESOURCE = f"{URL_BASE}/{API_VERSION}/schools/"
-URL_SCHOOL_COLLECTION = URL_SCHOOL_RESOURCE
-URL_SCHOOL_OBJECT = f"{URL_SCHOOL_RESOURCE}{{name}}"
-URL_USER_RESOURCE = f"{URL_BASE}/{API_VERSION}/users/"
-URL_USER_COLLECTION = URL_USER_RESOURCE
-URL_USER_OBJECT = f"{URL_USER_COLLECTION}{{name}}"
 
 
 @pytest.mark.asyncio
@@ -205,7 +195,10 @@ async def test_get_from_url(
 ):
     user = await new_school_user()
     url = URL_USER_OBJECT.format(
-        host=kelvin_session_kwargs["host"], school=user.school, name=user.name
+        host=kelvin_session_kwargs["host"],
+        api_version=kelvin_session_kwargs["api_version"],
+        school=user.school,
+        name=user.name,
     )
     async with Session(**kelvin_session_kwargs) as session:
         obj: User = await UserResource(session=session).get_from_url(url)
