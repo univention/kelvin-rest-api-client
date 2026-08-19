@@ -9,6 +9,8 @@ from conftest import TestServerConnectionError, retrieve_kelvin_access_token
 from faker import Faker
 from ruamel.yaml import YAML
 
+from ucsschool.kelvin.client import NoObject
+
 TOKEN_HASH_ALGORITHM = "HS256"  # noqa: S105
 fake = Faker()
 
@@ -86,3 +88,24 @@ def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
     assert payload["sub"] == exp_payload_sub
     expiry = datetime.datetime.fromtimestamp(payload["exp"])
     assert expiry > datetime.datetime.now()
+
+
+@pytest.mark.asyncio
+async def test_retry_until_replicated_retries_until_success(retry_until_replicated):
+    attempts = []
+
+    def check():
+        attempts.append(None)
+        assert len(attempts) == 3, "not replicated yet"
+
+    await retry_until_replicated(check, timeout=10, interval=0)
+    assert len(attempts) == 3
+
+
+@pytest.mark.asyncio
+async def test_retry_until_replicated_reraises_after_timeout(retry_until_replicated):
+    async def check():
+        raise NoObject("never replicated", reason="Not Found", status=404, url="http://test")
+
+    with pytest.raises(NoObject):
+        await retry_until_replicated(check, timeout=0, interval=0)

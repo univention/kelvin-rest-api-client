@@ -360,6 +360,7 @@ async def test_modify_legal_wards(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school_user,
+    retry_until_replicated,
 ):
     user = await new_school_user(roles=["legal_guardian"])
     student = await new_school_user(roles=["student"])
@@ -370,8 +371,12 @@ async def test_modify_legal_wards(
         obj.legal_wards = [student.name]
         new_obj: User = await obj.save()
         assert new_obj.legal_wards == [student.name]
-        obj: User = await user_resource.get(school=user.school, name=user.name)
-        assert obj.legal_wards == [student.name]
+
+        async def fresh_obj_has_legal_wards():
+            fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
+            assert fresh_obj.legal_wards == [student.name]
+
+        await retry_until_replicated(fresh_obj_has_legal_wards)
 
 
 @pytest.mark.asyncio
@@ -379,6 +384,7 @@ async def test_modify_legal_guardians(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school_user,
+    retry_until_replicated,
 ):
     user = await new_school_user(roles=["student"])
     legal_guardian = await new_school_user(roles=["legal_guardian"])
@@ -389,8 +395,12 @@ async def test_modify_legal_guardians(
         obj.legal_guardians = [legal_guardian.name]
         new_obj: User = await obj.save()
         assert new_obj.legal_guardians == [legal_guardian.name]
-        obj: User = await user_resource.get(school=user.school, name=user.name)
-        assert obj.legal_guardians == [legal_guardian.name]
+
+        async def fresh_obj_has_legal_guardians():
+            fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
+            assert fresh_obj.legal_guardians == [legal_guardian.name]
+
+        await retry_until_replicated(fresh_obj_has_legal_guardians)
 
 
 @pytest.mark.asyncio
@@ -444,6 +454,7 @@ async def test_modify(
     new_user_test_obj,
     new_workgroup,
     ldap_access,
+    retry_until_replicated,
 ):
     user = await new_school_user()
     wg_dn, wg_attr = await new_workgroup(school=user.school, users=[])
@@ -470,11 +481,15 @@ async def test_modify(
         new_obj: User = await obj.save()
         assert new_obj is obj
         compare_kelvin_obj_with_test_data(new_obj, **obj.as_dict())
+
         # load fresh object
-        fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
-        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
-        await check_password(fresh_obj.dn, new_data["password"])
+        async def fresh_obj_matches_saved():
+            fresh_obj: User = await user_resource.get(school=user.school, name=user.name)
+            compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+            compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_matches_saved)
+        await check_password(new_obj.dn, new_data["password"])
         # check that user was added to workgroup
         wg_ldap_filter = (
             f"(&(cn={wg_attr['school']}-{wg_attr['name']})(objectClass=ucsschoolGroup))"
@@ -512,6 +527,7 @@ async def test_move_change_name(
     kelvin_session_kwargs,
     new_school_user,
     schedule_delete_obj,
+    retry_until_replicated,
 ):
     user = await new_school_user()
     old_name = user.name
@@ -531,11 +547,15 @@ async def test_move_change_name(
         assert new_obj.name == new_name
         assert f"uid={new_name}" in new_obj.dn
         assert new_obj.url != old_url
+
         # load fresh object
-        fresh_obj: User = await user_resource.get(school=user.school, name=new_name)
-        assert fresh_obj.name == new_name
-        assert fresh_obj.url != old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+        async def fresh_obj_has_new_name():
+            fresh_obj: User = await user_resource.get(school=user.school, name=new_name)
+            assert fresh_obj.name == new_name
+            assert fresh_obj.url != old_url
+            compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_has_new_name)
 
 
 @pytest.mark.asyncio
@@ -544,6 +564,7 @@ async def test_move_change_school(
     new_school,
     kelvin_session_kwargs,
     new_school_user,
+    retry_until_replicated,
     schedule_delete_obj,
 ):
     user = await new_school_user()
@@ -568,27 +589,46 @@ async def test_move_change_school(
         assert new_obj.school == new_school_
         assert f"ou={new_school_}" in new_obj.dn
         assert new_obj.url == old_url
+
         # load fresh object
-        fresh_obj: User = await user_resource.get(school=new_school_, name=user.name)
-        assert fresh_obj.name == user.name
-        assert fresh_obj.school == new_school_
-        assert fresh_obj.schools == [new_school_]
-        assert fresh_obj.url == old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+        async def fresh_obj_is_in_new_school():
+            fresh_obj: User = await user_resource.get(school=new_school_, name=user.name)
+            assert fresh_obj.name == user.name
+            assert fresh_obj.school == new_school_
+            assert fresh_obj.schools == [new_school_]
+            assert fresh_obj.url == old_url
+            compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_is_in_new_school)
 
 
 @pytest.mark.asyncio
-async def test_delete(kelvin_session_kwargs, new_school_user):
+async def test_delete(kelvin_session_kwargs, new_school_user, retry_until_replicated):
     user = await new_school_user()
     async with Session(**kelvin_session_kwargs) as session:
-        obj = await UserResource(session=session).get(school=user.school, name=user.name)
-        assert obj
+        user_resource = UserResource(session=session)
+        obj = None
+
+        # new_school_user() only waits for LDAP, so the object may not be readable yet
+        async def user_is_readable():
+            nonlocal obj
+            obj = await user_resource.get(school=user.school, name=user.name)
+            assert obj
+
+        await retry_until_replicated(user_is_readable)
         res = await obj.delete()
         assert res is None
 
     async with Session(**kelvin_session_kwargs) as session:
-        with pytest.raises(NoObject):
-            await UserResource(session=session).get(school=user.school, name=user.name)
+
+        async def get_raises_no_object():
+            try:
+                await UserResource(session=session).get(school=user.school, name=user.name)
+            except NoObject:
+                return
+            raise AssertionError(f"deleted user {user.school}/{user.name} is still readable")
+
+        await retry_until_replicated(get_raises_no_object)
 
 
 @pytest.mark.asyncio
@@ -596,6 +636,7 @@ async def test_reload(
     kelvin_session_kwargs,
     ldap_access,
     new_school_user,
+    retry_until_replicated,
 ):
     user = await new_school_user()
     first_name_old = user.firstname
@@ -607,8 +648,12 @@ async def test_reload(
         await obj.reload()
         assert obj.firstname == first_name_old
         await ldap_access.modify(obj.dn, {"givenName": [(ldap3.MODIFY_REPLACE, [first_name_new])]})
-        await obj.reload()
-        assert obj.firstname == first_name_new
+
+        async def reload_shows_new_first_name():
+            await obj.reload()
+            assert obj.firstname == first_name_new
+
+        await retry_until_replicated(reload_shows_new_first_name)
 
 
 @pytest.mark.asyncio

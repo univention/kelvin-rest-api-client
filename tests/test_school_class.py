@@ -234,6 +234,7 @@ async def test_modify(
     mail_domain,
     new_school_class,
     new_school_class_test_obj,
+    retry_until_replicated,
     test_server_configuration,
 ):
     sc1_dn, sc1_attr = await new_school_class(
@@ -252,10 +253,14 @@ async def test_modify(
         new_obj: SchoolClass = await obj.save()
         assert new_obj is obj
         assert new_obj.as_dict() == obj.as_dict()
+
         # load fresh object
-        fresh_obj: SchoolClass = await sc_resource.get(school=school, name=name)
-        assert fresh_obj.as_dict() == new_obj.as_dict()
-        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+        async def fresh_obj_matches_saved():
+            fresh_obj: SchoolClass = await sc_resource.get(school=school, name=name)
+            assert fresh_obj.as_dict() == new_obj.as_dict()
+            compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_matches_saved)
 
 
 @pytest.mark.asyncio
@@ -263,6 +268,7 @@ async def test_move_change_name(
     compare_kelvin_obj_with_test_data,
     kelvin_session_kwargs,
     new_school_class,
+    retry_until_replicated,
     schedule_delete_obj,
 ):
     sc1_dn, sc1_attr = await new_school_class()
@@ -283,11 +289,15 @@ async def test_move_change_name(
         assert new_obj is obj
         assert new_obj.name == new_name
         assert new_obj.url != old_url
+
         # load fresh object
-        fresh_obj: SchoolClass = await sc_resource.get(school=school, name=new_name)
-        assert fresh_obj.name == new_name
-        assert fresh_obj.url != old_url
-        compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+        async def fresh_obj_has_new_name():
+            fresh_obj: SchoolClass = await sc_resource.get(school=school, name=new_name)
+            assert fresh_obj.name == new_name
+            assert fresh_obj.url != old_url
+            compare_kelvin_obj_with_test_data(fresh_obj, **new_obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_has_new_name)
 
 
 @pytest.mark.asyncio
@@ -319,7 +329,7 @@ async def test_move_change_school(
 
 
 @pytest.mark.asyncio
-async def test_delete(kelvin_session_kwargs, new_school_class):
+async def test_delete(kelvin_session_kwargs, new_school_class, retry_until_replicated):
     sc1_dn, sc1_attr = await new_school_class()
     school = sc1_attr["school"]
     name = sc1_attr["name"]
@@ -330,8 +340,15 @@ async def test_delete(kelvin_session_kwargs, new_school_class):
         assert res is None
 
     async with Session(**kelvin_session_kwargs) as session:
-        with pytest.raises(NoObject):
-            await SchoolClassResource(session=session).get(school=school, name=name)
+
+        async def get_raises_no_object():
+            try:
+                await SchoolClassResource(session=session).get(school=school, name=name)
+            except NoObject:
+                return
+            raise AssertionError(f"deleted school class {school}/{name} is still readable")
+
+        await retry_until_replicated(get_raises_no_object)
 
 
 @pytest.mark.asyncio
@@ -340,6 +357,7 @@ async def test_reload(
     kelvin_session_kwargs,
     ldap_access,
     new_school_class,
+    retry_until_replicated,
 ):
     sc1_dn, sc1_attr = await new_school_class()
     school = sc1_attr["school"]
@@ -355,8 +373,12 @@ async def test_reload(
         await ldap_access.modify(
             obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]}
         )
-        await obj.reload()
-        assert obj.description == description_new
+
+        async def reload_shows_new_description():
+            await obj.reload()
+            assert obj.description == description_new
+
+        await retry_until_replicated(reload_shows_new_description)
 
 
 @pytest.mark.asyncio

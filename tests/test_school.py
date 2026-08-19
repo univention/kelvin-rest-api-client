@@ -183,7 +183,11 @@ async def test_create_all_attrs(
 
 @pytest.mark.asyncio
 async def test_reload(
-    compare_kelvin_obj_with_test_data, kelvin_session_kwargs, ldap_access, new_school
+    compare_kelvin_obj_with_test_data,
+    kelvin_session_kwargs,
+    ldap_access,
+    new_school,
+    retry_until_replicated,
 ):
     school = new_school(1)[0]
     display_name_old = school.display_name
@@ -197,11 +201,19 @@ async def test_reload(
         await ldap_access.modify(
             obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_new])]}
         )
-        await obj.reload()
-        assert obj.display_name == display_name_new
-        await ldap_access.modify(
-            obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_old])]}
-        )
+
+        async def reload_shows_new_display_name():
+            await obj.reload()
+            assert obj.display_name == display_name_new
+
+        try:
+            await retry_until_replicated(reload_shows_new_display_name)
+        finally:
+            # DEMOSCHOOL/DEMOSCHOOL2 are shared by the whole suite, so restore even when
+            # the assertion above fails
+            await ldap_access.modify(
+                obj.dn, {"displayName": [(ldap3.MODIFY_REPLACE, [display_name_old])]}
+            )
 
 
 @pytest.mark.asyncio
