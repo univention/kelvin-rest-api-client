@@ -1,6 +1,7 @@
 import base64
 import copy
 import datetime
+import inspect
 import logging
 import os
 import random
@@ -40,6 +41,13 @@ from ldap3 import (
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from ldap3.utils.conv import escape_filter_chars
 from ruamel.yaml import YAML
+from tenacity import (
+    AsyncRetrying,
+    Retrying,
+    retry_if_exception_type,
+    stop_after_delay,
+    wait_fixed,
+)
 from urllib3.exceptions import InsecureRequestWarning
 
 import docker
@@ -521,6 +529,36 @@ def kelvin_session_kwargs(test_server_configuration, api_version) -> Dict[str, s
     }
 
 
+@pytest.fixture
+def retry_until_replicated():
+    """Retry a fetch-and-assert block until it passes or a deadline expires.
+
+    The Kelvin DB, which the v2 API reads from, is filled asynchronously by the
+    kelvin-connector, so a read issued right after a write can return 200 with
+    stale or missing data - a just-created object absent, a just-deleted one
+    still present. Retry on the assertions themselves (and on ``NoObject``, the
+    404 of a not-yet-replicated object) and let the last attempt's error
+    surface (``reraise=True``).
+
+    ``check`` may be sync or async; for v1 (synchronous LDAP) it passes on the
+    first attempt and adds no delay.
+    """
+
+    async def _retry(check: Callable[[], Any], *, timeout: int = 60, interval: int = 2) -> None:
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception_type((AssertionError, NoObject)),
+            stop=stop_after_delay(timeout),
+            wait=wait_fixed(interval),
+            reraise=True,
+        ):
+            with attempt:
+                result = check()
+                if inspect.isawaitable(result):
+                    await result
+
+    return _retry
+
+
 @dataclass
 class TestSchool:
     name: str
@@ -556,28 +594,54 @@ def new_school_test_obj() -> Callable[[], TestSchool]:
     return lambda: SchoolFactory()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def demoschool_data(
     json_headers, kelvin_session_kwargs, test_server_configuration
 ) -> List[Dict[str, Any]]:
-    response = httpx.get(
-        URL_SCHOOL_COLLECTION.format(
-            host=test_server_configuration.host,
-            api_version=kelvin_session_kwargs["api_version"],
-        ),
-        headers=json_headers,
-        verify=test_server_configuration.verify,
+    """DEMOSCHOOL and DEMOSCHOOL2 as the API under test returns them.
+
+    Session scoped on purpose: both schools are created once by
+    ``.gitlab-ci/prepare_test_vm.sh`` before the suite starts, so their presence is a
+    start-of-suite precondition rather than a per-test one. On ``v2`` the connector may
+    not have replicated them yet at that point, so wait for them here - once per
+    session instead of once per test, which would multiply the wait by every test that
+    needs a school.
+    """
+    url = URL_SCHOOL_COLLECTION.format(
+        host=test_server_configuration.host,
+        api_version=kelvin_session_kwargs["api_version"],
     )
-    json_resp = response.json()
-    if not {"DEMOSCHOOL", "DEMOSCHOOL2"}.issubset({obj["name"] for obj in json_resp}):
-        raise AssertionError(  # pragma: no cover
-            "To run the tests properly you need to have two schools named "
-            "'DEMOSCHOOL' and 'DEMOSCHOOL2' at the moment! Execute *on the "
-            "host*: "
-            "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL; "
-            "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2"
+
+    def fetch() -> List[Dict[str, Any]]:
+        response = httpx.get(
+            url,
+            headers=json_headers,
+            verify=test_server_configuration.verify,
         )
-    return json_resp
+        json_resp = response.json()
+        names = {obj["name"] for obj in json_resp} if isinstance(json_resp, list) else set()
+        if not {"DEMOSCHOOL", "DEMOSCHOOL2"}.issubset(names):
+            raise AssertionError(  # pragma: no cover
+                "To run the tests properly you need to have two schools named "
+                "'DEMOSCHOOL' and 'DEMOSCHOOL2' at the moment! Execute *on the "
+                "host*: "
+                "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL; "
+                "/usr/share/ucs-school-import/scripts/create_ou DEMOSCHOOL2\n"
+                f"GET {url!r} -> {response.status_code} {response.reason_phrase}, "
+                f"schools found: {sorted(names) if names else json_resp!r}\n"
+                "The v2 API reads from the Kelvin DB, which the kelvin-connector "
+                "fills asynchronously from the Nubus Provisioning API: an empty or "
+                "incomplete list here means the connector did not (yet) replicate "
+                "the schools."
+            )
+        return json_resp
+
+    return Retrying(
+        retry=retry_if_exception_type(AssertionError),
+        stop=stop_after_delay(60),
+        wait=wait_fixed(2),
+        reraise=True,
+    )(fetch)
 
 
 @pytest.fixture
@@ -638,6 +702,7 @@ async def new_school_class(
     ldap_access,
     new_school_class_test_obj,
     http_request,
+    retry_until_replicated,
     schedule_delete_obj,
 ):
     """Create a new school class"""
@@ -683,6 +748,10 @@ async def new_school_class(
         assert ldap_obj["cn"].value == f"{school}-{name}"
         assert "ucsschoolGroup" in ldap_obj["objectClass"]
         assert ldap_obj["ucsschoolRole"].value == f"school_class:school:{school}"
+        obj_url = URL_CLASS_OBJECT.format(
+            host=host, api_version=api_version, school=school, name=name
+        )
+        await retry_until_replicated(lambda: http_request("get", url=obj_url))
 
         return dn, data
 
@@ -735,6 +804,7 @@ async def new_workgroup(
     ldap_access,
     new_workgroup_test_obj,
     http_request,
+    retry_until_replicated,
     schedule_delete_obj,
 ):
     """Create a new workgroup"""
@@ -780,6 +850,10 @@ async def new_workgroup(
         assert ldap_obj["cn"].value == f"{school}-{name}"
         assert "ucsschoolGroup" in ldap_obj["objectClass"]
         assert ldap_obj["ucsschoolRole"].value == f"workgroup:school:{school}"
+        obj_url = URL_WORKGROUP_OBJECT.format(
+            host=host, api_version=api_version, school=school, name=name
+        )
+        await retry_until_replicated(lambda: http_request("get", url=obj_url))
 
         return dn, data
 
@@ -915,6 +989,7 @@ def new_school_user(
     ldap_access,
     http_request,
     new_user_test_obj,
+    retry_until_replicated,
     schedule_delete_obj,
 ):
     """Create a new school user"""
@@ -970,6 +1045,8 @@ def new_school_user(
             for role in roles
             for school in user_obj.schools
         }
+        obj_url = URL_USER_OBJECT.format(host=host, api_version=api_version, name=user_obj.name)
+        await retry_until_replicated(lambda: http_request("get", url=obj_url))
         # role/school urls to names
         obj["school"] = obj["school"].rsplit("/", 1)[-1]
         for attr in ("roles", "schools"):

@@ -225,6 +225,7 @@ async def test_modify(
     mail_domain,
     new_workgroup,
     new_workgroup_test_obj,
+    retry_until_replicated,
 ):
     wg1_dn, wg1_attr = await new_workgroup()
     new_data = asdict(new_workgroup_test_obj())
@@ -240,10 +241,14 @@ async def test_modify(
         new_obj: WorkGroup = await obj.save()
         assert new_obj is obj
         assert new_obj.as_dict() == obj.as_dict()
+
         # load fresh object
-        fresh_obj: WorkGroup = await wg_resource.get(school=school, name=name)
-        assert fresh_obj.as_dict() == new_obj.as_dict()
-        compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+        async def fresh_obj_matches_saved():
+            fresh_obj: WorkGroup = await wg_resource.get(school=school, name=name)
+            assert fresh_obj.as_dict() == new_obj.as_dict()
+            compare_kelvin_obj_with_test_data(fresh_obj, **obj.as_dict())
+
+        await retry_until_replicated(fresh_obj_matches_saved)
 
 
 @pytest.mark.asyncio
@@ -275,7 +280,7 @@ async def test_move_change_school(
 
 
 @pytest.mark.asyncio
-async def test_delete(kelvin_session_kwargs, new_workgroup):
+async def test_delete(kelvin_session_kwargs, new_workgroup, retry_until_replicated):
     wg1_dn, wg1_attr = await new_workgroup()
     school = wg1_attr["school"]
     name = wg1_attr["name"]
@@ -286,8 +291,15 @@ async def test_delete(kelvin_session_kwargs, new_workgroup):
         assert res is None
 
     async with Session(**kelvin_session_kwargs) as session:
-        with pytest.raises(NoObject):
-            await WorkGroupResource(session=session).get(school=school, name=name)
+
+        async def get_raises_no_object():
+            try:
+                await WorkGroupResource(session=session).get(school=school, name=name)
+            except NoObject:
+                return
+            raise AssertionError(f"deleted workgroup {school}/{name} is still readable")
+
+        await retry_until_replicated(get_raises_no_object)
 
 
 @pytest.mark.asyncio
@@ -295,6 +307,7 @@ async def test_reload(
     kelvin_session_kwargs,
     ldap_access,
     new_workgroup,
+    retry_until_replicated,
 ):
     wg1_dn, wg1_attr = await new_workgroup()
     school = wg1_attr["school"]
@@ -310,8 +323,12 @@ async def test_reload(
         await ldap_access.modify(
             obj.dn, {"description": [(ldap3.MODIFY_REPLACE, [description_new])]}
         )
-        await obj.reload()
-        assert obj.description == description_new
+
+        async def reload_shows_new_description():
+            await obj.reload()
+            assert obj.description == description_new
+
+        await retry_until_replicated(reload_shows_new_description)
 
 
 @pytest.mark.asyncio
