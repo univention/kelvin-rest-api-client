@@ -80,7 +80,7 @@ run_tests:
           - "3.9"
           - "3.10"
   variables:
-    TARGET_VERSION: "5.2-5"
+    TARGET_VERSION: "5.2-6"
     OPENSTACK_CFG_FILE: ".gitlab-ci/branch_tests.cfg"
     COVERAGE_LIMIT: 93
   script:
