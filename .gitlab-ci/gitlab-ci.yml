@@ -27,6 +27,26 @@ include:
       publish_stage: publish
       results_paths: "results/allure-results"
 
+# The one click that starts the whole matrix. GitLab offers a "Run all manual"
+# control above a stage, but only while every job in that stage is manual, and
+# it disappears the moment a non-manual job lands there -- silently, with no
+# warning. A gate does not depend on that: the machines are ordinary automatic
+# jobs waiting on one manual job, so there is one button wherever the stage
+# grows to.
+#
+# 'allow_failure: false' is not the default here and has to be written out:
+# for 'when: manual' outside 'rules' it defaults to *true*. Left alone, the
+# pipeline would run straight past this gate, skip 'run_tests' for want of its
+# 'needs', and hand 'allure:report' a pipeline with no results in it. Set to
+# false the gate blocks, exactly as 'run_tests' did when it was the manual job.
+start_tests:
+  stage: build
+  needs: []
+  when: manual
+  allow_failure: false
+  script:
+    - "true"
+
 # One machine per Python version, running at the same time rather than one
 # after another. Of a 28 minute run, only the first 4.8 minutes were the
 # machine coming up and joining the domain -- the rest was the four versions
@@ -42,8 +62,10 @@ run_tests:
   extends: .run_openstack_cfg
   stage: tests
   timeout: 120 minutes
-  when: manual
   allow_failure: False
+  needs:
+    - job: start_tests
+      artifacts: false
   parallel:
     matrix:
       - PYTHON_VERSION:
