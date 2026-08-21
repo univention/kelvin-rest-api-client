@@ -34,9 +34,10 @@ include:
 # whatever the number of versions, and each version costs one more machine
 # instead of another six minutes on every run.
 #
-# Each job fetches its own 'results/'. GitLab merges them for anything
-# downstream: the reports are named after the version, and the Allure results
-# are named by uuid, so nothing collides.
+# Each job fetches its own 'results/', turns its report into this version's
+# pass or fail, and publishes it. Downstream, GitLab merges the four: the
+# reports are named after the version and the Allure results are named by uuid,
+# so nothing collides.
 run_tests:
   extends: .run_openstack_cfg
   stage: tests
@@ -57,6 +58,11 @@ run_tests:
   script:
     - mkdir results
     - !reference [.run_openstack_cfg, script]
+    # Fails the job when this version's report contains failures, and shrinks
+    # the XML on the way -- GitLab refuses to parse the unshrunk one. It has to
+    # run before the artifacts are uploaded, which is why it is a script step
+    # rather than a job of its own.
+    - .gitlab-ci/parse_junit.py
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     # A failed run is the one the report is wanted for, so the results have to
@@ -65,31 +71,10 @@ run_tests:
     paths:
       - results
     reports:
+      junit: results/report_$PYTHON_VERSION.xml
       coverage_report:
         coverage_format: cobertura
         path: results/coverage_$PYTHON_VERSION.xml
-
-# Turns one version's report into that version's pass or fail, and shrinks the
-# XML on the way -- GitLab refuses to parse the unshrunk one. Needs the whole
-# 'run_tests' matrix, because GitLab does not pair two matrices by their shared
-# variable; the reports are named after the version, so each job finds its own.
-python:
-  needs:
-    - run_tests
-  stage: tests
-  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/python
-  script:
-    - .gitlab-ci/parse_junit.py
-  parallel:
-    matrix:
-      - PYTHON_VERSION:
-        - "3.7"
-        - "3.8"
-        - "3.9"
-        - "3.10"
-  artifacts:
-    reports:
-      junit: results/report_$PYTHON_VERSION.xml
 
 docs:
   image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/uv
