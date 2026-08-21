@@ -22,6 +22,20 @@ def count_errors(junit_file):
     return error_counter
 
 
+def coverage_percent(coverage_file):
+    """
+    Total line coverage from a cobertura report, as a percentage.
+
+    Taken from 'lines-covered' and 'lines-valid' rather than the 'line-rate'
+    attribute, which is rounded to four decimal places in the file.
+    """
+    root = ET.parse(coverage_file).getroot()  # noqa: S314
+    valid = int(root.attrib["lines-valid"])
+    if valid == 0:
+        return 100.0
+    return 100.0 * int(root.attrib["lines-covered"]) / valid
+
+
 def clean_junit_xml(junit_file):
     """
     gitlab refuses to parse large junit files.
@@ -46,14 +60,36 @@ def clean_junit_xml(junit_file):
 
 if __name__ == "__main__":
     test_report_path = pathlib.Path("./results")
-    error_counter = 0
-    junit_file = test_report_path / f"report_{os.getenv('PYTHON_VERSION')}.xml"
+    version = os.getenv("PYTHON_VERSION")
+    failed = False
+
+    junit_file = test_report_path / f"report_{version}.xml"
     print(f"Parsing {junit_file}")
     if not junit_file.is_file():
         print("Missing report file")
         sys.exit(1)
-    error_counter += count_errors(junit_file)
+    error_counter = count_errors(junit_file)
     clean_junit_xml(junit_file)
     if error_counter > 0:
         print(f"Found {error_counter} errors.")
+        failed = True
+
+    # pytest already checks this with '--cov-fail-under', but it reports it the
+    # same way it reports a failing test: exit code 1. The test run tolerates
+    # that so that the run reaches the step which fetches the results, which
+    # left a coverage drop with nothing to report it. Check it here instead,
+    # where the reports have arrived and the exit code is the job's verdict.
+    limit = os.getenv("COVERAGE_LIMIT")
+    if limit:
+        coverage_file = test_report_path / f"coverage_{version}.xml"
+        if not coverage_file.is_file():
+            print(f"Missing coverage report {coverage_file}")
+            sys.exit(1)
+        percent = coverage_percent(coverage_file)
+        print(f"Coverage {percent:.2f}%, required {float(limit):.2f}%")
+        if percent < float(limit):
+            print("Coverage below the required limit.")
+            failed = True
+
+    if failed:
         sys.exit(1)
