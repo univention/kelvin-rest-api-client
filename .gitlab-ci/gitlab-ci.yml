@@ -3,6 +3,8 @@ stages:
   - lint
   - build
   - tests
+  - report
+  - publish
   - deploy
 
 include:
@@ -13,6 +15,17 @@ include:
   - project: univention/dev/tooling/ci-components
     file:
       - fragments/openstack.yaml
+  # Replaces the hand-rolled 'allure_report' job. What it adds is the history:
+  # the trend lives in the project's package registry, one entry per run, so a
+  # branch is measured against main instead of being a snapshot on its own.
+  #
+  # No 'needs': the report is collected by stage ordering, so it is still
+  # produced when 'run_tests' fails -- which is the run it is wanted for.
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/allure@2.15.0
+    inputs:
+      report_stage: report
+      publish_stage: publish
+      results_paths: "results/allure-results"
 
 run_tests:
   extends: .run_openstack_cfg
@@ -29,6 +42,9 @@ run_tests:
     - !reference [.run_openstack_cfg, script]
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
+    # A failed run is the one the report is wanted for, so the results have to
+    # be uploaded then too.
+    when: always
     paths:
       - results
     reports:
@@ -53,18 +69,6 @@ python:
   artifacts:
     reports:
       junit: results/report_$PYTHON_VERSION.xml
-
-allure_report:
-  stage: tests
-  needs:
-    - run_tests
-  image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/allure
-  script:
-    - allure awesome --single-file results/allure-results
-  artifacts:
-    paths:
-      - allure-report/index.html
-    expose_as: "Test Report"
 
 docs:
   image: gitregistry.knut.univention.de/univention/dev/tooling/ci-components/uv
