@@ -42,8 +42,14 @@ include:
 start_tests:
   stage: build
   needs: []
-  when: manual
-  allow_failure: false
+  rules:
+    # The scheduled run needs no button; that is the point of scheduling it.
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - when: manual
+      # Written out even though 'when: manual' inside 'rules' already defaults
+      # to false, because the default outside 'rules' is the opposite and the
+      # two are easy to confuse. False is what blocks the pipeline here.
+      allow_failure: false
   script:
     - "true"
 
