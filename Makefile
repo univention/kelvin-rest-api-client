@@ -104,14 +104,19 @@ test-all: ## run tests with every supported Python version (3.7, 3.8, 3.9, 3.10)
 		uv run --python $$version --extra test pytest -l -v || exit 1; \
 	done
 
-test-ci: ## run tests with every supported Python version (3.7, 3.8, 3.9, 3.10) using uv
+# One version per invocation: CI gives each its own machine, so the versions run
+# at the same time instead of one after another.
+#
+# pytest exiting 1 is a test failure and is tolerated, as it was when this
+# looped over every version: the report is still written, and the 'python' job
+# turns that report into the pass or fail for this version. Any other exit code
+# is a crash and stops the run.
+test-ci: ## run the tests under one Python version, named by PYTHON_VERSION, using uv
 	mkdir -p allure-results
-	@for version in 3.7 3.8 3.9 3.10; do \
-		echo "Running tests with Python $$version..."; \
-		uv run --python $$version --extra test pytest --junitxml=report_$$version.xml --cov=./ucsschool/kelvin/client/ --cov-report term-missing --color=yes --cov-fail-under="$$COVERAGE_LIMIT" --cov-report xml:coverage_$$version.xml --alluredir allure-results -l -v; \
-		status=$$?; \
-		if [ $$status -ne 0 ] && [ $$status -ne 1 ]; then exit $$status; fi; \
-	done
+	@echo "Running tests with Python $${PYTHON_VERSION}..."
+	@uv run --python $${PYTHON_VERSION} --extra test pytest --junitxml=report_$${PYTHON_VERSION}.xml --cov=./ucsschool/kelvin/client/ --cov-report term-missing --color=yes --cov-fail-under="$$COVERAGE_LIMIT" --cov-report xml:coverage_$${PYTHON_VERSION}.xml --alluredir allure-results -l -v; \
+	status=$$?; \
+	if [ $$status -ne 0 ] && [ $$status -ne 1 ]; then exit $$status; fi
 
 .coverage: *.py docs/*.py ucsschool/kelvin/client/*.py tests/*.py
 	uv run --extra test coverage run --source tests,ucsschool -m pytest

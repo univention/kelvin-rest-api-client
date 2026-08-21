@@ -27,12 +27,29 @@ include:
       publish_stage: publish
       results_paths: "results/allure-results"
 
+# One machine per Python version, running at the same time rather than one
+# after another. Of a 28 minute run, only the first 4.8 minutes were the
+# machine coming up and joining the domain -- the rest was the four versions
+# in sequence, about 5.7 minutes each. Split up, a run is roughly 10 minutes
+# whatever the number of versions, and each version costs one more machine
+# instead of another six minutes on every run.
+#
+# Each job fetches its own 'results/'. GitLab merges them for anything
+# downstream: the reports are named after the version, and the Allure results
+# are named by uuid, so nothing collides.
 run_tests:
   extends: .run_openstack_cfg
   stage: tests
   timeout: 120 minutes
   when: manual
   allow_failure: False
+  parallel:
+    matrix:
+      - PYTHON_VERSION:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
   variables:
     TARGET_VERSION: "5.2-5"
     OPENSTACK_CFG_FILE: ".gitlab-ci/branch_tests.cfg"
@@ -50,8 +67,12 @@ run_tests:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: results/coverage_3.10.xml
+        path: results/coverage_$PYTHON_VERSION.xml
 
+# Turns one version's report into that version's pass or fail, and shrinks the
+# XML on the way -- GitLab refuses to parse the unshrunk one. Needs the whole
+# 'run_tests' matrix, because GitLab does not pair two matrices by their shared
+# variable; the reports are named after the version, so each job finds its own.
 python:
   needs:
     - run_tests
