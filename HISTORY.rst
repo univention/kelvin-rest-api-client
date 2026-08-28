@@ -2,6 +2,13 @@
 History
 =======
 
+2.5.0 (2026-08-31)
+------------------
+
+* A ``Session`` object can now be instantiated with the optional keyword ``api_version``.
+  It can be set to ``v2``, which would enable the usage of the Kelvin v2 REST API.
+  If unset the default ``v1`` is used.
+
 2.4.2 (2026-04-01)
 ------------------
 
