@@ -167,8 +167,8 @@ Release
         - [ ] Tag commit in gitlab
         - [ ] Run `make dist`
         - [ ] Run `make docs`
-        - [ ] Run `make release-test` and verify the installation
-        - [ ] Run `make release` and verify the installation
+        - [ ] Run `make release-test` and verify the installation # uv auth login test.pypi.org/legacy
+        - [ ] Run `make release` and verify the installation # uv auth login upload.pypi.org
         - [ ] Verify packages on https://pypi.org/
         - [ ] Release mail & chat announcement
 
