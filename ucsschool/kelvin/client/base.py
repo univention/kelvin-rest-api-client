@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 class KelvinObject:
     _class_display_name = "Kelvin Object"
     _kelvin_attrs = ["name", "ucsschool_roles", "udm_properties"]
+    _patch_if_none: List[str] = []
 
     def __init__(
         self,
@@ -124,7 +125,10 @@ class KelvinObject:
             return self
         # self.url was set -> modify object
         # TODO: or creation failed and this is the fall-back
-        resp_json = await self.session.put(url=self.url, json=data)
+        if any(getattr(self, attr) is None for attr in self._patch_if_none):
+            resp_json = await self.session.patch(url=self.url, json=data)
+        else:
+            resp_json = await self.session.put(url=self.url, json=data)
         resp_obj = self._from_kelvin_response(resp_json)
         for k, v in resp_obj.as_dict().items():
             setattr(self, k, v)
@@ -162,6 +166,9 @@ class KelvinObject:
             del data["ucsschool_roles"]
         del data["dn"]
         del data["url"]
+        for attr in self._patch_if_none:
+            if data[attr] is None:
+                del data[attr]
         try:
             # school name to school url
             data["school"] = f"{self.session.urls['school']}{data['school']}"

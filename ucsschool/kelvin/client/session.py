@@ -288,8 +288,8 @@ class Session:
     async def head(self, url: str, **kwargs) -> bool:
         return await self.request(self.client.head, url, **kwargs)
 
-    # async def patch(self, url: str, **kwargs,) -> Dict[str, Any]:
-    #     return await self.request(self.client.patch, url, **kwargs)
+    async def patch(self, url: str, **kwargs) -> Dict[str, Any]:
+        return await self.request(self.client.patch, url, **kwargs)
 
     async def post(self, url: str, **kwargs) -> Dict[str, Any]:
         return await self.request(self.client.post, url, **kwargs)

@@ -242,6 +242,25 @@ The mandatory ``school`` argument must be exact while the optional ``name`` argu
 
     WorkGroup('name'='testworkgroup', 'school'='DEMOSCHOOL', dn='cn=DEMOSCHOOL-testworkgroup,cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=example,dc=com')
 
+With the Kelvin ``v2`` API,
+``exclude="users"`` leaves the member list out of the search results,
+which makes listing the workgroups of a large school much faster.
+The ``users`` attribute of each result is then ``None``.
+The ``v1`` API ignores the argument and always returns the members.
+
+.. code-block:: python
+
+    async with Session(**credentials, api_version="v2") as session:
+        async for wg in WorkGroupResource(session=session).search(
+            school="DEMOSCHOOL", exclude="users"
+        ):
+            print(wg.name, wg.users)
+
+    testworkgroup None
+
+Saving such an object leaves its members unchanged.
+To change the members, :py:meth:`reload()` the object first.
+
 
 Change workgroup properties
 ------------------------------

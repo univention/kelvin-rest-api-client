@@ -45,6 +45,7 @@ class WorkGroup(KelvinObject):
         "users",
         "create_share",
     ]
+    _patch_if_none = ["users"]
 
     def __init__(
         self,
@@ -89,14 +90,16 @@ class WorkGroup(KelvinObject):
     @classmethod
     def _from_kelvin_response(cls, response: Dict[str, Any]) -> "WorkGroup":
         # user urls to user names
-        response["users"] = [unquote(url.rsplit("/", 1)[-1]) for url in response["users"]]
+        if response.get("users") is not None:
+            response["users"] = [unquote(url.rsplit("/", 1)[-1]) for url in response["users"]]
         # 'school' will be done in super class
         return super()._from_kelvin_response(response)
 
     def _to_kelvin_request_data(self) -> Dict[str, Any]:
         data = super()._to_kelvin_request_data()
         # users names to urls
-        data["users"] = [f"{self.session.urls['user']}{user}" for user in data["users"]]
+        if "users" in data:
+            data["users"] = [f"{self.session.urls['user']}{user}" for user in data["users"]]
         return data
 
 

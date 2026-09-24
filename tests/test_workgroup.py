@@ -365,3 +365,44 @@ def test__from_kelvin_response_unquote(quoted: bool):
     sc = WorkGroup._from_kelvin_response(response=test_response)
     assert sc.users == expected_users
     assert sc.school == expected_school
+
+
+def test__from_kelvin_response_users_excluded():
+    test_response = {
+        "name": "Demo-workgroup",
+        "school": "https://dummy.fqdn/ucsschool/kelvin/v2/schools/DEMOSCHOOL",
+        "users": None,
+    }
+    obj = WorkGroup._from_kelvin_response(response=test_response)
+    assert obj.users is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("users,method", ((None, "patch"), ([], "put"), (["demo_student"], "put")))
+async def test_save_keeps_members_that_were_not_loaded(users, method):
+    session = Session(
+        username="admin", password=fake.password(), host="dummy.fqdn", api_version="v2"
+    )
+    url = f"{session.urls['workgroup']}DEMOSCHOOL/Demo-workgroup"
+    obj = WorkGroup(
+        name="Demo-workgroup", school="DEMOSCHOOL", users=users, url=url, session=session
+    )
+    response = {
+        "name": "Demo-workgroup",
+        "school": f"{session.urls['school']}DEMOSCHOOL",
+        "users": [f"{session.urls['user']}demo_student"],
+        "url": url,
+    }
+    with patch.object(session, "patch") as patch_mock, patch.object(session, "put") as put_mock:
+        patch_mock.return_value = dict(response)
+        put_mock.return_value = dict(response)
+        await obj.save()
+    called, not_called = (patch_mock, put_mock) if method == "patch" else (put_mock, patch_mock)
+    called.assert_called_once()
+    not_called.assert_not_called()
+    sent = called.call_args.kwargs["json"]
+    if users is None:
+        assert "users" not in sent
+    else:
+        assert sent["users"] == [f"{session.urls['user']}{user}" for user in users]
+    assert obj.users == ["demo_student"]
