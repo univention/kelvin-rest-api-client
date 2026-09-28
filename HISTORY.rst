@@ -2,6 +2,15 @@
 History
 =======
 
+2.6.0 (2026-09-28)
+------------------
+
+* School classes and workgroups fetched with ``exclude="users"`` (Kelvin v2) no longer raise an error.
+  Their ``users`` attribute is ``None``, and ``save()`` sends a PATCH without ``users``, so existing members are kept.
+* The tests now also run on Python 3.11, 3.12, 3.13 and 3.14, in addition to 3.7 to 3.10.
+  The package metadata lists these versions as supported.
+
+
 2.5.0 (2026-08-31)
 ------------------
 
