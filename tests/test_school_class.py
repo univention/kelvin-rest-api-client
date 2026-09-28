@@ -442,13 +442,16 @@ async def test_save_keeps_members_that_were_not_loaded(users, method):
         "url": url,
     }
     with patch.object(session, "patch") as patch_mock, patch.object(session, "put") as put_mock:
-        patch_mock.return_value = dict(response)
-        put_mock.return_value = dict(response)
+        # side_effect coroutine works with both MagicMock (Python 3.7) and AsyncMock (3.8+)
+        async def respond(*args, **kwargs):
+            return dict(response)
+
+        patch_mock.side_effect = put_mock.side_effect = respond
         await obj.save()
     called, not_called = (patch_mock, put_mock) if method == "patch" else (put_mock, patch_mock)
     called.assert_called_once()
     not_called.assert_not_called()
-    sent = called.call_args.kwargs["json"]
+    sent = called.call_args[1]["json"]
     if users is None:
         assert "users" not in sent
     else:
