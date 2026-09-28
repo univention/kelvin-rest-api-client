@@ -146,6 +146,12 @@ release: dist ## package and upload a release to pypi
 release-test: dist ## package and upload a release to the pypi test site
 	uv publish --username __token__ --index testpypi
 
+GITLAB_USERNAME ?= __token__
+GITLAB_PUBLISH_URL ?= https://git.knut.univention.de/api/v4/projects/218/packages/pypi
+
+release-gitlab: dist ## package and upload a release to the gitlab package registry
+	uv publish --username $(GITLAB_USERNAME) --publish-url $(GITLAB_PUBLISH_URL)
+
 dist: clean ## builds source and wheel package
 	uv build
 	# PEP 625 compliance, use underscores instead of hyphens
