@@ -61,7 +61,7 @@ start_tests:
 # instead of another six minutes on every run.
 #
 # Each job fetches its own 'results/', turns its report into this version's
-# pass or fail, and publishes it. Downstream, GitLab merges the four: the
+# pass or fail, and publishes it. Downstream, GitLab merges them all: the
 # reports are named after the version and the Allure results are named by uuid,
 # so nothing collides.
 run_tests:
@@ -79,6 +79,10 @@ run_tests:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
   variables:
     TARGET_VERSION: "5.2-6"
     OPENSTACK_CFG_FILE: ".gitlab-ci/branch_tests.cfg"
