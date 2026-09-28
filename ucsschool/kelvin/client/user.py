@@ -62,7 +62,7 @@ class PasswordsHashes:
         self.samba_pwd_last_set = samba_pwd_last_set
 
     def as_dict(self) -> Dict[str, Any]:
-        return dict((attr, getattr(self, attr)) for attr in get_type_hints(self).keys())
+        return dict((attr, getattr(self, attr)) for attr in get_type_hints(type(self)).keys())
 
     def as_dict_with_ldap_attr_names(self) -> Dict[str, Any]:
         """
