@@ -78,14 +78,12 @@ def test_retrieve_kelvin_access_token_success(kelvin_session_kwargs):
     payload = jwt.decode(
         token, algorithms=[TOKEN_HASH_ALGORITHM], options={"verify_signature": False}
     )
-    exp_payload_sub = {
-        "username": kelvin_session_kwargs["username"],
-        "kelvin_admin": True,
-        "kelvin_reader": False,
-        "schools": [],
-        "roles": [],
-    }
-    assert payload["sub"] == exp_payload_sub
+    exp_claims = {"kelvin_admin": True, "kelvin_reader": False, "schools": [], "roles": []}
+    if isinstance(payload["sub"], dict):  # Kelvin < 4.1.1 put all claims into "sub"
+        assert payload["sub"] == {"username": kelvin_session_kwargs["username"], **exp_claims}
+    else:
+        assert payload["sub"] == kelvin_session_kwargs["username"]
+        assert {key: payload[key] for key in exp_claims} == exp_claims
     expiry = datetime.datetime.fromtimestamp(payload["exp"])
     assert expiry > datetime.datetime.now()
 
