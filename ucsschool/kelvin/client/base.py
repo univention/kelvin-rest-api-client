@@ -27,7 +27,7 @@
 # <http://www.gnu.org/licenses/>.
 import copy
 import logging
-from typing import Any, AsyncIterator, Dict, Generic, Iterable, List, Type, TypeVar
+from typing import Any, AsyncIterator, Dict, Generic, Iterable, List, Optional, Type, TypeVar
 from urllib.parse import unquote
 
 from .exceptions import InvalidRequest, NoObject
@@ -253,16 +253,63 @@ class KelvinResource(Generic[KelvinObjectType]):
         obj.session = self.session
         return obj
 
-    async def search(self, **kwargs) -> AsyncIterator[KelvinObjectType]:
+    async def search(
+        self, page_size: Optional[int] = None, **kwargs
+    ) -> AsyncIterator[KelvinObjectType]:
+        """
+        Search for objects.
+
+        :param int page_size: Kelvin ``v2`` only: retrieve the results in pages of this size.
+            It is sent as ``limit``, and the ``rel="next"`` links of the ``Link`` response
+            header (RFC 8288) are followed until all results have been retrieved. If the
+            server sends no ``Link`` header (e.g. ``v1``), only the first page is returned.
+            Cannot be used together with ``limit``.
+        :param kwargs: search parameters, sent as query string
+        :raises ucsschool.kelvin.client.InvalidRequest: when there is a problem with the kwargs
+        """
         self._check_search_attrs(**kwargs)
+        if page_size is not None:
+            self._check_page_size(page_size, **kwargs)
+            kwargs["limit"] = page_size
         # not necessary, but will simplify the query string
         for k in [k for k, v in kwargs.items() if v in ("", "*")]:
             del kwargs[k]
-        resp_json: List[Dict[str, Any]] = await self.session.get(self.collection_url, params=kwargs)
-        for resp in resp_json:
-            obj = self.Meta.kelvin_object._from_kelvin_response(resp)
-            obj.session = self.session
-            yield obj
+        if page_size is None:
+            pages = self._get_single_page(kwargs)
+        else:
+            pages = self._get_pages(kwargs)
+        async for resp_json in pages:
+            for resp in resp_json:
+                obj = self.Meta.kelvin_object._from_kelvin_response(resp)
+                obj.session = self.session
+                yield obj
+
+    async def _get_single_page(self, params: Dict[str, Any]) -> AsyncIterator[List[Dict[str, Any]]]:
+        yield await self.session.get(self.collection_url, params=params)
+
+    async def _get_pages(self, params: Dict[str, Any]) -> AsyncIterator[List[Dict[str, Any]]]:
+        resp_json, next_url = await self.session.get_page(self.collection_url, params=params)
+        yield resp_json
+        seen_urls = set()
+        while next_url:
+            if next_url in seen_urls:
+                logger.warning("Stopping pagination: next page %r was already fetched.", next_url)
+                return
+            seen_urls.add(next_url)
+            # the next link already contains all query parameters
+            resp_json, next_url = await self.session.get_page(next_url)
+            yield resp_json
+
+    def _check_page_size(self, page_size: Any, **kwargs) -> None:
+        if "limit" in kwargs:
+            raise InvalidRequest(
+                f"{self.__class__.__name__}.search() accepts only one of 'page_size' and 'limit'."
+            )
+        if isinstance(page_size, bool) or not isinstance(page_size, int) or page_size < 1:
+            raise InvalidRequest(
+                f"{self.__class__.__name__}.search(): 'page_size' must be a positive integer, "
+                f"got {page_size!r}."
+            )
 
     def _check_search_attrs(self, **kwargs) -> None:
         """

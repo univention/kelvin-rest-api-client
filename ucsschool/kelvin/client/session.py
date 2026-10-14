@@ -294,6 +294,18 @@ class Session:
     async def get(self, url: str, **kwargs) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         return await self.request(self.client.get, url, **kwargs)
 
+    async def get_page(self, url: str, **kwargs) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+        """
+        GET one page of a collection.
+
+        :return: tuple of the response body and the absolute URL of the next page, taken from
+            the ``rel="next"`` link of the ``Link`` header (RFC 8288), or ``None`` if there is
+            no next page
+        """
+        response, resp_json = await self._request(self.client.get, url, **kwargs)
+        next_url = response.links.get("next", {}).get("url")
+        return resp_json, str(response.url.join(next_url)) if next_url else None
+
     async def head(self, url: str, **kwargs) -> bool:
         return await self.request(self.client.head, url, **kwargs)
 
