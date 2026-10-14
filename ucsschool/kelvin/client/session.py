@@ -32,7 +32,7 @@ import logging
 import uuid
 import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import httpx
 import jwt
@@ -198,6 +198,18 @@ class Session:
     async def request(
         self, async_request_method: Any, url: str, return_json: bool = True, **kwargs
     ) -> Union[str, int, Dict[str, Any]]:
+        response, resp_json = await self._request(async_request_method, url, **kwargs)
+        if async_request_method == self.client.head:
+            return response.status_code
+        return resp_json if return_json else response.text
+
+    async def _request(
+        self, async_request_method: Any, url: str, **kwargs
+    ) -> Tuple[httpx.Response, Any]:
+        """
+        :return: tuple of the response and its decoded JSON body (``{}`` if not JSON)
+        :raises NoObject, InvalidRequest, ServerError: for status codes >= 300 (except for HEAD)
+        """
         if "headers" not in kwargs:
             kwargs["headers"] = await self.json_headers
         if "timeout" not in kwargs:
@@ -253,11 +265,8 @@ class Session:
             response.reason_phrase,
             f" ({detail})" if detail else "",
         )
-        if async_request_method == self.client.head:
-            return response.status_code
-
-        if 200 <= response.status_code <= 299:
-            return resp_json if return_json else response.text
+        if async_request_method == self.client.head or 200 <= response.status_code <= 299:
+            return response, resp_json
         elif response.status_code == 404:
             raise NoObject(
                 f"Object not found ({async_request_method.__name__.upper()} {url!r}).",
